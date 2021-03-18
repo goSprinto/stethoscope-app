@@ -101,6 +101,10 @@ const MacSecurity = {
   async openWifiConnections (root, args, context) {
     const result = await kmd('openWifiConnections', context)
     return result.wifiConnections === 'Closed'
+  },
+
+  async antivirus (root, args, context) {
+    return await WindowsDevice.antivirus(root, args, context)
   }
 
 }

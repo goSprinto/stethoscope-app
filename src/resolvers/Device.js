@@ -147,6 +147,14 @@ const Device = {
 
   security (root, args, context) {
     return {
+      async antivirus () {
+        const {status, activeProviders} = await Security.antivirus(root, args.policy, context)
+        return {
+          status: securityToDeviceStatus(status),
+          activeProviders
+        }
+      },
+
       async firewall () {
         const status = await Security.firewall(root, args, context)
         return securityToDeviceStatus(status)

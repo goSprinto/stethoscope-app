@@ -30,6 +30,8 @@ export default {
             status: passing ? PASS : failStatus
           }
         })
+      } else if(verification == 'antivirus'){
+        response[verification] = passing.status ? PASS : FAIL
       } else {
         // default item to PASS
         response[verification] = PASS
@@ -62,29 +64,29 @@ export default {
           response[verification] = NUDGE
         }
       }
-
-      // set the global validation status based on the individual policy evaluation results
-      const values = Object.values(response)
-      const deviceResults = new Set(values)
-
-      // need to also add any multiplicable statuses (e.g. applications)
-      values.forEach(val => {
-        if (Array.isArray(val)) {
-          val.forEach(({ status }) => {
-            deviceResults.add(status)
-          })
-        }
-      })
-
-      if (deviceResults.has(FAIL)) {
-        response.status = FAIL
-      } else if (deviceResults.has(NUDGE)) {
-        response.status = NUDGE
-      } else {
-        response.status = PASS
-      }
     }
 
+    // set the global validation status based on the individual policy evaluation results
+    const values = Object.values(response)
+    const deviceResults = new Set(values)
+
+    // need to also add any multiplicable statuses (e.g. applications)
+    values.forEach(val => {
+      if (Array.isArray(val)) {
+        val.forEach(({ status }) => {
+          deviceResults.add(status)
+        })
+      }
+    })
+
+    if (deviceResults.has(FAIL)) {
+      response.status = FAIL
+    } else if (deviceResults.has(NUDGE)) {
+      response.status = NUDGE
+    } else {
+      response.status = PASS
+    }
+    
     return response
   }
 }

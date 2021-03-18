@@ -142,6 +142,8 @@ input DevicePolicy {
   # [WINDOWS ONLY] optional maximum screenlock timeout (in seconds)
   windowsMaxScreenLockTimeout: Int
   openWifiConnections: RequirementOption
+  # Antivirus
+  antivirus: ApplicationGroupRequirement
 }
 
 # Defines a requirement for an installed application
@@ -303,4 +305,26 @@ enum RequirementOption {
 
 extend type Device {
   screenLockDelay: Int
+}
+
+extend type Security {
+  antivirus: Boolean
+}
+
+extend type SecurityInfo {
+  antivirus: ApplicationGroupFeatureState
+}
+
+extend type PolicyResult {
+  antivirus: FeatureState
+}
+
+input ApplicationGroupRequirement {
+  # Potential providers
+  providers: [ApplicationRequirement!]!
+}
+
+type ApplicationGroupFeatureState {
+  status: FeatureState!
+  activeProviders: [ApplicationFeatureState]!
 }

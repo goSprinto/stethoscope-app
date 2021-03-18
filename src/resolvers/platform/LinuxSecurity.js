@@ -2,6 +2,7 @@ import { UNKNOWN } from '../../constants'
 import semver from 'semver'
 import kmd from '../../lib/kmd'
 import sanitizeDebianVersionString from '../../lib/sanitizeDebianVersionString'
+import LinuxDevice from './LinuxDevice'
 
 export default {
   async firewall (root, args, context) {
@@ -89,5 +90,9 @@ export default {
 
       return { name, version: userApp.version }
     })
+  },
+
+  async antivirus (root, args, context) {
+    return await LinuxDevice.antivirus(root, args, context)
   }
 }

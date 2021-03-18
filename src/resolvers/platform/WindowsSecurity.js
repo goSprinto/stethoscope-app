@@ -1,6 +1,7 @@
 import semver from '../../lib/patchedSemver'
 import kmd from '../../lib/kmd'
 import { UNKNOWN, DEFAULT_WIN32_APP_REGISTRY_PATH } from '../../constants'
+import WindowsDevice from './WindowsDevice'
 
 export default {
   async automaticUpdates (root, args, context) {
@@ -97,5 +98,10 @@ export default {
 
       return { name, version: userApp.version }
     })
+  },
+
+  async antivirus (root, args, context) {
+    return await WindowsDevice.antivirus(root, args, context)
   }
+
 }

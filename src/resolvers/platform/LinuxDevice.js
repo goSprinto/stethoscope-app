@@ -1,5 +1,6 @@
 import kmd from '../../lib/kmd'
 import linuxFriendlyName from './LinuxDeviceName'
+import applicationRunningFilter from '../../lib/applicationRunningFilter'
 
 export default {
   async friendlyName (root, args, context) {
@@ -30,4 +31,7 @@ export default {
 
   },
 
+  async antivirus (root, args, context) {
+    return await applicationRunningFilter(args.providers, context)
+  }
 }

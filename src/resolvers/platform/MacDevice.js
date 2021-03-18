@@ -1,5 +1,6 @@
 import kmd from '../../lib/kmd'
 import macFriendlyName from '../../sources/macmodels'
+import applicationRunningFilter from '../../lib/applicationRunningFilter'
 
 const MacDevice = {
   async friendlyName (root, args, context) {
@@ -31,7 +32,12 @@ const MacDevice = {
   async applications (root, args, context) {
     // const result = await kmd('apps', context)
     return []
+  },
+
+  async antivirus (root, args, context) {
+    return await applicationRunningFilter(args.providers, context)
   }
+
 }
 
 export default MacDevice

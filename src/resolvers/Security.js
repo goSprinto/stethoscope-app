@@ -233,5 +233,16 @@ export default {
       return PlatformSecurity.openWifiConnections(root, args, context)
     }
     return UNSUPPORTED
-  }
+  },
+
+  async antivirus (root, policy, context) {
+    if ('antivirus' in PlatformSecurity) {
+      const activeProviders = await PlatformSecurity.antivirus(root, policy.antivirus, context)
+      return {
+        status: activeProviders.length > 0,
+        activeProviders
+      }
+    }
+    return UNSUPPORTED
+  },
 }

@@ -16,5 +16,20 @@ export default {
     const batteryTimeout = parseInt(lock.batteryTimeout, 10)
 
     return Math.min(chargingTimeout, batteryTimeout)
+  },
+
+  async antivirus (root, args, context) {
+    const installedAntivirus = (await kmd('antivirus', context)).antivirusProducts
+    installedAntivirus.filter(({productState}) => {
+      // Convert productState to Hex. The 3rd character
+      // indicates if the antivirus is enable or not.
+      const state = parseInt(productState, 16).toString()
+      return state.substr(2, 1) == '1'
+    }).map(({displayName}) => {
+      return {
+        name: displayName
+      }
+    })
   }
+
 }
