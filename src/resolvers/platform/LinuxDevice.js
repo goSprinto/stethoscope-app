@@ -16,5 +16,18 @@ export default {
     volumes.forEach(vol => { vol.encrypted = vol.type === 'crypto_LUKS' });
 
     return volumes
-  }
+  },
+
+  async screenLockDelay (root, args, context) {
+    const settings = await kmd('screen', context)
+
+    // idle-delay is the time for the session to become
+    // idle.
+    // lock-delay is time since the session becomes idle
+    // and the screensaver comes on.
+    const { lockDelay, idleDelay } = settings.screen
+    return parseInt(idleDelay, 10) + parseInt(lockDelay, 10)
+
+  },
+
 }

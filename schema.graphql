@@ -300,3 +300,7 @@ enum RequirementOption {
   IF_SUPPORTED
   NEVER
 }
+
+extend type Device {
+  screenLockDelay: Int
+}

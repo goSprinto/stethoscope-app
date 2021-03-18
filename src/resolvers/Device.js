@@ -73,7 +73,7 @@ const Device = {
   },
 
   friendlyName (root, args, context) {
-    if ('friendlyName' in Device) {
+    if ('friendlyName' in PlatformDevice) {
       return PlatformDevice.friendlyName(root, args, context)
     }
 
@@ -101,7 +101,7 @@ const Device = {
   },
 
   applications (root, args, context) {
-    if ('applications' in Device) {
+    if ('applications' in PlatformDevice) {
       return PlatformDevice.applications(root, args, context)
     }
 
@@ -135,6 +135,14 @@ const Device = {
 
   stethoscopeVersion (root, args, context) {
     return pkg.version
+  },
+
+  screenLockDelay (root, args, context) {
+    if ('screenLockDelay' in PlatformDevice) {
+      return PlatformDevice.screenLockDelay(root, args, context)
+    }
+
+    return -1
   },
 
   security (root, args, context) {
@@ -217,7 +225,7 @@ const Device = {
   },
 
   disks (root, args, context) {
-    if ('disks' in Device) {
+    if ('disks' in PlatformDevice) {
       return PlatformDevice.disks(root, args, context)
     }
 
