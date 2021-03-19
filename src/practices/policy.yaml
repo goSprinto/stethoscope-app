@@ -13,15 +13,28 @@ osVersion:
     ok: ">=10.0.14393"
     nudge: ">=10.0.10240"
   ubuntu:
-    ok: ">=18.4.0"
-    nudge: ">=18.0.2"
+    ok: ">=18.04.5 || >=20.04"
+    nudge: ">=18.04"
   linux:
-    ok: ">=18.4.0"
-    nudge: ">=18.0.2"
-firewall: ALWAYS
+    ok: ">=18.04.5 || >=20.04"
+    nudge: ">=18.04"
 diskEncryption: ALWAYS
-automaticUpdates: SUGGESTED
 screenLock: IF_SUPPORTED
 screenIdle: "<=120"
-remoteLogin: NEVER
-openWifiConnections: SUGGESTED
+antivirus:
+  providers:
+    # AVG
+    - name: "avgd"
+      assertion: SUGGESTED
+      platform:
+        linux: ">=16.04"
+    # Clam AV
+    - name: "clamscan"
+      assertion: SUGGESTED
+      platform:
+        linux: ">=16.04"
+    # Comodo AV
+    - name: "cmdscan"
+      assertion: SUGGESTED
+      platform:
+        linux: ">=16.04"

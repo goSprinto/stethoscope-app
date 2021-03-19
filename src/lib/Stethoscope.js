@@ -72,22 +72,11 @@ export default class Stethoscope {
         validate(policy: $policy) {
           status
           osVersion
-          firewall
           diskEncryption
           screenLock
           screenIdle
-          automaticUpdates
-          remoteLogin
           stethoscopeVersion
-          openWifiConnections
-
-          applications {
-            name
-            status
-            version
-            installed
-            state
-          }
+          antivirus
         }
       }
 
@@ -102,29 +91,11 @@ export default class Stethoscope {
         friendlyName
         hardwareSerial
         stethoscopeVersion
-
-        disks {
-          label
-          name
-          encrypted
-        }
-
+        screenLockDelay
         security {
-          firewall
-          publicFirewall
-          privateFirewall
-          domainFirewall
-          automaticUpdates
           diskEncryption
           screenLock
           screenIdle
-          remoteLogin
-          automaticAppUpdates
-          automaticSecurityUpdates
-          automaticOsUpdates
-          automaticDownloadUpdates
-          automaticConfigDataInstall
-          automaticCheckEnabled
         }
       }
     }`
