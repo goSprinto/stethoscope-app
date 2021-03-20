@@ -1,20 +1,24 @@
 #!/usr/bin/env kmd
-exec wmic csproduct get uuid, vendor, version
+exec powershell 'Get-CimInstance Win32_ComputerSystemProduct | Select-Object UUID, Vendor, Version | Format-List'
 trim
 save out
 
-extract \n([\w\d-]+)
+extract UUID\s*:\s*([\w\d-]+)
 save system.uuid
 
 load out
-extract \n[\w\d-]+\s+([\w+\s]+)\s+[\d.]+
+extract Vendor\s*:\s*([^\n]+)
 save system.hardwareVendor
 
 load out
-extract \n[\w\d-]+\s+[\w+\s]+\s+([\d.]+)
+extract Version\s*:\s*([^\n]+)
 save system.hardwareVersion
 
 remove out
+
+exec reg query 'HKLM\\SOFTWARE\\MICROSOFT\\CRYPTOGRAPHY'
+extract MachineGuid\s+REG_SZ\s+([\w\d-]+)
+save system.machineGuid
 
 exec powershell 'Get-WmiObject win32_operatingsystem | select SerialNumber | Format-List'
 extract SerialNumber\s+:\s+([\d\-A-Z]+)

@@ -28,7 +28,8 @@ const securityToPassFailStatus = status => {
 const Device = {
   async deviceId (root, args, context) {
     const result = await kmd('hardware', context)
-    return result.system.uuid
+    const { platform = process.platform } = context
+    return platform === 'win32' ? result.system.machineGuid : result.system.uuid
   },
 
   async deviceName (root, args, context) {
