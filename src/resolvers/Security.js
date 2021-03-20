@@ -244,5 +244,5 @@ export default {
       }
     }
     return UNSUPPORTED
-  },
+  }
 }

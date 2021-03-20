@@ -1,14 +1,14 @@
 #/usr/bin/env kmd
-exec powershell 'wmic /Node:localhost /Namespace:\\\\root\\SecurityCenter2 Path AntiVirusProduct Get * /value'
+exec powershell 'Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct'
 trim
 split \n\n
   save line
-  extract displayName=(.*)
+  extract displayName\s*:\s*([^\n]+)
   save name
 
   load line
-  extract productState=(.*)
-  save state
+  extract productState\s*:\s*([^\n]+)
+  save productState
 
   remove line
 noEmpty

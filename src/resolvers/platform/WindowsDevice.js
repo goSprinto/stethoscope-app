@@ -20,16 +20,17 @@ export default {
 
   async antivirus (root, args, context) {
     const installedAntivirus = (await kmd('antivirus', context)).antivirusProducts
-    installedAntivirus.filter(({productState}) => {
+    const activeAntiVirus = installedAntivirus.filter(({productState}) => {
       // Convert productState to Hex. The 3rd character
       // indicates if the antivirus is enable or not.
-      const state = parseInt(productState, 16).toString()
-      return state.substr(2, 1) == '1'
-    }).map(({displayName}) => {
+      const state = parseInt(productState, 10).toString(16)
+      return state.substr(2, 1) === '1'
+    }).map(({name}) => {
       return {
-        name: displayName
+        name
       }
     })
+    return activeAntiVirus
   }
 
 }

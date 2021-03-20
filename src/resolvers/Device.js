@@ -149,7 +149,7 @@ const Device = {
   security (root, args, context) {
     return {
       async antivirus () {
-        const {status, activeProviders} = await Security.antivirus(root, args.policy, context)
+        const { status, activeProviders } = await Security.antivirus(root, args.policy, context)
         return {
           status: securityToDeviceStatus(status),
           activeProviders

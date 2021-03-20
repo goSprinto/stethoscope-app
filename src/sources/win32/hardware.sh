@@ -17,8 +17,11 @@ save system.hardwareVersion
 remove out
 
 exec reg query 'HKLM\\SOFTWARE\\MICROSOFT\\CRYPTOGRAPHY'
+save out
 extract MachineGuid\s+REG_SZ\s+([\w\d-]+)
 save system.machineGuid
+
+remove out
 
 exec powershell 'Get-WmiObject win32_operatingsystem | select SerialNumber | Format-List'
 extract SerialNumber\s+:\s+([\d\-A-Z]+)

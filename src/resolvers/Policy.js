@@ -30,7 +30,7 @@ export default {
             status: passing ? PASS : failStatus
           }
         })
-      } else if(verification == 'antivirus'){
+      } else if (verification === 'antivirus') {
         response[verification] = passing.status ? PASS : FAIL
       } else {
         // default item to PASS
@@ -86,7 +86,7 @@ export default {
     } else {
       response.status = PASS
     }
-    
+
     return response
   }
 }
