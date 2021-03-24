@@ -1,6 +1,8 @@
 import { NUDGE, DEFAULT_DARWIN_APP_PATH } from '../../constants'
 import kmd from '../../lib/kmd'
 import os from 'os'
+import MacDevice from './MacDevice'
+
 
 const MacSecurity = {
   async automaticAppUpdates (root, args, context) {
@@ -78,7 +80,7 @@ const MacSecurity = {
 
   async diskEncryption (root, args, context) {
     const result = await kmd('file-vault', context)
-    return result.fileVaultEnabled === 'true'
+    return result.fileVaultEnabled === 'On'
   },
 
   // TODO when branching logic works in kmd
@@ -104,7 +106,7 @@ const MacSecurity = {
   },
 
   async antivirus (root, args, context) {
-    return await WindowsDevice.antivirus(root, args, context)
+    return await MacDevice.antivirus(root, args, context)
   }
 
 }
