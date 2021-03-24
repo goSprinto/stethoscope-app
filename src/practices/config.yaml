@@ -1,8 +1,12 @@
 allowHosts:
   - "stethoscope://main"
 hostLabels:
-  - pattern: "^http://127.0.0.1:3000"
+  - pattern: "^http://127.0.0.1:5000"
     name: Local Server
+  - pattern: "^http://localhost:5000"
+    name: Local Server
+  - pattern: "^http://(.+\\.)?sprinto\\.com"
+    name: Sprinto
 policyServer:
 testHosts:
   # - url: "http://foo.bar.com"
