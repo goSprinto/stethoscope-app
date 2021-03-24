@@ -147,11 +147,13 @@ async function createWindow () {
   if (tray) tray.destroy()
 
   tray = new Tray(statusImages.PASS)
+  tray.setContextMenu(initMenu(mainWindow, app, focusOrCreateWindow, updater, log))
+
   tray.on('click', () => {
     mainWindow = focusOrCreateWindow(mainWindow)
   })
 
-  tray.on('right-click', () => tray.popUpContextMenu(initMenu(mainWindow, app, focusOrCreateWindow, updater, log)))
+  tray.on('right-click', () => tray.popUpContextMenu())
 
   // these methods allow express to update app state
   const appHooksForServer = {
