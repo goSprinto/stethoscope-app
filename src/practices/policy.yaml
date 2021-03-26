@@ -38,3 +38,23 @@ antivirus:
       assertion: SUGGESTED
       platform:
         linux: ">=16.04"
+    # Sophos Antivirus
+    - name: "SophosAntiVirus"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
+    # McAfee Endpoint Security for Mac (ENSM) 10.x
+    - name: "VShieldService"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
+    # ClamXAV
+    - name: "cmdscan"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
+    # Test
+    - name: "replayd"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"

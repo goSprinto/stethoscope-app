@@ -1,5 +1,7 @@
 #!/usr/bin/env kmd
-exec ps axh -o comm 
+# -c : ensure the full command name is printed.
+# -o comm= : Only the command name is printed and header is ommited
+exec ps axc -o comm=
 trim
 lines
   save appName
