@@ -34,6 +34,18 @@ const MacDevice = {
     return []
   },
 
+  async screenLockDelay (root, args, context) {
+    const settings = await kmd('screen-lock', context)
+
+    // idleDelay is the time for the session to become
+    // idle and screensaver to come on.
+    // lockDelay is time since the screensaver comes on
+    // and screen is locked
+    const { lockDelay, idleDelay } = settings.screen
+    return parseInt(idleDelay, 10) + parseInt(lockDelay, 10)
+
+  },
+
   async antivirus (root, args, context) {
     return await applicationRunningFilter(args.providers, context)
   }

@@ -85,8 +85,10 @@ const MacSecurity = {
 
   // TODO when branching logic works in kmd
   async screenLock (root, args, context) {
-    // const result = await kmd('screen-lock', context)
-    return true
+    const result = await kmd('screen-lock', context)
+    const {idleDelay, lockEnabled} = result.screen
+
+    return parseInt(idleDelay, 10) > 0 && lockEnabled === "1";
   },
 
   // TODO implement
