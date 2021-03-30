@@ -31,7 +31,8 @@ export default {
           }
         })
       } else if (verification === 'antivirus') {
-        response[verification] = passing.status ? PASS : FAIL
+        // Keep Antivirus on nudge for now since it is not needed for everyone
+        response[verification] = passing.status ? PASS : NUDGE
       } else {
         // default item to PASS
         response[verification] = PASS

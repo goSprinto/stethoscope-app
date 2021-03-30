@@ -1,4 +1,4 @@
-organization: Stethoscope
+organization: Sprinto
 version: "1.0"
 policyFormat: "1.0"
 
@@ -191,19 +191,19 @@ practices:
   screenIdle:
     title:  >
       {{#if passing}}
-        Screen will lock when system is idle for too long.
+        Screen will lock when system is idle for 15 minutes or more.
       {{else}}
-        Screen should lock when system is idle for too long.
+        Screen should lock when system is idle for 15 minutes or more.
       {{/if}}
     description: >
-      Screens which lock automatically when your laptop is unattended prevent unauthorized access from third-parties by requiring a password to dismiss the screen saver or wake from "sleep" mode. Your timeout setting should be equal to or less than the suggested setting below.
+      Screens which lock automatically when your laptop is unattended prevent unauthorized access from third-parties by requiring a password to dismiss the screen saver or wake from "sleep" mode. Your timeout setting should be 15 minutes or less.
     directions:
       darwin: |
         1. Choose [System Preferences](x-apple.systempreferences:com.apple.systempreferences) from the Apple menu.
         1. Click Desktop & Screen Saver.
         1. Click the [Screen Saver](open:///System/Library/PreferencePanes/DesktopScreenEffectsPref.prefPane/) tab.
-        1. Adjust the "Start after" dropdown to less than or equal to the number of seconds shown below.
-        {{securitySetting "screenIdle"}}
+        1. Adjust the "Start after" dropdown to 15 minutes or less.
+        1. Also make sure that on [General](x-apple.systempreferences:com.apple.preference.security?General) tab, the pull down menu is set to "immediately".
       linux: |
         1. From the upper-right drop-down menu, click the Settings icon.
         1. In the left-hand pane, select Privacy.
@@ -260,10 +260,13 @@ practices:
         Antivirus is not running.
       {{/if}}
     description: >
-      Antivirus software protects you from viruses, malware and spyware.
+      Antivirus software protects you from viruses, malware and spyware. If you have access to any of the company production servers, you need to have an antivirus software installed and running on your system.
     directions:
       darwin: |
         Install one of the following:
+        1. [Sophos Antivirus](https://home.sophos.com/en-us/download-mac-anti-virus.aspx)
+        1. [McAfee Endpoint Security for Mac](https://www.mcafee.com/enterprise/en-in/products/endpoint-security.html)
+        1. [ClamXAV](https://www.clamxav.com/)
 
       win32: |
         [Enable Windows Defender using these steps](https://support.microsoft.com/en-us/windows/stay-protected-with-windows-security-2ae0363d-0ada-c064-8b56-6a39afb6a963)
@@ -273,7 +276,6 @@ practices:
         1. [Comodo Antivirus](https://antivirus.comodo.com/)
         1. [Clam Antivirus](https://www.clamav.net/)
         1. [AVG Antivirus](https://www.avg.com/en-us/free-antivirus-download)
-
 
   openWifiConnections:
     title: >
