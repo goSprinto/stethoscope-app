@@ -4,9 +4,13 @@ import applicationRunningFilter from '../../lib/applicationRunningFilter'
 
 const MacDevice = {
   async friendlyName (root, args, context) {
-    const result = await kmd('hardware', context)
-    const hardwareModel = result.system.hardwareVersion
-    return macFriendlyName(hardwareModel)
+    // The friendlyName implementation is inaccurate.
+    // Better to stick with Model Name reported by
+    // the system.
+    //const hardwareModel = result.system.hardwareVersion
+    //return macFriendlyName(hardwareModel)
+
+    return result.system.modelName + ' (' + result.system.hardwareVersion + ')'
   },
 
   async disks (root, args, context) {
@@ -36,14 +40,21 @@ const MacDevice = {
 
   async screenLockDelay (root, args, context) {
     const settings = await kmd('screen-lock', context)
-
     // idleDelay is the time for the session to become
     // idle and screensaver to come on.
     // lockDelay is time since the screensaver comes on
     // and screen is locked
     const { lockDelay, idleDelay } = settings.screen
-    return parseInt(idleDelay, 10) + parseInt(lockDelay, 10)
 
+    // idleDelay = 0 -> Set to never in settings
+    // idleDelay = -1 -> We were not able to extract since
+    // likely it was never manually set by the user. Default
+    // is set to 1200 seconds which is high.
+    if (lockDelay > 0 && idleDelay > 0) {
+        return parseInt(idleDelay, 10) + parseInt(lockDelay, 10)
+    }
+
+    return -1;
   },
 
   async antivirus (root, args, context) {
