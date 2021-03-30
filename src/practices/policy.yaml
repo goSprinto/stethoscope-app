@@ -53,8 +53,3 @@ antivirus:
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"
-    # Test
-    - name: "replayd"
-      assertion: SUGGESTED
-      platform:
-        darwin: ">=10.13"

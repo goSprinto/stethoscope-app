@@ -4,6 +4,8 @@ import applicationRunningFilter from '../../lib/applicationRunningFilter'
 
 const MacDevice = {
   async friendlyName (root, args, context) {
+    const result = await kmd('hardware', context)
+
     // The friendlyName implementation is inaccurate.
     // Better to stick with Model Name reported by
     // the system.
