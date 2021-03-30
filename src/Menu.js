@@ -72,7 +72,7 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
         shell.openExternal(link)
       }
     })).concat({
-      label: `Stethoscope version ${pkg.version}`,
+      label: `${app.name} version ${pkg.version}`,
       enabled: false
     }, {
       label: 'Copy Debug Info',
@@ -99,7 +99,7 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
   const applicationMenu = Menu.buildFromTemplate([{
     label: app.name,
     submenu: [{
-      label: `Stethoscope version ${pkg.version}`,
+      label: `${app.name} version ${pkg.version}`,
       enabled: false
     },
     {
