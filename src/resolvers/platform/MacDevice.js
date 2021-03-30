@@ -4,9 +4,13 @@ import applicationRunningFilter from '../../lib/applicationRunningFilter'
 
 const MacDevice = {
   async friendlyName (root, args, context) {
-    const result = await kmd('hardware', context)
-    const hardwareModel = result.system.hardwareVersion
-    return macFriendlyName(hardwareModel)
+    // The friendlyName implementation is inaccurate.
+    // Better to stick with Model Name reported by
+    // the system.
+    //const hardwareModel = result.system.hardwareVersion
+    //return macFriendlyName(hardwareModel)
+
+    return result.system.modelName + ' (' + result.system.hardwareVersion + ')'
   },
 
   async disks (root, args, context) {

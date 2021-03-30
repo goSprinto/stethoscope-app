@@ -7,6 +7,10 @@ extract Model Identifier: ([\w,]+)
 save system.hardwareVersion
 
 load line
+extract Model Name: ([^\n]+)
+save system.modelName
+
+load line
 extract Boot ROM Version: ([\d\.]+)
 save system.firmwareVersion
 
