@@ -208,9 +208,7 @@ class App extends Component {
   loadPractices = () => {
     return new Promise((resolve, reject) =>
       this.setState({ loading: true }, () => {
-        const process = remote.process
-        const dev = process.env.STETHOSCOPE_ENV === 'development'
-        const basePath = `${dev ? '.' : process.resourcesPath}/src/practices`
+        const basePath = ipcRenderer.sendSync('get:env:basePath')
 
         glob(`${basePath}/*.yaml`, (err, files) => {
           if (err || !files.length) {
