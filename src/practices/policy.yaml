@@ -1,9 +1,9 @@
 osVersion:
   darwin:
     # Big Sur
-    ok: ">=11.0"
+    ok: ">=11.2 || >=10.15.7"
     # Catalina
-    nudge: ">=10.15.7"
+    nudge: ">=11.0 || >=10.14"
   win32:
     # Version 20H2
     ok: ">=10.0.19042"
@@ -20,7 +20,7 @@ osVersion:
     nudge: ">=18.04"
 diskEncryption: ALWAYS
 screenLock: IF_SUPPORTED
-screenIdle: "<=120"
+screenIdle: "<=900"
 antivirus:
   providers:
     # AVG

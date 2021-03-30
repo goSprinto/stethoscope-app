@@ -61,7 +61,7 @@
     "cors": "^2.8.4",
     "cross-env": "^5.2.0",
     "electron-notarize": "^0.2.1",
-    "electron-settings": "^3.2.x",
+    "electron-settings": "4.0.2",
     "electron-updater": "4.0.6",
     "express": "^4.16.2",
     "extend": "^3.0.2",
@@ -101,8 +101,8 @@
     "benchmark": "^2.1.4",
     "chai": "^4.1.2",
     "chai-http": "^4.0.0",
-    "electron": "^7.1.0",
-    "electron-builder": "21.2.0",
+    "electron": "9.4.4",
+    "electron-builder": "22.9.1",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
     "eslint-plugin-standard": "^4.0.0",
@@ -153,7 +153,8 @@
       "entitlements": "entitlements.mac.plist",
       "entitlementsInherit": "entitlements.mac.plist",
       "extraResources": [
-        "src/practices"
+        "src/practices",
+        "mac-screenlock-check/screenlock-check"
       ]
     },
     "win": {
