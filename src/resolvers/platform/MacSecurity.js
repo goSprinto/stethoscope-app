@@ -3,7 +3,6 @@ import kmd from '../../lib/kmd'
 import os from 'os'
 import MacDevice from './MacDevice'
 
-
 const MacSecurity = {
   async automaticAppUpdates (root, args, context) {
     const result = await kmd('com.apple.commerce', context)
@@ -86,15 +85,19 @@ const MacSecurity = {
   // TODO when branching logic works in kmd
   async screenLock (root, args, context) {
     const result = await kmd('screen-lock', context)
-    const {idleDelay, lockEnabled} = result.screen
 
+    const {idleDelay, lockEnabled} = result.screen
     return parseInt(idleDelay, 10) > 0 && lockEnabled === "1";
   },
 
-  // TODO implement
   async screenIdle (root, args, context) {
-    // const result = await kmd('screen-idle', context)
-    return true
+
+    const { screenIdle } = args
+    const totalDelay = MacDevice.screenLockDelay(root, args, context);
+    const delayOk = totalDelay > 0 && semver.satisfies(semver.coerce(totalDelay), screenIdle);
+    const idleOk = this.screenLock(root, args, context);
+
+    return delayOk && idleOk
   },
 
   async firewall (root, args, context) {
