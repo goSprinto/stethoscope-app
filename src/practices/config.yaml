@@ -1,5 +1,5 @@
 allowHosts:
-  - "stethoscope://main"
+  - "drsprinto://main"
 hostLabels:
   - pattern: "^http://127.0.0.1:5000"
     name: Local Server

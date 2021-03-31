@@ -152,8 +152,8 @@ export default async function startServer (env, log, language = 'en-US', appActi
     // allow GET/POST requests and determine what property to use
     const key = req.method === 'POST' ? 'body' : 'query'
     const origin = req.get('origin')
-    const isRemote = origin !== 'stethoscope://main'
-    let remoteLabel = 'Stethoscope'
+    const isRemote = origin !== 'drsprinto://main'
+    let remoteLabel = 'DrSprinto'
 
     // Try to find the host label to display in app ("Last scanned by X")
     if (isRemote) {

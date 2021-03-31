@@ -304,7 +304,7 @@ if (!gotTheLock) {
     // override internal request origin to give express CORS policy something to check
     session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
       const { requestHeaders } = details
-      const base = 'stethoscope://main'
+      const base = 'drsprinto://main'
       Object.assign(requestHeaders, {
         Origin: base,
         Referrer: base
