@@ -3,11 +3,7 @@
     "help": [
       {
         "label": "Email Support",
-        "link": "mailto:support@your-company.com"
-      },
-      {
-        "label": "Slack Support",
-        "link": "slack://channel?id=YOUR_CHANNEL_ID&team=YOUR_TEAM_ID"
+        "link": "mailto:support@sprinto.com"
       }
     ]
   },

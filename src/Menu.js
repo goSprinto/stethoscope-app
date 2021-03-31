@@ -31,38 +31,38 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
         }
       ]
     },
-    {
-      id: 'autolaunch',
-      label: 'Launch on Startup',
-      submenu: [
-        {
-          id: 'autolaunchOn',
-          label: 'On',
-          type: 'checkbox',
-          checked: isAutoLauncherEnabled,
-          click (event) {
-            toggleAutoLaunchMenus(true)
-            autoLauncher.enable()
-          }
-        },
-        {
-          id: 'autolaunchOff',
-          label: 'Off',
-          type: 'checkbox',
-          checked: !isAutoLauncherEnabled,
-          click (event) {
-            toggleAutoLaunchMenus(false)
-            autoLauncher.disable()
-          }
-        }
-      ]
-    },
-    {
-      label: 'Check for Update',
-      click (event) {
-        checkForUpdates(this, mainWindow, event)
-      }
-    },
+    // {
+    //   id: 'autolaunch',
+    //   label: 'Launch on Startup',
+    //   submenu: [
+    //     {
+    //       id: 'autolaunchOn',
+    //       label: 'On',
+    //       type: 'checkbox',
+    //       checked: isAutoLauncherEnabled,
+    //       click (event) {
+    //         toggleAutoLaunchMenus(true)
+    //         autoLauncher.enable()
+    //       }
+    //     },
+    //     {
+    //       id: 'autolaunchOff',
+    //       label: 'Off',
+    //       type: 'checkbox',
+    //       checked: !isAutoLauncherEnabled,
+    //       click (event) {
+    //         toggleAutoLaunchMenus(false)
+    //         autoLauncher.disable()
+    //       }
+    //     }
+    //   ]
+    // },
+    // {
+    //   label: 'Check for Update',
+    //   click (event) {
+    //     checkForUpdates(this, mainWindow, event)
+    //   }
+    // },
     { role: 'separator', enabled: false }
   ].concat({
     label: 'Help',
@@ -102,12 +102,12 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
       label: `${app.name} version ${pkg.version}`,
       enabled: false
     },
-    {
-      label: 'Check for Update',
-      click (event) {
-        checkForUpdates(this, mainWindow, event)
-      }
-    },
+    // {
+    //   label: 'Check for Update',
+    //   click (event) {
+    //     checkForUpdates(this, mainWindow, event)
+    //   }
+    // },
     { role: 'copy', accelerator: 'CmdOrCtrl+C' },
     { role: 'quit', accelerator: 'CmdOrCtrl+Q' }
     ]
