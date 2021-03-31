@@ -1,6 +1,6 @@
 {
   "name": "DrSprinto",
-  "version": "5.0.3",
+  "version": "1.0.0",
   "private": true,
   "homepage": ".",
   "author": "Sprinto",
@@ -86,7 +86,8 @@
     "showdown": "^1.8.6",
     "socket.io": "^2.4.0",
     "winston": "3.1.0",
-    "winston-daily-rotate-file": "^3.3.0"
+    "winston-daily-rotate-file": "^3.3.0",
+    "yarn": "^1.22.10"
   },
   "devDependencies": {
     "@babel/cli": "7.4.4",
@@ -200,6 +201,12 @@
         ]
       }
     ],
-    "afterSign": "scripts/maybeNotarize.js"
+    "afterSign": "scripts/maybeNotarize.js",
+    "publish": [
+      {
+        "provider": "generic",
+        "url": ""
+      }
+    ]
   }
 }
