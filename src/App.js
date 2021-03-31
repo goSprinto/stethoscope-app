@@ -27,6 +27,7 @@ const { shell, remote, ipcRenderer } = window.require('electron')
 const settings = window.require('electron-settings')
 const log = remote.getGlobal('log')
 const platform = os.platform()
+const {app} = remote
 
 class App extends Component {
   state = {
@@ -40,7 +41,7 @@ class App extends Component {
     // determines loading screen wording
     remoteScan: false,
     // surface which app performed the most recent scan
-    scannedBy: 'Stethoscope',
+    scannedBy: `${app.name}`,
     lastScanTime: Date.now(),
     // whether app currently has focus
     focused: true,
@@ -133,7 +134,7 @@ class App extends Component {
     this.setState({
       loading: true,
       remoteScan: remote,
-      scannedBy: remote ? remoteLabel : 'Stethoscope'
+      scannedBy: remote ? remoteLabel : `${app.name}`
     })
   }
 
@@ -141,7 +142,7 @@ class App extends Component {
     const { noResults = false } = payload
     // device only scan with no policy completed
     if (noResults) {
-      return this.setState({ loading: false, scannedBy: 'Stethoscope' })
+      return this.setState({ loading: false, scannedBy: `${app.name}` })
     }
 
     const {
@@ -170,7 +171,7 @@ class App extends Component {
     }
 
     const { data: { policy = {} } } = Object(result)
-    const scannedBy = remote ? remoteLabel : 'Stethoscope'
+    const scannedBy = remote ? remoteLabel : `${app.name}`
 
     const newState = {
       result: policy.validate,
@@ -262,7 +263,7 @@ class App extends Component {
           lastScanTime,
           lastScanDuration: timing.total / 1000,
           scanIsRunning: false,
-          scannedBy: 'Stethoscope',
+          scannedBy: `${app.name}`,
           loading: false
         }, () => {
           ipcRenderer.send('app:loaded')
