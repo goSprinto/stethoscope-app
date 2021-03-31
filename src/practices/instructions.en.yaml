@@ -171,6 +171,7 @@ practices:
         1. Select the [General](x-apple.systempreferences:com.apple.preference.security?General) tab.
         1. Unlock the pane by clicking the lock in the lower-left corner and enter the administrator username and password.
         1. Check the "Require password" box and set the pull down menu to to "immediately" after sleep or screen saver begins.
+        1. Make sure the [Screen Saver is enabled](open:///System/Library/PreferencePanes/DesktopScreenEffectsPref.prefPane/) as well.
       win32: |
         Standard settings:
         1. Open [Lock screen settings](ms-settings:lockscreen).
