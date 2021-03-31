@@ -1,13 +1,13 @@
 {
-  "name": "Stethoscope",
+  "name": "DrSprinto",
   "version": "5.0.3",
   "private": true,
-  "homepage": "./",
-  "author": "Netflix",
-  "description": "Local Stethoscope app",
+  "homepage": ".",
+  "author": "Sprinto",
+  "description": "Sprinto Agent helps make your machine compatible with your organisation's security policies.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Netflix-Skunkworks/stethoscope-app.git"
+    "url": "https://github.com/abhaga/stethoscope-app.git"
   },
   "main": "compiled/start.js",
   "standard": {
@@ -26,7 +26,7 @@
   },
   "scripts": {
     "start": "yarn babel && cross-env FORCE_COLOR=true nf start -p 12000",
-    "dev:electron": "cross-env STETHOSCOPE_ENV=development electron -r @babel/register .",
+    "dev:electron": "cross-env STETHOSCOPE_ENV=development electron -r @babel/register . --enable-logging",
     "dev:electron-start": "node src/start-react",
     "dev:react-start": "react-scripts start",
     "prebuild": "run-s lint build:clean build:update-config build:react babel",
@@ -129,9 +129,9 @@
     "not op_mini all"
   ],
   "build": {
-    "appId": "com.netflix.stethoscope-local",
+    "appId": "com.sprinto.drsprinto",
     "extends": null,
-    "productName": "Stethoscope",
+    "productName": "DrSprinto",
     "directories": {
       "buildResources": "public"
     },
@@ -147,6 +147,7 @@
       "schema.graphql"
     ],
     "mac": {
+      "icon": "build/drsprinto-icons/icon.icns",
       "category": "public.app-category.utilities",
       "gatekeeperAssess": false,
       "hardenedRuntime": true,
@@ -159,6 +160,7 @@
     },
     "win": {
       "target": "nsis",
+      "icon": "build/drsprinto-icons/icon.png",
       "extraResources": [
         "src/practices",
         "bitlocker-status/bitlocker-status.exe",
@@ -178,7 +180,12 @@
       "format": "UDBZ"
     },
     "linux": {
-      "target": "AppImage",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "maintainer": "Sprinto",
+      "icon": "build/drsprinto-icons",
       "category": "System",
       "extraResources": [
         "src/practices"
@@ -186,10 +193,10 @@
     },
     "protocols": [
       {
-        "name": "stethoscope",
+        "name": "DrSprinto",
         "role": "Viewer",
         "schemes": [
-          "stethoscope"
+          "drsprinto"
         ]
       }
     ],
