@@ -20,7 +20,7 @@ export default class ErrorMessage extends Component {
       <div className='error'>
         <h1>Oh no!</h1>
         <p>Something went wrong. Here's what we know:</p>
-        <pre>Stethoscope version: {this.props.version}</pre>
+        <pre>DrSprinto version: {this.props.version}</pre>
         <pre>{this.props.message + ''}</pre>
         {this.props.showStack ? <pre>{this.props.stack}</pre> : null}
         <button onClick={this.handleCopy}>Copy Error to Clipboard</button>
@@ -28,9 +28,6 @@ export default class ErrorMessage extends Component {
         <div id='helpBubble'>
           <strong>Need some help?</strong>
           {this.props.children}
-        </div>
-        <div id='giraffe'>
-          <img alt='Stethoscope Giraffe' src='./favicon.png' />
         </div>
       </div>
     )

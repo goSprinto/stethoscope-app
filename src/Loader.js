@@ -54,7 +54,7 @@ export default class Loader extends React.Component {
               </div>
             ) : (
               <div>
-              Sometimes restarting Stethoscope can resolve slow loading issues.<br />
+              Sometimes restarting DrSprinto can resolve slow loading issues.<br />
                 <button onClick={onRestart}>Restart Application</button>
               </div>
             )}
