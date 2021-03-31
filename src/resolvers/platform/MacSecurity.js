@@ -1,6 +1,7 @@
 import { NUDGE, DEFAULT_DARWIN_APP_PATH } from '../../constants'
 import kmd from '../../lib/kmd'
 import os from 'os'
+import semver from 'semver'
 import MacDevice from './MacDevice'
 
 const MacSecurity = {
@@ -93,10 +94,9 @@ const MacSecurity = {
   async screenIdle (root, args, context) {
 
     const { screenIdle } = args
-    const totalDelay = MacDevice.screenLockDelay(root, args, context);
-    const delayOk = totalDelay > 0 && semver.satisfies(semver.coerce(totalDelay), screenIdle);
-    const idleOk = this.screenLock(root, args, context);
-
+    const totalDelay = await MacDevice.screenLockDelay(root, args, context);
+    const delayOk = totalDelay > 0 && semver.satisfies(semver.coerce(totalDelay.toString()), screenIdle);
+    const idleOk = await this.screenLock(root, args, context);
     return delayOk && idleOk
   },
 
