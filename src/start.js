@@ -48,9 +48,9 @@ let isLaunching = true
 let isFirstLaunch = false
 // icons that are displayed in the Menu bar
 const statusImages = {
-  PASS: nativeImage.createFromPath(findIcon('scope-icon-ok2@2x.png')),
-  NUDGE: nativeImage.createFromPath(findIcon('scope-icon-nudge2@2x.png')),
-  FAIL: nativeImage.createFromPath(findIcon('scope-icon-warn2@2x.png'))
+  PASS: nativeImage.createFromPath(findIcon('drsprinto-icons/drsprinto-icon-ok@2x.png')),
+  NUDGE: nativeImage.createFromPath(findIcon('drsprinto-icons/drsprinto-icon-nudge@2x.png')),
+  FAIL: nativeImage.createFromPath(findIcon('drsprinto-icons/drsprinto-icon-warn@2x.png'))
 }
 
 const windowPrefs = {
