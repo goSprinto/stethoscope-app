@@ -388,4 +388,8 @@ ipcMain.on('get:env:basePath', (event, arg) => {
   event.returnValue = basePath
 })
 
+ipcMain.on('get:app:name', (event, arg) => {
+  event.returnValue = app.name
+})
+
 export {}
