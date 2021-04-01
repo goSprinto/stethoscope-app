@@ -1,6 +1,6 @@
 /* global fetch */
 import { HOST, PASS, FAIL } from '../constants'
-const { remote } = window.require('electron')
+const remote = window.require('@electron/remote')
 const log = remote.getGlobal('log')
 
 const handleValidate = (result, partitions, device, practices, platform) => {

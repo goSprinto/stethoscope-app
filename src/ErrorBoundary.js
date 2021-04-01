@@ -2,10 +2,9 @@ import React from 'react'
 import serializeError from 'serialize-error'
 
 let log = console
-let remote
 
 try {
-  remote = window.require('electron').remote
+  const remote = window.require('@electron/remote')
   log = remote.getGlobal('log')
 } catch (e) {
   // browser context

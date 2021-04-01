@@ -31,6 +31,8 @@ import { IS_MAC, IS_WIN } from './lib/platform'
 import AutoLauncher from './AutoLauncher'
 import updateInit from './updater'
 
+require('@electron/remote/main').initialize()
+
 const env = process.env.STETHOSCOPE_ENV || 'production'
 const findIcon = iconFinder(env)
 const IS_DEV = env === 'development'
@@ -64,7 +66,8 @@ const windowPrefs = {
     nodeIntegration: true,
     webSecurity: false,
     contextIsolation: false,
-    sandbox: false
+    sandbox: false,
+    enableRemoteModule: true
   }
 }
 
