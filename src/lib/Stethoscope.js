@@ -75,7 +75,6 @@ export default class Stethoscope {
           diskEncryption
           screenLock
           screenIdle
-          stethoscopeVersion
           antivirus
         }
       }
