@@ -25,7 +25,7 @@ const Schema = readFileSync(path.join(__dirname, '../schema.graphql'), 'utf8')
 const IS_DEV = process.env.STETHOSCOPE_ENV === 'development'
 const app = express()
 const server = new Server(app)
-const io = socketio(server, { wsEngine: 'ws' })
+const io = socketio(server, { wsEngine: require('ws').Server })
 
 function matchHost (origin) {
   return label => {
@@ -62,8 +62,8 @@ export default async function startServer (env, log, language = 'en-US', appActi
 
   app.use(helmet())
   app.use(noCache())
-  app.use(bodyParser.urlencoded({ extended: true }))
-  app.use(bodyParser.json())
+  app.use(express.urlencoded())
+  app.use(express.json())
 
   const schema = makeExecutableSchema({
     resolvers: Resolvers,
