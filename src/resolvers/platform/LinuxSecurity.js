@@ -50,7 +50,7 @@ export default {
     // lock-delay is time since the session becomes idle
     // and the screensaver comes on.
     const totalDelay = parseInt(idleDelay, 10) + parseInt(lockDelay, 10)
-    const delayOk = semver.satisfies(semver.coerce(totalDelay), screenIdle)
+    const delayOk = semver.satisfies(semver.coerce(totalDelay.toString()), screenIdle)
 
     const idleOk = this.screenLock(root, args, context)
 

@@ -12,7 +12,7 @@ const toggleAutoLaunchMenus = (autoLaunchOn) => {
 
 export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
   const { checkForUpdates } = updater
-  const autoLauncher = new AutoLauncher()
+  const autoLauncher = new AutoLauncher(`${app.name}`)
   const isAutoLauncherEnabled = autoLauncher.isEnabled()
 
   const contextMenu = [
