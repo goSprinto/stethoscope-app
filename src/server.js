@@ -57,7 +57,7 @@ export default async function startServer (env, log, language = 'en-US', appActi
   const checks = await precompile()
   const find = filePath => path.join(__dirname, filePath)
   const settingsHandle = readFileSync(find('./practices/config.yaml'), 'utf8')
-  const defaultConfig = yaml.safeLoad(settingsHandle)
+  const defaultConfig = yaml.load(settingsHandle)
 
   app.use(helmet())
   app.use(noCache())
@@ -245,12 +245,12 @@ export default async function startServer (env, log, language = 'en-US', appActi
       (req, res) => {
         const filePath = getFilePath(filename)
         try {
-          const response = yaml.safeLoad(readFileSync(filePath, 'utf8'))
+          const response = yaml.load(readFileSync(filePath, 'utf8'))
           res.json(transform(response))
         } catch (e) {
           log.error(`Failed to load and transform ${filePath}`)
           if (fallback && typeof fallback === 'string') {
-            const response = yaml.safeLoad(readFileSync(getFilePath(fallback), 'utf8'))
+            const response = yaml.load(readFileSync(getFilePath(fallback), 'utf8'))
             res.json(transform(response))
           }
         }

@@ -10,10 +10,10 @@ const exec = util.promisify(require('child_process').exec)
 const pkg = require('../../package.json')
 
 const configHandle = fs.readFileSync(path.resolve(__dirname, '../practices/config.yaml'), 'utf8')
-const config = yaml.safeLoad(configHandle)
+const config = yaml.load(configHandle)
 
 const policyHandle = fs.readFileSync(path.resolve(__dirname, '../practices/policy.yaml'), 'utf8')
-const policy = yaml.safeLoad(policyHandle)
+const policy = yaml.load(policyHandle)
 
 policy.stethoscopeVersion = `>=${pkg.version}`
 

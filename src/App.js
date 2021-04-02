@@ -221,7 +221,7 @@ class App extends Component {
           files.forEach(filePath => {
             const parts = path.parse(filePath)
             const handle = readFileSync(filePath, 'utf8')
-            configs[parts.name.split('.').shift()] = yaml.safeLoad(handle)
+            configs[parts.name.split('.').shift()] = yaml.load(handle)
           })
 
           this.setState({ ...configs, loading: false }, () => {
