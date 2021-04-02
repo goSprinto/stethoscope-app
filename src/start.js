@@ -123,10 +123,10 @@ async function createWindow () {
   updater = updateInit(env, mainWindow, log, server, focusOrCreateWindow)
 
   if (isLaunching) {
-    // updater.checkForUpdates({}, {}, {}, true)
+    updater.checkForUpdates({}, {}, {}, true)
     // check for updates in background
     const EVERY_DAY = 86400 * 1000
-    // setInterval(() => updater.checkForUpdates({}, {}, {}, true), EVERY_DAY)
+    setInterval(() => updater.checkForUpdates({}, {}, {}, true), EVERY_DAY)
     isLaunching = false
   }
 

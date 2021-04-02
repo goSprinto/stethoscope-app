@@ -1,4 +1,4 @@
-import { dialog } from 'electron'
+import { dialog, app } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import config from './config'
 
@@ -37,8 +37,8 @@ export default function updater (env, mainWindow, log = console, server, focusOr
       if (!forceUpdate) {
         dialog.showMessageBox({
           type: 'info',
-          title: 'Stethoscope Update Available',
-          message: 'A new version of Stethoscope is available, would you like to download and update now?',
+          title: `${app.name} Update Available`,
+          message: `A new version of ${app.name} is available, would you like to download and update now?`,
           buttons: ['Yes', 'No'],
           defaultId: 0
         }).then(({ response }) => {
@@ -49,8 +49,8 @@ export default function updater (env, mainWindow, log = console, server, focusOr
             } else {
               attemptingUpdate = false
               dialog.showMessageBox({
-                title: 'Downloading Stethoscope',
-                message: 'App cannot be updated in dev mode'
+                title: `Downloading ${app.name}`,
+                message: `App cannot be updated in dev mode`
               })
             }
           }
@@ -65,8 +65,8 @@ export default function updater (env, mainWindow, log = console, server, focusOr
       if (isFirstLaunch) return
 
       dialog.showMessageBox({
-        title: 'No Stethoscope Updates',
-        message: 'You already have the latest version of Stethoscope.'
+        title: `No ${app.name} Updates`,
+        message: `You already have the latest version of ${app.name}.`
       })
 
       attemptingUpdate = false
@@ -74,8 +74,8 @@ export default function updater (env, mainWindow, log = console, server, focusOr
     'update-downloaded': () => {
       if (!forceUpdate) {
         dialog.showMessageBox({
-          title: 'Install Stethoscope Updates',
-          message: 'Updates downloaded, Stethoscope will quit and relaunch.'
+          title: `Install ${app.name} Updates`,
+          message: `Updates downloaded, ${app.name} will quit and relaunch.`
         }).then(() => {
           if (!isDev) {
             if (server && server.listening) {

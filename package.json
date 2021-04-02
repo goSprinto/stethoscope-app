@@ -206,7 +206,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": ""
+        "url": "https://drsprinto.s3.amazonaws.com/"
       }
     ]
   }

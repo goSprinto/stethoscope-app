@@ -57,12 +57,12 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
     //     }
     //   ]
     // },
-    // {
-    //   label: 'Check for Update',
-    //   click (event) {
-    //     checkForUpdates(this, mainWindow, event)
-    //   }
-    // },
+    {
+      label: 'Check for Update',
+      click (event) {
+        checkForUpdates(this, mainWindow, event)
+      }
+    },
     { role: 'separator', enabled: false }
   ].concat({
     label: 'Help',
