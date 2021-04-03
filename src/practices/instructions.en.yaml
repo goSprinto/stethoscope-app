@@ -45,19 +45,19 @@ practices:
   stethoscopeVersion:
     title: >
       {{#if passing}}
-        Stethoscope is up-to-date
+        {{appName}} is up-to-date
       {{else}}
-        Stethoscope needs to be updated
+        {{appName}} needs to be updated
       {{/if}}
     description: >
-      Keeping the Stethoscope app up-to-date gives you access to the latest features, security patches, and performance improvements.
+      Keeping the app up-to-date gives you access to the latest features, security patches, and performance improvements.
     directions:
       darwin: |
-        <a href='stethoscope://update' class="btn">Update Stethoscope</a>
+        <a href='{{appName}}://update' class="btn">Update {{appName}}</a>
       win32: |
-        <a href='stethoscope://update' class="btn">Update Stethoscope</a>.
+        <a href='{{appName}}://update' class="btn">Update {{appName}}</a>.
       linux: |
-        <a href='stethoscope://update' class="btn">Update Stethoscope</a>.
+        <a href='{{appName}}://update' class="btn">Update {{appName}}</a>.
 
   remoteLogin:
     title: >

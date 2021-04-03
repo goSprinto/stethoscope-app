@@ -7,6 +7,9 @@ import getRecommendedVersion from './lib/getRecommendedVersion'
 import showdown from 'showdown'
 import Handlebars from 'handlebars/dist/handlebars.min.js'
 
+const { ipcRenderer } = window.require('electron')
+const appName = ipcRenderer.sendSync('get:app:name')
+
 const converter = new showdown.Converter()
 
 class Action extends Component {
@@ -132,14 +135,14 @@ class Action extends Component {
     const passing = status === 'PASS'
     const template = Handlebars.compile(html)
     const platformOverrides = this.getPlatformAndVersionSpecificFlags(device)
-    return template({ ...security, ...device, ...platformOverrides, passing })
+    return template({ ...security, ...device, ...platformOverrides, passing, appName })
   }
 
   parseTitle () {
     const { action: { status, title } } = this.props
     const template = Handlebars.compile(title)
     const passing = status === 'PASS'
-    return template({ passing })
+    return template({ passing, appName })
   }
 
   render () {

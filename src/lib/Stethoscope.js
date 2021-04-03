@@ -76,6 +76,7 @@ export default class Stethoscope {
           screenLock
           screenIdle
           antivirus
+          stethoscopeVersion
         }
       }
 
