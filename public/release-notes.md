@@ -1,10 +1,8 @@
 Fixed:
-- upstream auto update issue ([electron issue](https://github.com/electron-userland/electron-builder/issues/3269))
-- DeviceID resolution for Windows and Linux
+- Upgrade to electron@12
+- Upgrade all other dependencies
+- Screenlock check for linux now takes in account the idle-time
 
 Added:
-- Thrift connection pooling
-- Support for AWS workstations
-- Scan duration to UI
-- Automated testing for builds
-- Cross-platform support for applications schema
+- Screenlock and ScreenIdle checks implemented for MacOS > 10.13
+- New Antivirus check for all platforms
