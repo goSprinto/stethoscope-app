@@ -85,7 +85,7 @@ practices:
       {{#if passing}}
         Disk Encryption is enabled
       {{else}}
-        Disk Encryption should be enabled
+        Disk Encryption should be enabled [Required]
       {{/if}}
     description: >
       Full-disk encryption protects data at rest from being accessed by a party who does not know the password or decryption key. Systems containing internal data should be encrypted. It is every employee's responsibility to keep internal data safe.
@@ -160,7 +160,7 @@ practices:
       {{#if passing}}
         Screen Lock is enabled
       {{else}}
-        Screen Lock should be enabled
+        Screen Lock should be enabled [Required]
       {{/if}}
     description: >
       Screen locks, or screen saver locks, prevent unauthorized third-parties from accessing your laptop when unattended by requiring a password to dismiss the screen saver or wake from "sleep" mode.
@@ -192,9 +192,9 @@ practices:
   screenIdle:
     title:  >
       {{#if passing}}
-        Screen will lock when system is idle for 15 minutes or more.
+        Screen will lock if the system is idle for more than 15 minutes.
       {{else}}
-        Screen should lock when system is idle for 15 minutes or more.
+        Screen should lock if the system is idle for more than 15 minutes. [Required]
       {{/if}}
     description: >
       Screens which lock automatically when your laptop is unattended prevent unauthorized access from third-parties by requiring a password to dismiss the screen saver or wake from "sleep" mode. Your timeout setting should be 15 minutes or less.
@@ -217,7 +217,7 @@ practices:
       {{#if passing}}
         System is up-to-date
       {{else}}
-        System needs to be updated
+        System needs to be updated [Required]
       {{/if}}
     description: >
       One of the most important things you can do to secure your device(s) is to keep your operating system and software up to date. New vulnerabilities and weaknesses are found every day, so frequent updates are essential to ensuring your device(s) include the latest fixes and preventative measures.
@@ -256,15 +256,17 @@ practices:
   antivirus:
     title: >
       {{#if passing}}
-        Antivirus is running.
+        Antivirus is running
       {{else}}
-        Antivirus is not running.
+        Antivirus should be running [Optional]
       {{/if}}
     description: >
-      Antivirus software protects you from viruses, malware and spyware. If you have access to any of the company production servers, you need to have an antivirus software installed and running on your system.
+      An antivirus software protects you from viruses, malware and spyware.
+      <p class="highlight">If you have access to any of the company production servers, you must have an antivirus software running on your system.</p>
     directions:
       darwin: |
-        Install one of the following:
+        Please install one of the following:
+        1. <a target="_blank" href="https://www.avg.com/en-in/avg-antivirus-for-mac#pc">AVG Antivirus</a>
         1. <a target="_blank" href="https://home.sophos.com/en-us/download-mac-anti-virus.aspx">Sophos Antivirus</a>
         1. <a target="_blank" href="https://www.mcafee.com/enterprise/en-in/products/endpoint-security.html">McAfee Endpoint Security for Mac</a>
         1. <a target="_blank" href="https://www.clamxav.com/">ClamXAV</a>
@@ -273,7 +275,7 @@ practices:
         <a target="_blank" href="https://support.microsoft.com/en-us/windows/stay-protected-with-windows-security-2ae0363d-0ada-c064-8b56-6a39afb6a963">Enable Windows Defender using these steps</a>
 
       linux: |
-        Install one of the following:
+        Please install one of the following:
         1. <a target="_blank" href="https://antivirus.comodo.com/">Comodo Antivirus</a>
         1. <a target="_blank" href="https://www.clamav.net/">Clam Antivirus</a>
         1. <a target="_blank" href="https://www.avg.com/en-us/free-antivirus-download">AVG Antivirus</a>

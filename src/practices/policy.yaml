@@ -54,3 +54,8 @@ antivirus:
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"
+    # AVG
+    - name: "com.avg.daemon"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"

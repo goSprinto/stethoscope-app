@@ -264,3 +264,13 @@ a.btn:hover {
   transform: rotate(90deg);
   transition: transform 0.2s ease;
 }
+
+div.description p.highlight {
+  border-left: 4px solid rgb(240, 68, 68);
+  padding-left: 10px;
+}
+
+h3.title {
+  margin-top: .25em;
+  margin-bottom: .25em;
+}

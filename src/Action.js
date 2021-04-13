@@ -153,9 +153,7 @@ class Action extends Component {
       description = (
         <div className='action-description'>
           <div className='more-info'>
-            <div className='description'>
-              {action.description}
-            </div>
+            <div className='description' dangerouslySetInnerHTML={{ __html: action.description }} />
             {action.details &&
               <pre className='description'>{action.details}</pre>}
             {action.link &&
@@ -178,16 +176,16 @@ class Action extends Component {
         key={String(action.title).replace(/[^a-zA-Z]+/g, '')}
         ref={el => { this.el = el }}
       >
-        <span className='title' onClick={this.handleToggleDescription}>
+        <h3 className='title' onClick={this.handleToggleDescription}>
           <ActionIcon
             className='action-icon'
             variant={this.getIconVariant(type)}
           />
           {this.parseTitle()}
-        </span>
-        <Accessible label='Toggle action description' expanded={this.state.showDescription}>
-          <a href='#toggle' className={`toggleLink show-description ${this.state.showDescription ? 'open' : 'closed'}`} onClick={this.handleToggleDescription}>&#9660;</a>
-        </Accessible>
+          <Accessible label='Toggle action description' expanded={this.state.showDescription}>
+            <a href='#toggle' className={`toggleLink show-description ${this.state.showDescription ? 'open' : 'closed'}`} onClick={this.handleToggleDescription}>&#9660;</a>
+          </Accessible>
+        </h3>
         {description}
       </li>
     )
