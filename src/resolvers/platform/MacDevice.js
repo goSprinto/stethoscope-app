@@ -52,7 +52,9 @@ const MacDevice = {
     // idleDelay = -1 -> We were not able to extract since
     // likely it was never manually set by the user. Default
     // is set to 1200 seconds which is high.
-    if (lockDelay > 0 && idleDelay > 0) {
+
+    // lockDelay = -1: lock is disabled. 0: locks immediately on idle
+    if (lockDelay >= 0 && idleDelay > 0) {
         return parseInt(idleDelay, 10) + parseInt(lockDelay, 10)
     }
 
