@@ -1,6 +1,2 @@
 Fixed:
-- Fix the collection of debug info
-- Fix clam antivirus detection for Linux
-
-Added:
-- Updated the acceptable OS versions
+- Fix the Mac screen idle time check for the cases where it has never been changed by the user
