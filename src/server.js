@@ -95,7 +95,7 @@ export default async function startServer (env, log, language = 'en-US', appActi
   // policy, instructions and config data should only be served to app
   const policyRequestOptions = {
     origin (origin, callback) {
-      const allowed = ['http://localhost:', 'stethoscope://', 'http://127.0.0.1:']
+      const allowed = ['http://localhost:', 'drsprinto://', 'http://127.0.0.1:']
       if (origin && allowed.some(hostname => origin.startsWith(hostname))) {
         callback(null, true)
       } else {
