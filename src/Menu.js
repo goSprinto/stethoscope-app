@@ -79,7 +79,7 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
       click () {
         fetch('http://127.0.0.1:37370/debugger', {
           headers: {
-            Origin: `${app.name}://main`
+            Origin: `${app.name.toLowerCase()}://main`
           }
         })
           .then(res => res.text())
