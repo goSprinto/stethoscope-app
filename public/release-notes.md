@@ -1,5 +1,6 @@
 Fixed:
-- Fix the calculation of screen idle time for Mac
+- Fix the collection of debug info
+- Fix clam antivirus detection for Linux
 
 Added:
-- Add AVG to Antivirus suggesitons for Mac
+- Updated the acceptable OS versions
