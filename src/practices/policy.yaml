@@ -1,22 +1,22 @@
 osVersion:
   darwin:
     # Big Sur
-    ok: ">=11.2 || >=10.15.7"
+    ok: ">=11.3.1 || >=10.15.7 || >= 10.14.6"
     # Catalina
-    nudge: ">=11.0 || >=10.14"
+    nudge: ">=10.14"
   win32:
     # Version 20H2
     ok: ">=10.0.19042"
-    # Version 2004
+    # Version 20H1
     nudge: ">=10.0.19041"
   awsWorkspace:
     ok: ">=10.0.14393"
     nudge: ">=10.0.10240"
   ubuntu:
-    ok: ">=18.04.5 || >=20.04"
+    ok: ">=18.04.5 || >=20.04.2"
     nudge: ">=18.04"
   linux:
-    ok: ">=18.04.5 || >=20.04"
+    ok: ">=18.04.5 || >=20.04.2"
     nudge: ">=18.04"
 diskEncryption: ALWAYS
 screenLock: IF_SUPPORTED
