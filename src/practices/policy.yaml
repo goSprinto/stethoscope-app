@@ -30,12 +30,12 @@ antivirus:
       platform:
         linux: ">=16.04"
     # Clam AV
-    - name: "clamscan"
+    - name: "clamd"
       assertion: SUGGESTED
       platform:
         linux: ">=16.04"
     # Comodo AV
-    - name: "cmdscan"
+    - name: "cmdavd"
       assertion: SUGGESTED
       platform:
         linux: ">=16.04"
@@ -50,7 +50,7 @@ antivirus:
       platform:
         darwin: ">=10.13"
     # ClamXAV
-    - name: "cmdscan"
+    - name: "clamd"
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"
