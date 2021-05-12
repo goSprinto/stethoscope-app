@@ -194,7 +194,7 @@ practices:
       {{#if passing}}
         Screen will lock if the system is idle for more than 15 minutes.
       {{else}}
-        Screen should lock if the system is idle for more than 15 minutes. [Required]
+        Screen should lock within 15 minutes if the system is idle. [Required]
       {{/if}}
     description: >
       Screens which lock automatically when your laptop is unattended prevent unauthorized access from third-parties by requiring a password to dismiss the screen saver or wake from "sleep" mode. Your timeout setting should be 15 minutes or less.
@@ -262,7 +262,7 @@ practices:
       {{/if}}
     description: >
       An antivirus software protects you from viruses, malware and spyware.
-      <p class="highlight">If you have access to any of the company production servers, you must have an antivirus software running on your system.</p>
+      <p class="highlight">If you have access to the company production servers or if you handle customer data, you must have an antivirus software running on your system.</p>
     directions:
       darwin: |
         Please install one of the following:
