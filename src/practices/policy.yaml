@@ -39,6 +39,11 @@ antivirus:
       assertion: SUGGESTED
       platform:
         linux: ">=16.04"
+    # Avast antivirus
+    - name: "com.avast.daemon"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
     # Sophos Antivirus
     - name: "SophosAntiVirus"
       assertion: SUGGESTED
