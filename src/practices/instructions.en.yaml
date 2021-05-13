@@ -192,7 +192,7 @@ practices:
   screenIdle:
     title:  >
       {{#if passing}}
-        Screen will lock if the system is idle for more than 15 minutes.
+        Screen will lock in 15 minutes if the system is idle.
       {{else}}
         Screen should lock within 15 minutes if the system is idle. [Required]
       {{/if}}

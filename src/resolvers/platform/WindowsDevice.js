@@ -11,19 +11,18 @@ export default {
   },
 
   async screenLockDelay (root, args, context) {
-    const lock = await kmd('screenlock', context)
-    const chargingTimeout = parseInt(lock.chargingTimeout, 10)
-    const batteryTimeout = parseInt(lock.batteryTimeout, 10)
+    const lock = await kmd('screensaver', context)
+    const screenlockDelay = parseInt(lock.screenlockDelay, 10)
 
-    return Math.min(chargingTimeout, batteryTimeout)
+    return screenlockDelay
   },
 
   async antivirus (root, args, context) {
     const installedAntivirus = (await kmd('antivirus', context)).antivirusProducts
     const activeAntiVirus = installedAntivirus.filter(({productState}) => {
-      // Convert productState to Hex. The 3rd character
+      // Convert productState to Hex of 6 digits. The 3rd character
       // indicates if the antivirus is enable or not.
-      const state = parseInt(productState, 10).toString(16)
+      const state = parseInt(productState, 10).toString(16).padStart(6,0)
       return state.substr(2, 1) === '1'
     }).map(({name}) => {
       return {

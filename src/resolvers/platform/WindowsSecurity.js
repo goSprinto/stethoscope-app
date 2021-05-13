@@ -37,23 +37,25 @@ export default {
 
   async screenLock (root, args, context) {
     const device = await kmd('os', context)
-    // // screen lock creates problems in workspaces
+    // screen lock creates problems in workspaces
     if (device.system.platform === 'awsWorkspace') {
       return UNKNOWN
     }
 
-    const lock = await kmd('screenlock', context)
-    const { windowsMaxScreenLockTimeout = 600 } = args
-    const chargingTimeout = parseInt(lock.chargingTimeout, 10)
-    const batteryTimeout = parseInt(lock.batteryTimeout, 10)
+    const lock = await kmd('screensaver', context)
 
     return (
-      // According to Windows: 0 = Never
-      chargingTimeout !== 0 &&
-      batteryTimeout !== 0 &&
-      chargingTimeout <= windowsMaxScreenLockTimeout &&
-      batteryTimeout <= windowsMaxScreenLockTimeout
+      lock.screensaverEnabled === "True" &&
+      lock.screenlockEnabled === "True"
     )
+  },
+
+  async screenIdle (root, args, context) {
+    const lock = await kmd('screensaver', context)
+    const screenlockDelay = parseInt(lock.screenlockDelay, 10)
+    const delayOk = semver.satisfies(semver.coerce(screenlockDelay.toString()), screenIdle)
+
+    return delayOk && lock.screensaverEnabled === "True" && lock.screenlockEnabled === "True"
   },
 
   async firewall (root, args, context) {
