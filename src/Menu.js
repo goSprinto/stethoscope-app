@@ -2,18 +2,18 @@ import { Menu, shell, clipboard } from 'electron'
 import fetch from 'node-fetch'
 import pkg from '../package.json'
 import config from './config.json'
-import AutoLauncher from './AutoLauncher'
+// import AutoLauncher from './AutoLauncher'
 
-const toggleAutoLaunchMenus = (autoLaunchOn) => {
-  const autoLaunchMenuOptions = Menu.getApplicationMenu().getMenuItemById('autolaunch').submenu
-  autoLaunchMenuOptions.getMenuItemById('autolaunchOn').checked = autoLaunchOn
-  autoLaunchMenuOptions.getMenuItemById('autolaunchOff').checked = !autoLaunchOn
-}
+// const toggleAutoLaunchMenus = (autoLaunchOn) => {
+//   const autoLaunchMenuOptions = Menu.getApplicationMenu().getMenuItemById('autolaunch').submenu
+//   autoLaunchMenuOptions.getMenuItemById('autolaunchOn').checked = autoLaunchOn
+//   autoLaunchMenuOptions.getMenuItemById('autolaunchOff').checked = !autoLaunchOn
+// }
 
 export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
   const { checkForUpdates } = updater
-  const autoLauncher = new AutoLauncher(`${app.name}`)
-  const isAutoLauncherEnabled = autoLauncher.isEnabled()
+  // const autoLauncher = new AutoLauncher(`${app.name}`)
+  // const isAutoLauncherEnabled = autoLauncher.isEnabled()
 
   const contextMenu = [
     { role: 'copy', accelerator: 'CmdOrCtrl+C' },
