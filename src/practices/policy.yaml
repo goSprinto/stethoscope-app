@@ -44,6 +44,11 @@ antivirus:
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"
+    # Norton
+    - name: "SymDaemon"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
     # Sophos Antivirus
     - name: "SophosAntiVirus"
       assertion: SUGGESTED
