@@ -1,6 +1,6 @@
 Fixed:
-- Fix the antivirus check for Windows 
-- Fix the screen lock check for Windows
+- Fix the screen lock check for Windows [For real this time]
+- Fix debug info collection on Windows
 
 Added:
-- Antivirus check now supports Norton Antivirus for Mac
+- Collect better debug info with timestamp
