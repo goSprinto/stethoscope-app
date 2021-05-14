@@ -87,7 +87,7 @@
     "socket.io": "^4.0.1",
     "socket.io-client": "^4.0.1",
     "winston": "3.3.3",
-    "winston-daily-rotate-file": "4.5.1",
+    "winston-daily-rotate-file": "4.5.5",
     "ws": "^7.4.4",
     "yarn": "^1.22.10"
   },

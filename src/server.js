@@ -39,11 +39,14 @@ setKmdEnv({
 })
 
 function precompile () {
-  const searchPath = path.resolve(__dirname, `./sources/${process.platform}/*.sh`)
+  let searchPath = path.resolve(__dirname, `./sources/${process.platform}/*.sh`)
+  if (process.platform === 'win32') {
+    // glob wants the pattern with forward slashes
+    searchPath = searchPath.replace(/\\/g, '/')
+  }
   return glob(searchPath)
     .then(files =>
-      files.map(file =>
-        compile(readFileSync(file, 'utf8'))
+      files.map((file) => compile(readFileSync(file, 'utf8'))
       )
     )
 }
@@ -110,21 +113,22 @@ export default async function startServer (env, log, language = 'en-US', appActi
   }
 
   app.get('/debugger', cors(corsOptions), async (req, res) => {
+    log.info('Collecting debug info')
     let promise = Promise.resolve()
 
     if (req.get('host') !== '127.0.0.1:37370') {
       promise = appActions.requestLogPermission(req.get('origin'))
       appActions.enableDebugger()
     }
-
     promise.then(async () => {
-      const file = readFileSync(log.getLogFile())
+      log.warn(checks.length)
       const promises = Object.entries(checks).map(async ([name, script]) => {
-        try { return await run(script) } catch (e) { return '' }
+        try { return await run(script) } catch (e) { return `Error: ${e}` }
       })
       const checkData = await Promise.all(promises)
       // format response
       const sep = `\n${'='.repeat(20)}\n`
+      const file = readFileSync(log.getLogFile())
       const noColor = String(file).replace(/\[[\d]+m?:?/g, '') + '\n'
       const str = JSON.stringify(extend(true, {}, ...checkData), null, 3)
       const version = `Stethoscope version: ${pkg.version}`
