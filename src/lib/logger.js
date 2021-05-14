@@ -33,7 +33,11 @@ if (!global.log) {
         dirname: path.resolve(userDataPath),
         zippedArchive: true,
         maxSize: '20m',
-        maxFiles
+        maxFiles,
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.printf(info => `${info.timestamp} ${info.level} - ${info.message}`)
+        )
       })
     ]
   })
