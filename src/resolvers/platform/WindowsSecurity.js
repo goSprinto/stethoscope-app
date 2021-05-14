@@ -51,6 +51,9 @@ export default {
   },
 
   async screenIdle (root, args, context) {
+
+    const { screenIdle } = args
+
     const lock = await kmd('screensaver', context)
     const screenlockDelay = parseInt(lock.screenlockDelay, 10)
     const delayOk = semver.satisfies(semver.coerce(screenlockDelay.toString()), screenIdle)

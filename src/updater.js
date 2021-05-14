@@ -50,7 +50,7 @@ export default function updater (env, mainWindow, log = console, server, focusOr
               attemptingUpdate = false
               dialog.showMessageBox({
                 title: `Downloading ${app.name}`,
-                message: `App cannot be updated in dev mode`
+                message: 'App cannot be updated in dev mode'
               })
             }
           }

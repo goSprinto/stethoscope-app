@@ -92,7 +92,7 @@ export default class Stethoscope {
         hardwareSerial
         stethoscopeVersion
         screenLockDelay
-        security {
+        security (policy: $policy) {
           diskEncryption
           screenLock
           screenIdle
