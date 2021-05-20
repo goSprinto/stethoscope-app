@@ -173,16 +173,10 @@ practices:
         1. Check the "Require password" box and set the pull down menu to to "immediately" after sleep or screen saver begins.
         1. Make sure the Screen Saver is enabled as well.
       win32: |
-        Standard settings:
         1. Open [Lock screen settings](ms-settings:lockscreen).
-        1. Scroll down and click on "Screen timeout settings".
-        1. Ensure that Screen settings for "On battery power" and "When plugged in" are less than or equal to 10 minutes.
-
-        If fixing the standard settings doesn't resolve the issue:
-        1. Open [User Account Settings](ps://netplwiz).
-        1. Ensure that "Users must enter a user name and password to use this computer" is checked.
-        1. Click "Apply".
-        1. Click "OK".
+        1. Scroll down and click on "Screen saver settings".
+        1. Select a screen saver of your choice and a wait time of less than 15 minutes.
+        1. Select the option "On resume, display logon screen".
       linux: |
         1. From the upper-right drop-down menu, click the Settings icon.
         1. In the left-hand pane, select Privacy.
