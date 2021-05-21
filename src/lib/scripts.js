@@ -15,7 +15,11 @@ setKmdEnv({
 })
 
 export async function precompile () {
-  const searchPath = path.resolve(__dirname, `../sources/${process.platform}/*.sh`)
+  let searchPath = path.resolve(__dirname, `../sources/${process.platform}/*.sh`)
+  if (process.platform === 'win32') {
+    // glob wants the pattern with forward slashes
+    searchPath = searchPath.replace(/\\/g, '/')
+  }
   const files = await glob(searchPath)
 
   return files.reduce((out, file) => {
