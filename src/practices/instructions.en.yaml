@@ -108,12 +108,12 @@ practices:
         {{/each}}
 
       win32: |
-        #### Windows 10 Professional Edition
+        **Windows 10 Professional Edition**
 
           1. Open [BitLocker Drive Encryption](prefs://BitLocker).
           1. Click "Turn on BitLocker".
 
-        #### All Windows 10 Editions
+        **All Windows 10 Editions**
 
         Alternatively, you can use <a target="_blank" href="https://www.veracrypt.fr/en/Home.html">Veracrypt</a> on all editions of Windows 10.
 

@@ -29,8 +29,8 @@ export default {
 
     const disk = await kmd('bitlocker', context)
 
-    if (disk.bitlockerStatus) {
-      return disk.bitlockerStatus === 'ON'
+    if (disk.bitlockerStatus && disk.bitlockerStatus === 'ON') {
+      return true
     }
     else {
       return await this._veracryptStatus(root, args, context)
@@ -41,7 +41,7 @@ export default {
     const disk = await kmd('veracrypt', context)
 
     if (disk.veracryptStatus) {
-      return disk.bitlockerStatus === 'Yes'
+      return disk.veracryptStatus === 'Yes'
     }
 
     return false
