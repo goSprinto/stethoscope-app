@@ -122,10 +122,13 @@ export default {
     }
 
     const { ok, nudge } = Object(args.osVersion[platform])
+    // Ubuntu versions look like 18.04.5. Convert it to
+    // 18.4.5 so that semver likes it.
+    const semverVersion = String(version).split('.').map(i => parseInt(i)).join('.')
 
-    if (semver.satisfies(semver.coerce(version), ok)) {
+    if (semver.satisfies(semver.coerce(semverVersion), ok)) {
       return true
-    } else if (semver.satisfies(semver.coerce(version), nudge)) {
+    } else if (semver.satisfies(semver.coerce(semverVersion), nudge)) {
       return NUDGE
     } else {
       return false
