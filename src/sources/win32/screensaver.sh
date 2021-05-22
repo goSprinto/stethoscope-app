@@ -20,3 +20,5 @@ load output
 extract ScreenSaverTimeout\s+:\s+([0-9]*)
 defaultTo -1
 save screenlockDelay
+
+remove output

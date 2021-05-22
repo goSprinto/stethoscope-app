@@ -123,7 +123,7 @@ export default async function startServer (env, log, language = 'en-US', appActi
     promise.then(async () => {
       log.warn(checks.length)
       const promises = Object.entries(checks).map(async ([name, script]) => {
-        try { return await run(script) } catch (e) { return `Error: ${e}` }
+        try { return await run(script) } catch (e) { return { name: { error: e } } }
       })
       const checkData = await Promise.all(promises)
       // format response

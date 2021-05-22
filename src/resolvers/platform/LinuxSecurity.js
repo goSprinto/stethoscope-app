@@ -52,7 +52,7 @@ export default {
     const totalDelay = parseInt(idleDelay, 10) + parseInt(lockDelay, 10)
     const delayOk = semver.satisfies(semver.coerce(totalDelay.toString()), screenIdle)
 
-    const idleOk = this.screenLock(root, args, context)
+    const idleOk = await this.screenLock(root, args, context)
 
     return delayOk && idleOk
   },
