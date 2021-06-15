@@ -32,7 +32,6 @@ const platform = os.platform()
 const appName = ipcRenderer.sendSync('get:app:name')
 
 class App extends Component {
-  
   state = {
     device: {},
     policy: {},

@@ -4,7 +4,7 @@
   "private": true,
   "homepage": ".",
   "author": "Sprinto",
-  "description": "Sprinto Agent helps make your machine compatible with your organisation's security policies.",
+  "description": "DrSprinto helps you keep your machine compatible with your organisation's security policies.",
   "repository": {
     "type": "git",
     "url": "https://github.com/abhaga/stethoscope-app.git"

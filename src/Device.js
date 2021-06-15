@@ -176,16 +176,16 @@ class Device extends Component {
 
     const deviceLogReportingFreqDays = 30
     const today = new Date()
-    const daysSinceLastLog = deviceLogLastReportedOn 
-      ? Math.round((today.getTime() - deviceLogLastReportedOn.getTime())/(1000 * 3600 * 24))
-      : (deviceLogReportingFreqDays+1)
-  
-    // const reportingStatusMsg = daysSinceLastLog === 0 
+    const daysSinceLastLog = deviceLogLastReportedOn
+      ? Math.round((today.getTime() - deviceLogLastReportedOn.getTime()) / (1000 * 3600 * 24))
+      : (deviceLogReportingFreqDays + 1)
+
+    // const reportingStatusMsg = daysSinceLastLog === 0
     //   ? `Last recorded today`
-    //   : daysSinceLastLog === 1 
+    //   : daysSinceLastLog === 1
     //     ? `Last recorded 1 day ago.`
     //     : `Last recorded ${daysSinceLastLog} days ago.`
-  
+
     if (!this.props.stethoscopeVersion) return null
 
     const device = Object.assign({}, this.props, this.process(this.props))
@@ -270,7 +270,6 @@ class Device extends Component {
           <div className={`panel device-summary ${deviceClass}`}>
             {deviceMessages[deviceClass](this.props.strings[deviceClass])}
           </div>
-
 
           <div className='action-list'>
             <ul key='action-list-main-ul'>
