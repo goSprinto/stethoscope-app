@@ -77,13 +77,13 @@ nav a.brand {
 .text-danger {
   color: #a94442;
 }
-.panel.critical {
+/* .panel.critical {
   border-color: #ebccd1;
-}
-.panel.critical header, .notification-status.error {
+} */
+/* .panel.critical header, .notification-status.error {
   color: #a94442;
   background-color: #f2dede;
-}
+} */
 .notification-status {
   margin-top: 5px;
 }
@@ -94,25 +94,24 @@ nav a.brand {
 .notification-status.error {
   padding: 5px 10px;
 }
-.panel.warning {
+/* .panel.warning {
   color: #666;
-}
-.panel.warning header {
+} */
+/* .panel.warning header {
   color: #90783b;
   background-color: #fbf3df;
   border-color: #f1e2bd;
-}
-.panel.critical header {
+} */
+/* .panel.critical header {
   border-color: #e4c9c8;
-}
-.panel.unknown, .panel.unknown header {
+} */
+/* .panel.unknown, .panel.unknown header {
   color: #666;
 }
 .panel.ok header, .panel.done header {
   background-color: #dfe8db;
   color: #737b73;
-}
-
+} */
 
 nav {
   background-color: #eaeaea;
@@ -170,13 +169,14 @@ nav .right li.close {
 }
 
 .panel header {
-  background-color: #f1f1f1;
-  padding: 25px 20px;
+  background-color: #083763;
+  color: white;
+  padding: 20px;
   border-bottom: 1px solid #d9d9d9;
   margin-left: -20px;
   margin-right: -20px;
   margin-top: -20px;
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
 }
 /* buttons */
 button,
@@ -254,7 +254,7 @@ button[disabled],
   color: #fff !important;
 }
 .btn-primary {
-  background-color: #478cc8 !important;
+  background-color: #ff8c00 !important;
 }
 .btn-success {
   background-color: #8dac71 !important;

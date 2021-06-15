@@ -11,7 +11,7 @@ strings:
     The security settings on this device should be improved.
     Click the arrow next to each recommendation for instructions.
   policyDescription: baseline policy
-  rescanButton: rescan
+  rescanButton: Rescan
   lastScan: Last scanned by
 
 practices:

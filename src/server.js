@@ -146,6 +146,13 @@ export default async function startServer (env, log, language = 'en-US', appActi
     res.json(extend(true, {}, ...checkData))
   })
 
+  app.post('/update-last-reported-timestamp', cors(corsOptions), async (req, res) => {
+    // Record the timestamp of successful status report
+    io.sockets.emit('sprinto:devicelogrecorded')
+    res.status(201).send('Updated')
+  })
+
+
   app.use(['/scan', '/graphql'], cors(corsOptions), async (req, res) => {
     // set upper boundary on scan time (45 seconds)
     req.setTimeout(45000, () => {
@@ -166,7 +173,6 @@ export default async function startServer (env, log, language = 'en-US', appActi
         remoteLabel = label.name
       }
     }
-
     const { query, sessionId = false } = req[key]
     let { variables: policy } = req[key]
     // native notifications are only shown for external requests and

@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import classNames from 'classnames'
 import Accessible from './Accessible'
 import Action from './Action'
 import ActionIcon, { VARIANTS } from './ActionIcon'
@@ -168,10 +169,26 @@ class Device extends Component {
   }
 
   render () {
+    const {
+      deviceLogLastReportedOn, highlightRescan, scanResult, instructions,
+      onClickOpen, onRescan, reportingAppURI
+    } = this.props
+
+    const deviceLogReportingFreqDays = 30
+    const today = new Date()
+    const daysSinceLastLog = deviceLogLastReportedOn 
+      ? Math.round((today.getTime() - deviceLogLastReportedOn.getTime())/(1000 * 3600 * 24))
+      : (deviceLogReportingFreqDays+1)
+  
+    // const reportingStatusMsg = daysSinceLastLog === 0 
+    //   ? `Last recorded today`
+    //   : daysSinceLastLog === 1 
+    //     ? `Last recorded 1 day ago.`
+    //     : `Last recorded ${daysSinceLastLog} days ago.`
+  
     if (!this.props.stethoscopeVersion) return null
 
     const device = Object.assign({}, this.props, this.process(this.props))
-    const { org, scanResult } = this.props
 
     let deviceInfo = null
 
@@ -212,8 +229,8 @@ class Device extends Component {
       <div className='device-wrapper'>
         <div className={`panel device ${deviceClass}`}>
           <header>
-            <div className='device-name'>{device.friendlyName}</div>
-            <div className='device-identifier'>{device.identifier}&nbsp;</div>
+            <h2 className='device-name'>{device.friendlyName}</h2>
+            <h3 className='device-identifier'>{device.identifier}&nbsp;</h3>
             <Accessible
               expanded={this.state.showInfo}
               label={`Toggle and review ${device.deviceRating} device information for ${device.friendlyName}`}
@@ -229,14 +246,31 @@ class Device extends Component {
           </header>
 
           {deviceInfo}
+          <div className='buttonRow'>
+            <button
+              className={classNames('btn btn-default', {
+                'btn-primary': highlightRescan && scanResult.status !== 'PASS'
+              })}
+              onClick={onRescan}
+            >
+              <span className='icon icon-arrows-ccw' />
+              {instructions && instructions.strings && instructions.strings.rescanButton}
+            </button>
+            <button
+              className={classNames('btn btn-default', {
+                'btn-primary': daysSinceLastLog > deviceLogReportingFreqDays
+              })}
+              onClick={onClickOpen}
+              href={reportingAppURI}
+            >
+              <span className='icon icon-arrows-ccw' /> Record Device Status on Sprinto App
+            </button>
+          </div>
 
           <div className={`panel device-summary ${deviceClass}`}>
             {deviceMessages[deviceClass](this.props.strings[deviceClass])}
           </div>
 
-          <h4>
-            {org} {this.props.strings.policyDescription}
-          </h4>
 
           <div className='action-list'>
             <ul key='action-list-main-ul'>

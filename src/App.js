@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import Stethoscope from './lib/Stethoscope'
 import Device from './Device'
 import Loader from './Loader'
-import Footer from './Footer'
+// import Footer from './Footer'
 import DownloadProgress from './DownloadProgress'
 import openSocket from 'socket.io-client'
 import moment from 'moment'
@@ -32,6 +32,7 @@ const platform = os.platform()
 const appName = ipcRenderer.sendSync('get:app:name')
 
 class App extends Component {
+  
   state = {
     device: {},
     policy: {},
@@ -40,6 +41,7 @@ class App extends Component {
     scanIsRunning: false,
     loading: true,
     lastScanDuration: 0,
+    deviceLogLastReportedOn: new Date(),
     // determines loading screen wording
     remoteScan: false,
     // surface which app performed the most recent scan
@@ -58,7 +60,13 @@ class App extends Component {
   async componentDidMount () {
     // append app version to title
     document.querySelector('title').textContent += ` (v${pkg.version})`
-    this.setState({ recentHang: settings.get('recentHang', 0) > 1 })
+
+    const deviceLogLastReportedOnTS = await settings.get('deviceLogLastReportedOn')
+    const deviceLogLastReportedOn = deviceLogLastReportedOnTS ? new Date(deviceLogLastReportedOnTS) : null
+    this.setState({
+      recentHang: settings.get('recentHang', 0) > 1,
+      deviceLogLastReportedOn
+    })
     ipcRenderer.send('scan:init')
     // perform the initial policy load & scan
     try {
@@ -91,11 +99,20 @@ class App extends Component {
     // setup a socket io listener to refresh the app when a scan is performed
     socket.on('scan:complete', this.onScanComplete)
     socket.on('scan:error', this.onScanError)
+    socket.on('sprinto:devicelogrecorded', this.onDeviceLogRecorded)
     // the focus/blur handlers are used to update the last scanned time
     window.addEventListener('focus', () => this.setState({ focused: true }))
     window.addEventListener('blur', () => this.setState({ focused: false }))
     document.addEventListener('dragover', event => event.preventDefault())
     document.addEventListener('drop', event => event.preventDefault())
+  }
+
+  onDeviceLogRecorded = () => {
+    const ts = new Date()
+    settings.set('deviceLogLastReportedOn', ts)
+    this.setState({
+      deviceLogLastReportedOn: ts
+    })
   }
 
   onDownloadProgress = (event, downloadProgress) => {
@@ -285,12 +302,14 @@ class App extends Component {
   render () {
     const {
       device, policy, result, downloadProgress,
-      scannedBy, lastScanTime, lastScanDuration, error,
+      scannedBy, lastScanTime, lastScanDuration, error, deviceLogLastReportedOn,
       instructions, loading, highlightRescan,
       recentHang, remoteScan, recentLogs
     } = this.state
 
-    const isDev = process.env.STETHOSCOPE_ENV === 'development'
+    const isDev = ipcRenderer.sendSync('get:env:isDev')
+
+    const reportingAppURI = isDev ? 'http://localhost:5000/app/intranet/endpointScanLogs?drawerOpen=true' : appConfig.deviceStatusReportingAppURI
 
     let content = null
 
@@ -353,12 +372,11 @@ class App extends Component {
               lastScanDuration={lastScanDuration}
               scannedBy={scannedBy}
               onExpandPolicyViolation={this.handleHighlightRescanButton}
-            />
-            <Footer
+              deviceLogLastReportedOn={deviceLogLastReportedOn}
               highlightRescan={highlightRescan}
-              result={result}
               instructions={instructions}
               webScopeLink={appConfig.stethoscopeWebURI}
+              reportingAppURI={reportingAppURI}
               onClickOpen={this.handleOpenExternal}
               onRescan={this.handleScan}
             />

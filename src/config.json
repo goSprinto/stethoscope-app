@@ -7,6 +7,7 @@
       }
     ]
   },
+  "deviceStatusReportingAppURI": "https://app.sprinto.in/app/intranet/endpointScanLogs?drawerOpen=true",
   "rescanIntervalSeconds": 604800,
   "autoLaunchPrompt": true,
   "allowPrerelease": false

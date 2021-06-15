@@ -202,6 +202,8 @@ a.btn:hover {
 .panel.device-summary {
   border: 1px solid #ddd;
   background: #fbfafa;
+  padding: 10px;
+  margin-bottom: 1em;
 }
 .panel.device-summary.ok {
   font-size: 1.05em;

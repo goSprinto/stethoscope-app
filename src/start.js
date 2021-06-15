@@ -57,7 +57,7 @@ const statusImages = {
 
 const windowPrefs = {
   width: 480,
-  height: 670,
+  height: 720,
   fullscreenable: false,
   maximizable: false,
   autoHideMenuBar: true,
@@ -389,6 +389,11 @@ ipcMain.on('get:env:basePath', (event, arg) => {
   const dev = process.env.STETHOSCOPE_ENV === 'development'
   const basePath = `${dev ? '.' : process.resourcesPath}/src/practices`
   event.returnValue = basePath
+})
+
+ipcMain.on('get:env:isDev', (event, arg) => {
+  const isDev = process.env.STETHOSCOPE_ENV === 'development'
+  event.returnValue = isDev
 })
 
 ipcMain.on('get:app:name', (event, arg) => {
