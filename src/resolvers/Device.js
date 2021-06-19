@@ -29,7 +29,13 @@ const Device = {
   async deviceId (root, args, context) {
     const result = await kmd('hardware', context)
     const { platform = process.platform } = context
-    return platform === 'win32' ? result.system.machineGuid : result.system.uuid
+    // Both machineGuid and uuid can be duplicate in windows machines
+    // so we use both.
+    if (platform === 'win32') {
+      return  [result.system.machineGuid, result.system.uuid, result.system.serialNumber].join("|")
+    } else {
+      return result.system.uuid
+    }
   },
 
   async deviceName (root, args, context) {
