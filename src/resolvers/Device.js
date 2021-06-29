@@ -74,6 +74,15 @@ const Device = {
     return result.system.platform
   },
 
+  async distroName (root, args, context) {
+    const result = await kmd('os', context)
+    if ('distroId' in result.system) {
+      return result.system.distroId
+    } else {
+      return this.platform()
+    }
+  },
+
   async firmwareVersion (root, args, context) {
     const result = await kmd('hardware', context)
     return result.system.firmwareVersion

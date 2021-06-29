@@ -27,6 +27,8 @@ type Device {
   osBuild: String
   # os name
   osName: String
+  # Distribution Name (For Linux)
+  distroName: String
   # device firmware version
   firmwareVersion: String
   # device model

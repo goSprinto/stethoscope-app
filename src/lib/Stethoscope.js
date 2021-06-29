@@ -85,6 +85,7 @@ export default class Stethoscope {
         deviceName
         platform
         platformName
+        distroName
         osVersion
         firmwareVersion
         hardwareModel
