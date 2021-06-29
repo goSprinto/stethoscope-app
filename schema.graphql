@@ -258,6 +258,9 @@ input PlatformBracketRequirement {
   darwin: VersionBracket
   win32: VersionBracket
   ubuntu: VersionBracket
+  fedora: VersionBracket
+  debian: VersionBracket
+  linuxmint: VersionBracket
   linux: VersionBracket
   awsWorkspace: VersionBracket
   all: VersionBracket

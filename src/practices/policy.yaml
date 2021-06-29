@@ -16,6 +16,13 @@ osVersion:
     # Instead of 20.04, we need 20.4 to keep semver happy
     ok: ">=20.4.2 || ~18.4.5"
     nudge: "20.4.x || 18.4.x"
+  fedora:
+    ok: ">=33"
+  debian:
+    ok: ">=10.10 || ~9.13"
+    nudge: "10.x || 9.x"
+  linuxmint:
+    ok: ">=20.x || 19.x"
   linux:
     ok: ">=20.4.2 || ~18.4.5"
     nudge: "20.4.x || 18.4.x"

@@ -121,6 +121,12 @@ export default {
       platform = process.platform
     }
 
+    // For linux, use the distro id to get the correct version
+    // to compare against
+    if (platform === 'linux') {
+      platform = result.system.distroId
+    }
+
     const { ok, nudge } = Object(args.osVersion[platform])
     // Ubuntu versions look like 18.04.5. Convert it to
     // 18.4.5 so that semver likes it.

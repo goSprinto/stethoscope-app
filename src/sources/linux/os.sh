@@ -1,12 +1,21 @@
 #!/usr/bin/env kmd
 exec cat /etc/os-release
 save output
-extract NAME="(.*)"
+extract NAME="(.*)"\n
 save system.platform
 
 load output
-extract VERSION="*([\d\.]+)"*
+extract \nID="*(.*)"*\n
+save system.distroId
+
+load output
+extract \nID_LIKE="*(.*)"*\n
+save system.distroIdLike
+
+load output
+extract \nVERSION="*([\d\.]+)[^\n]*\n
 save system.version
+
 remove output
 
 exec uname -r
