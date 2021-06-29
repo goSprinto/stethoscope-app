@@ -79,7 +79,7 @@ const Device = {
     if ('distroId' in result.system) {
       return result.system.distroId
     } else {
-      return this.platform()
+      return Device.platform(root, args. context)
     }
   },
 
