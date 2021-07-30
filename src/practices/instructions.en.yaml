@@ -194,6 +194,9 @@ practices:
         1. In the left-hand pane, select Privacy.
         1. Click on ScreenLock
         1. Ensure that "Automatic Screen Lock" is set to ON.
+        1. For "Lock screen after blank for", select "Screen Turns Off".
+        1. In the left-hand menu, select Power.
+        1. Under Power Saving -> Blank screen, select a value less than 15 minutes.
 
   screenIdle:
     title:  >
@@ -285,9 +288,9 @@ practices:
     directions:
       darwin: |
         Please install one of the following:
-        1. <a target="_blank" href="https://www.avg.com/en-in/avg-antivirus-for-mac#pc">AVG Antivirus</a>
-        1. <a target="_blank" href="https://home.sophos.com/en-us/download-mac-anti-virus.aspx">Sophos Antivirus</a>
-        1. <a target="_blank" href="https://www.mcafee.com/enterprise/en-in/products/endpoint-security.html">McAfee Endpoint Security for Mac</a>
+        1. <a target="_blank" href="https://www.avg.com/en-in/avg-antivirus-for-mac#pc">AVG Antivirus</a> [Free]
+        1. <a target="_blank" href="https://home.sophos.com/en-us/download-mac-anti-virus.aspx">Sophos Antivirus</a> [Free]
+        1. <a target="_blank" href="https://www.mcafee.com/en-in/antivirus/mac.html">McAfee Endpoint Security for Mac</a>
         1. <a target="_blank" href="https://www.clamxav.com/">ClamXAV</a>
 
       win32: |
