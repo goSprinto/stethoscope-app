@@ -113,11 +113,11 @@ async function createWindow () {
 
   mainWindow = new BrowserWindow(windowPrefs)
 
-  if (IS_DEV) loadReactDevTools(BrowserWindow)
-  // open developer console if env vars or args request
-  if (enableDebugger || DEBUG_MODE) {
-    mainWindow.webContents.openDevTools()
-  }
+  // if (IS_DEV) loadReactDevTools(BrowserWindow)
+  // // open developer console if env vars or args request
+  // if (enableDebugger || DEBUG_MODE) {
+  //   mainWindow.webContents.openDevTools()
+  // }
 
   // required at run time so dependencies can be injected
   updater = updateInit(env, mainWindow, log, server, focusOrCreateWindow)
