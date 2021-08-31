@@ -113,16 +113,10 @@ practices:
           1. Open [BitLocker Drive Encryption](prefs://BitLocker).
           1. Click "Turn on BitLocker".
 
-        **All Windows 10 Editions**
-
-        Alternatively, you can use Veracrypt on all editions of Windows 10.
-
-          1. <a target="_blank" href="https://www.veracrypt.fr/en/Downloads.html">Download Veracrypt</a>
-          1. Follow the instructions to <a target="_blank" href="https://www.veracrypt.fr/en/System%20Encryption.html">enable system encryption</a>. You can also follow <a target="_blank" href="https://www.howtogeek.com/howto/6169/use-truecrypt-to-secure-your-data/">this tutorial with screenshots</a>.
       linux: |
         The recommended option for full disk encryption for Linux is <a target="_blank" href="https://gitlab.com/cryptsetup/cryptsetup/-/wikis/home">LUKS</a>. You can find instructions for Ubuntu 19.04 and 20.04 below.
         1. <a target="_blank" href="https://medium.com/@chrishantha/encrypting-disks-on-ubuntu-19-04-b50bfc65182a">Ubuntu 19.04</a>
-        1. <a target="_blank" href="https://mutschler.eu/linux/install-guides/ubuntu-btrfs/">Ubuntu 20.04</a>
+        1. <a target="_blank" href="https://gist.github.com/luispabon/db2c9e5f6cc73bb37812a19a40e137bc">Ubuntu 21.04 dual boot with Windows 10</a>
 
         For other distributions, please consult the documentation.
   automaticUpdates:
