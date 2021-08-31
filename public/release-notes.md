@@ -1,4 +1,7 @@
 Updated:
-- Updated instructions for setting up screenlock in Ubuntu
+- Updated instructions for setting up Screen Lock, Antivirus & Disk Encryption in Ubuntu
+- Updated policy OS requirements
+- Updated app dependencies
 
-Added:
+Removed:
+- Support for Veracrypt for Disk encryption
