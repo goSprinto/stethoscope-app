@@ -32,7 +32,7 @@ const Device = {
     // Both machineGuid and uuid can be duplicate in windows machines
     // so we use both.
     if (platform === 'win32') {
-      return  [result.system.machineGuid, result.system.uuid, result.system.serialNumber].join("|")
+      return [result.system.machineGuid, result.system.uuid, result.system.serialNumber].join('|')
     } else {
       return result.system.uuid
     }
@@ -79,7 +79,7 @@ const Device = {
     if ('distroId' in result.system) {
       return result.system.distroId
     } else {
-      return Device.platform(root, args. context)
+      return Device.platform(root, args.context)
     }
   },
 

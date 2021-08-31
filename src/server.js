@@ -152,7 +152,6 @@ export default async function startServer (env, log, language = 'en-US', appActi
     res.status(201).send('Updated')
   })
 
-
   app.use(['/scan', '/graphql'], cors(corsOptions), async (req, res) => {
     // set upper boundary on scan time (45 seconds)
     req.setTimeout(45000, () => {
