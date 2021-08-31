@@ -1,13 +1,13 @@
 osVersion:
   darwin:
     # Big Sur
-    ok: ">=11.3.1 || ~10.15.7 || ~10.14.6"
+    ok: ">=11.5.1 || ~10.15.7 || ~10.14.6"
     # Catalina
     nudge: ">=10.14"
   win32:
-    # Version 20H2
-    ok: ">=10.0.19042"
-    # Version 20H1
+    # Version 21H2
+    ok: ">=10.0.19043"
+    # Version 2004 supported till Dec 21
     nudge: ">=10.0.19041"
   awsWorkspace:
     ok: ">=10.0.14393"
