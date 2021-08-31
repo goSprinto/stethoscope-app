@@ -184,6 +184,8 @@ practices:
         1. Select a screen saver of your choice and a wait time of less than 15 minutes.
         1. Select the option "On resume, display logon screen".
       linux: |
+        **Ubuntu 18.04**
+
         1. From the upper-right drop-down menu, click the Settings icon.
         1. In the left-hand pane, select Privacy.
         1. Click on ScreenLock
@@ -191,6 +193,15 @@ practices:
         1. For "Lock screen after blank for", select "Screen Turns Off".
         1. In the left-hand menu, select Power.
         1. Under Power Saving -> Blank screen, select a value less than 15 minutes.
+
+        **Ubuntu 20.04**
+
+        1. From the upper-right drop-down menu, click the Settings icon.
+        1. In the left-hand pane, select Privacy -> Screen Lock.
+        1. For "Blank Screen Delay", select a value less than 15 minutes.
+        1. Set "Automatic Screen Lock" to ON.
+        1. For "Automatic Screen Lock Delay", select "Screen Turns Off".
+        1. Set "Lock Screen on Suspend" to ON.
 
   screenIdle:
     title:  >
@@ -209,11 +220,20 @@ practices:
         1. Adjust the "Start after" dropdown to 15 minutes or less.
         1. Also make sure that on [General](x-apple.systempreferences:com.apple.preference.security?General) tab, the pull down menu is set to "immediately".
       linux: |
+        ** Ubuntu 18.04 **
         1. From the upper-right drop-down menu, click the Settings icon.
         1. In the left-hand pane, select Privacy.
         1. Click on ScreenLock
-        1. Adjust the "Lock screen after blank" dropdown to less than or equal to the number of seconds shown below.
-        {{securitySetting "screenIdle"}}
+        1. For "Lock screen after blank for", select "Screen Turns Off".
+        1. In the left-hand menu, select Power.
+        1. Under Power Saving -> Blank screen, select a value less than 15 minutes.
+
+        ** Ubuntu 20.04 **
+        1. From the upper-right drop-down menu, click the Settings icon.
+        1. In the left-hand pane, select Privacy -> Screen Lock.
+        1. For "Blank Screen Delay", select a value less than 15 minutes.
+        1. For "Automatic Screen Lock Delay", select "Screen Turns Off".
+
       win32: |
         1. Open [Lock screen settings](ms-settings:lockscreen).
         1. Scroll down and click on "Screen saver settings".
@@ -295,6 +315,12 @@ practices:
         1. <a target="_blank" href="https://antivirus.comodo.com/">Comodo Antivirus</a>
         1. <a target="_blank" href="https://www.clamav.net/">Clam Antivirus</a>
         1. <a target="_blank" href="https://www.avg.com/en-us/free-antivirus-download">AVG Antivirus</a>
+
+        **Setting up Clam Antivirus**
+
+        1. sudo apt-get install clamav clamav-daemon
+        1. sudo service clamav-freshclam restart (wait for 3-5 minutes)
+        1. sudo service clamav-daemon restart && sudo service clamav-daemon status (The output should show the status as running)
 
   openWifiConnections:
     title: >
