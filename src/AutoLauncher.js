@@ -1,8 +1,9 @@
-import settings from 'electron-settings'
+import Store from 'electron-store'
 import AutoLaunch from 'auto-launch'
 import config from './config.json'
 import os from 'os'
 
+const settings = new Store({name: 'settings'})
 export default class AutoLauncher {
   constructor (appName) {
     const autoLaunchOpts = {

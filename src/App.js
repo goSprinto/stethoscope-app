@@ -24,12 +24,13 @@ const glob = window.require('glob')
 const { readFileSync } = window.require('fs')
 const path = window.require('path')
 const { shell, ipcRenderer } = window.require('electron')
-const settings = window.require('electron-settings')
+const Store = window.require('electron-store')
 const remote = window.require('@electron/remote')
 const log = remote.getGlobal('log')
 const platform = os.platform()
 
 const appName = ipcRenderer.sendSync('get:app:name')
+const settings = new Store({name: 'settings'})
 
 class App extends Component {
   state = {
