@@ -1,7 +1,7 @@
 osVersion:
   darwin:
     # Big Sur
-    ok: ">=11.5.1 || ~10.15.7 || ~10.14.6"
+    ok: ">=11.6 || ~10.15.7 || ~10.14.6"
     # Catalina
     nudge: ">=10.14"
   win32:
@@ -14,17 +14,19 @@ osVersion:
     nudge: ">=10.0.10240"
   ubuntu:
     # Instead of 20.04, we need 20.4 to keep semver happy
-    ok: ">=20.4.2 || ~18.4.5"
+    ok: ">=20.4.3 || ~18.4.6"
     nudge: "20.4.x || 18.4.x"
   fedora:
     ok: ">=33"
   debian:
-    ok: ">=10.10 || ~9.13"
+    ok: "11.0 || ~10.10 || ~9.13"
     nudge: "10.x || 9.x"
   linuxmint:
     ok: ">=20.x || 19.x"
+  kali:
+    ok: "2021.3"
   linux:
-    ok: ">=20.4.2 || ~18.4.5"
+    ok: ">=20.4.3 || ~18.4.6"
     nudge: "20.4.x || 18.4.x"
 diskEncryption: ALWAYS
 screenLock: IF_SUPPORTED
