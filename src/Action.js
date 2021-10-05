@@ -14,7 +14,7 @@ const converter = new showdown.Converter()
 
 class Action extends Component {
   state = {
-    showDescription: this.props.expandedByDefault
+    showDescription: this.props.expandedByDefault || this.props.type === 'unknown'
   }
 
   constructor (props) {
@@ -27,7 +27,7 @@ class Action extends Component {
       return VARIANTS.BLOCK
     } else if (type === 'done') {
       return VARIANTS.PASS
-    } else if (type === 'suggested') {
+    } else if (type === 'suggested' || type === 'unknown') {
       return VARIANTS.SUGGEST
     }
   }
@@ -88,7 +88,7 @@ class Action extends Component {
       // display the highest minimum version
       // if advanced semver requirement is passed (e.g. >1.2.3 || < 3.0.0)
       const { distroName } = device
-      const { ok } = policy[key][distroName]
+      const { ok } = distroName in policy[key] ? policy[key][distroName] : {ok: ''}
       const recommended = getRecommendedVersion(ok)
 
       return new Handlebars.SafeString(
@@ -153,6 +153,8 @@ class Action extends Component {
     if (this.state.showDescription) {
       description = (
         <div className='action-description'>
+          {type === 'unknown' ? 'Failed to run the check for your device. Please contact support@sprinto.com along with the debug logs.' : 
+          <>
           <div className='more-info'>
             <div className='description' dangerouslySetInnerHTML={{ __html: action.description }} />
             {action.details &&
@@ -167,7 +169,9 @@ class Action extends Component {
             />
           )}
           {this.props.children}
-        </div>
+          </>
+          }
+          </div>
       )
     }
 

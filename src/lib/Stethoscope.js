@@ -46,6 +46,9 @@ const handleValidate = (result, partitions, device, practices, platform) => {
       case 'FAIL':
         acc.critical.push(item)
         break
+      case 'UNKNOWN':
+        acc.unknown.push(item)
+        break
       default:
         acc.suggested.push(item)
     }
@@ -59,12 +62,12 @@ export default class Stethoscope {
     const partitions = {
       critical: [],
       suggested: [],
+      unknown: [],
       done: []
     }
 
     return handleValidate(result, partitions, device, practices, platform)
   }
-
   // privately retry request until a response is given
   static __repeatRequest (policy, resolve, reject) {
     const query = `query ValidateDevice($policy: DevicePolicy!) {

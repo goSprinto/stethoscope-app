@@ -273,6 +273,7 @@ class Device extends Component {
 
           <div className='action-list'>
             <ul key='action-list-main-ul'>
+              {this.actions(device.unknown, 'unknown', device)}
               {this.actions(device.critical, 'critical', device)}
               {this.actions(device.suggested, 'suggested', device)}
               {this.actions(device.done, 'done', device)}

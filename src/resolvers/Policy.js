@@ -1,5 +1,5 @@
 import Security from './Security'
-import { PASS, FAIL, NUDGE, SUGGESTED, NEVER } from '../constants'
+import { PASS, FAIL, NUDGE, SUGGESTED, NEVER, UNKNOWN } from '../constants'
 
 export default {
   async validate (root, args, context) {
@@ -15,7 +15,6 @@ export default {
       let passing = true
       // determine device state
       passing = await Security[verification](root, policy, context)
-
       // this handles multiplicable items like applications, etc.
       if (Array.isArray(passing)) {
         // convert verification result to PASS|FAIL
@@ -63,6 +62,9 @@ export default {
 
         if (passing === NUDGE) {
           response[verification] = NUDGE
+        }
+        if (passing === UNKNOWN) {
+          response[verification] = UNKNOWN
         }
       }
     }

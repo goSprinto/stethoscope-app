@@ -263,6 +263,7 @@ input PlatformBracketRequirement {
   fedora: VersionBracket
   debian: VersionBracket
   linuxmint: VersionBracket
+  kali: VersionBracket
   linux: VersionBracket
   awsWorkspace: VersionBracket
   all: VersionBracket
