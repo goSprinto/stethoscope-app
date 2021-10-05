@@ -19,7 +19,7 @@ osVersion:
   fedora:
     ok: ">=33"
   debian:
-    ok: "11.0 || ~10.10 || ~9.13"
+    ok: ">=11.0 || ~10.10 || ~9.13"
     nudge: "10.x || 9.x"
   linuxmint:
     ok: ">=20.x || 19.x"

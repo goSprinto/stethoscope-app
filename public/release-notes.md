@@ -1,7 +1,6 @@
 Updated:
-- Updated instructions for setting up Screen Lock, Antivirus & Disk Encryption in Ubuntu
 - Updated policy OS requirements
-- Updated app dependencies
+- Upgrade to Electron 15
 
-Removed:
-- Support for Veracrypt for Disk encryption
+Fixed:
+- Prevent app from crashing when running on a linux distro which is missing in policy
