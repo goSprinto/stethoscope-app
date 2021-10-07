@@ -264,6 +264,8 @@ input PlatformBracketRequirement {
   debian: VersionBracket
   linuxmint: VersionBracket
   kali: VersionBracket
+  pop: VersionBracket
+  manjaro: VersionBracket
   linux: VersionBracket
   awsWorkspace: VersionBracket
   all: VersionBracket

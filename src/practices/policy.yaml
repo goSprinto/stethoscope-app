@@ -6,7 +6,7 @@ osVersion:
     nudge: ">=10.14"
   win32:
     # Version 21H2
-    ok: ">=10.0.19043"
+    ok: ">=10.0.19042"
     # Version 2004 supported till Dec 21
     nudge: ">=10.0.19041"
   awsWorkspace:
@@ -18,6 +18,12 @@ osVersion:
     nudge: "20.4.x || 18.4.x"
   fedora:
     ok: ">=33"
+  pop:
+    # Based on Ubuntu but LTS lasts till release of next LTS
+    ok: ">=20.4"
+  manjaro:
+    # Based on arch that uses rolling releases.
+    ok: ">=21.1.3"
   debian:
     ok: ">=11.0 || ~10.10 || ~9.13"
     nudge: "10.x || 9.x"
