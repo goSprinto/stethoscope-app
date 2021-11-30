@@ -11,7 +11,7 @@ const deviceMessages = {
   ok (msg) {
     return (
       <span>
-        <ActionIcon className='action-icon' size='35px' variant={VARIANTS.PASS} />
+        <ActionIcon className='action-icon' size='28px' variant={VARIANTS.PASS} />
         <span>{msg}</span>
       </span>
     )
@@ -246,7 +246,39 @@ class Device extends Component {
           </header>
 
           {deviceInfo}
-          <div className='buttonRow'>
+          {daysSinceLastLog > deviceLogReportingFreqDays ?
+          <div className={`panel device-summary critical`}>
+            <span>
+              <ActionIcon className='action-icon' size='28px' variant={VARIANTS.BLOCK} />
+              Device status not reported to Sprinto
+            </span>
+            <button
+              className={classNames('btn btn-default', {
+                'btn-primary': daysSinceLastLog > deviceLogReportingFreqDays
+              })}
+              onClick={onClickOpen}
+              href={reportingAppURI}
+            >
+              Report Now
+            </button>
+
+          </div>
+          : <div className={`panel device-summary ok`}>
+            <span>
+              <ActionIcon className='action-icon' size='28px' variant={VARIANTS.OK} />
+              Status reported to Sprinto {daysSinceLastLog} {daysSinceLastLog === 1 ? 'day': 'days'} ago.
+            </span>
+            <button
+              className={classNames('btn btn-default')}
+              onClick={onClickOpen}
+              href={reportingAppURI}
+            >
+              Report Now
+            </button>
+
+          </div>}
+          <div className={`panel device-summary ${deviceClass}`}>
+            {deviceMessages[deviceClass](this.props.strings[deviceClass])}
             <button
               className={classNames('btn btn-default', {
                 'btn-primary': highlightRescan && scanResult.status !== 'PASS'
@@ -256,25 +288,6 @@ class Device extends Component {
               <span className='icon icon-arrows-ccw' />
               {instructions && instructions.strings && instructions.strings.rescanButton}
             </button>
-            <button
-              className={classNames('btn btn-default', {
-                'btn-primary': daysSinceLastLog > deviceLogReportingFreqDays
-              })}
-              onClick={onClickOpen}
-              href={reportingAppURI}
-            >
-              <span className='icon icon-arrows-ccw' /> Record Device Status on Sprinto App
-            </button>
-          </div>
-          {daysSinceLastLog > deviceLogReportingFreqDays ?
-          <div className={`panel device-summary critical`}>
-            <span>
-              <ActionIcon className='action-icon' size='35px' variant={VARIANTS.BLOCK} />
-              <span>Device status not reported for last {daysSinceLastLog} days.</span>
-            </span>
-          </div> :null}
-          <div className={`panel device-summary ${deviceClass}`}>
-            {deviceMessages[deviceClass](this.props.strings[deviceClass])}
           </div>
 
           <div className='action-list'>

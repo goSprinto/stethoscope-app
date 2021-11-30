@@ -200,9 +200,13 @@ a.btn:hover {
 }
 
 .panel.device-summary {
+  display: flex;
+  align-content: center;
+  justify-content: space-between;
   border: 1px solid #ddd;
   background: #fbfafa;
   padding: 10px;
+  margin-top: 1em;
   margin-bottom: 1em;
 }
 .panel.device-summary.ok {
@@ -218,13 +222,12 @@ a.btn:hover {
 
 .panel.device-summary svg {
   position: relative;
-  top: -3px;
+  top: 5px;
   padding-right: 10px;
 }
 
 .panel.device-summary span {
   color: #333;
-  vertical-align: middle;
 }
 .panel.device-summary.critical span {
   color: #9a211d;
