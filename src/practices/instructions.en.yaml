@@ -250,11 +250,11 @@ practices:
       One of the most important things you can do to secure your device(s) is to keep your operating system and software up to date. New vulnerabilities and weaknesses are found every day, so frequent updates are essential to ensuring your device(s) include the latest fixes and preventative measures.
     directions:
       darwin: |
-        1. Open the [App Store](app://App%20Store) app.
-        1. Click [Updates](macappstore://showUpdatesPage) on the top of the app window.
-        1. Install any outstanding updates.
+        1. From the Apple menu in the corner of your screen, choose System Preferences.
+        1. In the System Preferences window, click Software Update. (If your System Preferences doesn't include Software Update, use the App Store to get updates instead.)
+        1. Click Update Now or Upgrade Now.
 
-        If you don't see any available updates, you may need the next major version of MacOS. New releases are featured on the [App Store](app://App%20Store) home screen.
+        For more details, please see Apple help page on <a target="_blank" href="https://support.apple.com/en-in/HT201541">how to update/upgrade MacOS</a>.
 
         {{requirement "osVersion" "darwin"}}
 
