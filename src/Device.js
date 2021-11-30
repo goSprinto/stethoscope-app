@@ -174,7 +174,7 @@ class Device extends Component {
       onClickOpen, onRescan, reportingAppURI
     } = this.props
 
-    const deviceLogReportingFreqDays = 30
+    const deviceLogReportingFreqDays = 90
     const today = new Date()
     const daysSinceLastLog = deviceLogLastReportedOn
       ? Math.round((today.getTime() - deviceLogLastReportedOn.getTime()) / (1000 * 3600 * 24))
@@ -266,7 +266,13 @@ class Device extends Component {
               <span className='icon icon-arrows-ccw' /> Record Device Status on Sprinto App
             </button>
           </div>
-
+          {daysSinceLastLog > deviceLogReportingFreqDays ?
+          <div className={`panel device-summary critical`}>
+            <span>
+              <ActionIcon className='action-icon' size='35px' variant={VARIANTS.BLOCK} />
+              <span>Device status not reported for last {daysSinceLastLog} days.</span>
+            </span>
+          </div> :null}
           <div className={`panel device-summary ${deviceClass}`}>
             {deviceMessages[deviceClass](this.props.strings[deviceClass])}
           </div>
