@@ -1,6 +1,7 @@
-Updated:
-- Updated policy OS requirements
-- Upgrade to Electron 15
+Features:
+- Added clearer call to action to report device status to Sprinto
+if it is due.
 
-Fixed:
-- Prevent app from crashing when running on a linux distro which is missing in policy
+Updates:
+- Updated policy OS requirements
+- Upgrade to Electron 16
