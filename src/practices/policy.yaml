@@ -1,14 +1,14 @@
 osVersion:
   darwin:
-    # Big Sur
-    ok: ">=12.0.1 || >=11.6.1 || ~10.15.7"
+    # Monterey & Big Sur
+    ok: ">=12.1 || >=11.6.2 || ~10.15.7"
     # Catalina
     nudge: ">=10.15"
   win32:
-    # Version 21H2
-    ok: ">=10.0.19042"
-    # Version 2004 supported till Dec 21
-    nudge: ">=10.0.19041"
+    # Windows 11
+    ok: ">=10.0.22000"
+    # Version 20H2
+    nudge: ">=10.0.19042"
   awsWorkspace:
     ok: ">=10.0.14393"
     nudge: ">=10.0.10240"
@@ -55,6 +55,11 @@ antivirus:
       assertion: SUGGESTED
       platform:
         linux: ">=16.04"
+    # Sophos for Linux Standalone
+    - name: "savd"
+      assertion: SUGGESTED
+      platform:
+        linux: ">=16.04"
     # Avast antivirus
     - name: "com.avast.daemon"
       assertion: SUGGESTED
@@ -82,6 +87,11 @@ antivirus:
         darwin: ">=10.13"
     # AVG
     - name: "com.avg.daemon"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
+    # BitDefender
+    - name: "BDLDaemon"
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"

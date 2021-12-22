@@ -1,7 +1,6 @@
 Features:
-- Added clearer call to action to report device status to Sprinto
-if it is due.
+- Added support for detecting BitDefender Antivirus for MacOS
+and Sophos Antivirus for Linux.
 
 Updates:
-- Updated policy OS requirements
-- Upgrade to Electron 16
+- Updated policy OS requirements for Windows & MacOS
