@@ -32,6 +32,8 @@ import { IS_MAC, IS_WIN } from './lib/platform'
 import AutoLauncher from './AutoLauncher'
 import updateInit from './updater'
 
+app.disableHardwareAcceleration()
+
 const remoteMain = require('@electron/remote/main')
 remoteMain.initialize()
 
