@@ -265,7 +265,7 @@ class Device extends Component {
           </div>
           : <div className={`panel device-summary ok`}>
             <span>
-              <ActionIcon className='action-icon' size='28px' variant={VARIANTS.OK} />
+              <ActionIcon className='action-icon' size='28px' variant={VARIANTS.PASS} />
               Status reported to Sprinto {daysSinceLastLog} {daysSinceLastLog === 1 ? 'day': 'days'} ago.
             </span>
             <button
