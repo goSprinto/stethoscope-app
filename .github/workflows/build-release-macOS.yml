@@ -1,0 +1,38 @@
+name: Build/release
+
+on:
+  push:
+    tags:
+      - v*.*.*-drs
+
+env:
+  STETHOSCOPE_ENV: production
+
+jobs:
+  release:
+    name: Release App for macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Lint code
+        run: |
+          CI=true yarn lint
+
+      - name: Build/release Electron app
+        uses: samuelmeuli/action-electron-builder@v1
+        with:
+          # macOS code signing certificate
+          mac_certs: ${{ secrets.mac_certs }}
+          mac_certs_password: ${{ secrets.mac_certs_password }}
+
+          # If the commit is tagged with a version (e.g. "v1.0.0"),
+          # release the app after building
+          # release: ${{ startsWith(github.ref, 'refs/tags/v') }}
