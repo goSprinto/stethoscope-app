@@ -150,6 +150,8 @@
       "schema.graphql"
     ],
     "mac": {
+      "target": "dmg",
+      "arch": ["x64", "arm64"],
       "icon": "build/drsprinto-icons/icon.icns",
       "category": "public.app-category.utilities",
       "gatekeeperAssess": false,
