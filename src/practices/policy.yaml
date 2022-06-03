@@ -95,3 +95,8 @@ antivirus:
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"
+    # Kaspersky Endpoint Security Cloud
+    - name: "kavd"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
