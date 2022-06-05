@@ -1,31 +1,31 @@
 osVersion:
   darwin:
     # Monterey & Big Sur
-    ok: ">=12.1 || >=11.6.2 || ~10.15.7"
+    ok: ">=12.4 || >=11.6.6 || ~10.15.7"
     # Catalina
     nudge: ">=10.15"
   win32:
     # Windows 11
-    ok: ">=10.0.22000"
-    # Version 20H2
-    nudge: ">=10.0.19042"
+    ok: ">=10.0.22000 || 10.0.19043 || 10.0.19044"
+    # Version 21H1
+    # nudge: ">=10.0.19043"
   awsWorkspace:
     ok: ">=10.0.14393"
     nudge: ">=10.0.10240"
   ubuntu:
     # Instead of 20.04, we need 20.4 to keep semver happy
-    ok: ">=20.4.3 || ~18.4.6"
+    ok: ">=22.4.0 || ~20.4.4 || ~18.4.6"
     nudge: "20.4.x || 18.4.x"
   fedora:
-    ok: ">=33"
+    ok: ">=34"
   pop:
     # Based on Ubuntu but LTS lasts till release of next LTS
-    ok: ">=20.4"
+    ok: ">=22.4"
   manjaro:
     # Based on arch that uses rolling releases.
     ok: ">=21.1.3"
   debian:
-    ok: ">=11.0 || ~10.10 || ~9.13"
+    ok: ">=11.3 || ~10.12 || ~9.13"
     nudge: "10.x || 9.x"
   linuxmint:
     ok: ">=20.x || 19.x"
