@@ -1,6 +1,6 @@
 {
   "name": "DrSprinto",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "private": true,
   "homepage": ".",
   "author": "Sprinto",
@@ -37,7 +37,7 @@
     "build:react": "react-scripts build && node -r @babel/register update-download-page.js",
     "build:clean": "rimraf dist",
     "build:all": "electron-builder -wl",
-    "build:mac": "run-s prebuild 'build:electron -m' postbuild",
+    "build:mac": "run-s prebuild 'build:electron -m --x64 --arm64' postbuild",
     "_electron-builder-windows": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -w",
     "build:windows": "run-s prebuild _electron-builder-windows",
     "_electron-builder-linux": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -l",
@@ -149,10 +149,6 @@
     ],
     "mac": {
       "target": "dmg",
-      "arch": [
-        "x64",
-        "arm64"
-      ],
       "icon": "build/drsprinto-icons/icon.icns",
       "category": "public.app-category.utilities",
       "gatekeeperAssess": false,
