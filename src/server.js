@@ -1,8 +1,8 @@
 import { compile, setKmdEnv, run } from 'kmd-script/src'
-import { graphiqlExpress } from 'graphql-server-express'
+// import { graphiqlExpress } from 'graphql-server-express'
 import { graphql } from 'graphql'
 import noCache from 'nocache'
-import { makeExecutableSchema } from 'graphql-tools'
+import { makeExecutableSchema } from '@graphql-tools/schema'
 import { performance } from 'perf_hooks'
 import { PORT } from './constants'
 import kmd from './lib/kmd'
@@ -108,9 +108,9 @@ export default async function startServer (env, log, language = 'en-US', appActi
     }
   }
 
-  if (IS_DEV) {
-    app.use('/graphiql', cors(corsOptions), graphiqlExpress({ endpointURL: '/scan' }))
-  }
+  // if (IS_DEV) {
+  //   app.use('/graphiql', cors(corsOptions), graphiqlExpress({ endpointURL: '/scan' }))
+  // }
 
   app.get('/debugger', cors(corsOptions), async (req, res) => {
     log.info('Collecting debug info')
@@ -285,9 +285,9 @@ export default async function startServer (env, log, language = 'en-US', appActi
 
   const serverInstance = server.listen(PORT, '127.0.0.1', () => {
     console.log(`GraphQL server listening on ${PORT}`)
-    if (IS_DEV) {
-      console.log(`Explore the schema: http://127.0.0.1:${PORT}/graphiql`)
-    }
+    // if (IS_DEV) {
+    //   console.log(`Explore the schema: http://127.0.0.1:${PORT}/graphiql`)
+    // }
     serverInstance.emit('server:ready')
   })
 
