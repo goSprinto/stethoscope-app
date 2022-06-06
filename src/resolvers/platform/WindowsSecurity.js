@@ -29,22 +29,7 @@ export default {
 
     const disk = await kmd('bitlocker', context)
 
-    if (disk.bitlockerStatus && disk.bitlockerStatus === 'ON') {
-      return true
-    }
-    else {
-      return await this._veracryptStatus(root, args, context)
-    }
-  },
-
-  async _veracryptStatus (root, args, context) {
-    const disk = await kmd('veracrypt', context)
-
-    if (disk.veracryptStatus) {
-      return disk.veracryptStatus === 'Yes'
-    }
-
-    return false
+    return disk.bitlockerStatus && disk.bitlockerStatus === 'ON'
   },
 
   async screenLock (root, args, context) {

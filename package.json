@@ -137,7 +137,6 @@
     },
     "files": [
       "bitlocker-status/*",
-      "verastatus/*",
       "build/**",
       "compiled/practices/*",
       "compiled/resolvers/**",
@@ -172,8 +171,7 @@
         "bitlocker-status/Microsoft.WindowsAPICodePack.ExtendedLinguisticServices.dll",
         "bitlocker-status/Microsoft.WindowsAPICodePack.Sensors.dll",
         "bitlocker-status/Microsoft.WindowsAPICodePack.Shell.dll",
-        "bitlocker-status/Microsoft.WindowsAPICodePack.ShellExtensions.dll",
-        "verastatus/VeraStatus.exe"
+        "bitlocker-status/Microsoft.WindowsAPICodePack.ShellExtensions.dll"
       ]
     },
     "nsis": {
