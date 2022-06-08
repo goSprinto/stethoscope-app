@@ -1,0 +1,1 @@
+signcode -$ commercial -a sha1 -t http://timestamp.sectigo.com -i https://sprinto.com -spc /code-signing-cert/sprinto-code-signing-cert-2021-08.spc -v /code-signing-cert/sprinto-code-signing-cert-2021-08.pvk -n DrSprinto\ Installer dist/DrSprinto\ Setup\ 2.3.0.exe
