@@ -104,8 +104,9 @@
     "benchmark": "^2.1.4",
     "chai": "^4.1.2",
     "chai-http": "^4.0.0",
-    "electron": "16.0.2",
-    "electron-builder": "22.14.5",
+    "electron": "19.0.5",
+    "electron-builder": "23.0.3",
+    "electron-builder-notarize": "^1.5.0",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
     "eslint-plugin-standard": "^4.0.0",
@@ -118,7 +119,7 @@
     "react-scripts": "^3.2.0",
     "rimraf": "3.0.2",
     "shx": "^0.3.2",
-    "spectron": "^9.0.0",
+    "spectron": "19.0.0",
     "standard": "^14.3.1",
     "tap": "^12.1.1",
     "terser": "^3.14.1",
@@ -131,7 +132,8 @@
     "not op_mini all"
   ],
   "build": {
-    "appId": "com.sprinto.drsprinto",
+	  "afterSign": "electron-builder-notarize",
+	  "appId": "com.sprinto.drsprinto",
     "extends": null,
     "productName": "DrSprinto",
     "directories": {
@@ -203,8 +205,7 @@
           "drsprinto"
         ]
       }
-    ],
-    "afterSign": "scripts/maybeNotarize.js",
+    ],    
     "publish": [
       {
         "provider": "generic",
