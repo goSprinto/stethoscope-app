@@ -37,7 +37,7 @@ app.disableHardwareAcceleration()
 const remoteMain = require('@electron/remote/main')
 remoteMain.initialize()
 
-const settings = new Store({name: 'settings'})
+const settings = new Store({ name: 'settings' })
 
 const env = process.env.STETHOSCOPE_ENV || 'production'
 const findIcon = iconFinder(env)
@@ -72,7 +72,7 @@ const windowPrefs = {
     nodeIntegration: true,
     webSecurity: false,
     contextIsolation: false,
-    sandbox: false,
+    sandbox: false
   }
 }
 

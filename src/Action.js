@@ -88,7 +88,7 @@ class Action extends Component {
       // display the highest minimum version
       // if advanced semver requirement is passed (e.g. >1.2.3 || < 3.0.0)
       const { distroName } = device
-      const { ok } = distroName in policy[key] ? policy[key][distroName] : {ok: ''}
+      const { ok } = distroName in policy[key] ? policy[key][distroName] : { ok: '' }
       const recommended = getRecommendedVersion(ok)
 
       return new Handlebars.SafeString(
@@ -153,25 +153,24 @@ class Action extends Component {
     if (this.state.showDescription) {
       description = (
         <div className='action-description'>
-          {type === 'unknown' ? 'Failed to run the check for your device. Please contact support@sprinto.com along with the debug logs.' : 
-          <>
-          <div className='more-info'>
-            <div className='description' dangerouslySetInnerHTML={{ __html: action.description }} />
-            {action.details &&
-              <pre className='description'>{action.details}</pre>}
-            {action.link &&
-              <a href={action.link} target='_blank' rel='noopener noreferrer'>More info</a>}
-          </div>
-          {action.directions && (
-            <div
-              className='instructions'
-              dangerouslySetInnerHTML={{ __html: this.parseDirections() }}
-            />
-          )}
-          {this.props.children}
-          </>
-          }
-          </div>
+          {type === 'unknown' ? 'Failed to run the check for your device. Please contact support@sprinto.com along with the debug logs.'
+            : <>
+              <div className='more-info'>
+                <div className='description' dangerouslySetInnerHTML={{ __html: action.description }} />
+                {action.details &&
+                  <pre className='description'>{action.details}</pre>}
+                {action.link &&
+                  <a href={action.link} target='_blank' rel='noopener noreferrer'>More info</a>}
+              </div>
+              {action.directions && (
+                <div
+                  className='instructions'
+                  dangerouslySetInnerHTML={{ __html: this.parseDirections() }}
+                />
+              )}
+              {this.props.children}
+              </>}
+        </div>
       )
     }
 

@@ -246,37 +246,37 @@ class Device extends Component {
           </header>
 
           {deviceInfo}
-          {daysSinceLastLog > deviceLogReportingFreqDays ?
-          <div className={`panel device-summary critical`}>
-            <span>
-              <ActionIcon className='action-icon' size='28px' variant={VARIANTS.BLOCK} />
+          {daysSinceLastLog > deviceLogReportingFreqDays
+            ? <div className='panel device-summary critical'>
+              <span>
+                <ActionIcon className='action-icon' size='28px' variant={VARIANTS.BLOCK} />
               Device status not reported to Sprinto
-            </span>
-            <button
-              className={classNames('btn btn-default', {
-                'btn-primary': daysSinceLastLog > deviceLogReportingFreqDays
-              })}
-              onClick={onClickOpen}
-              href={reportingAppURI}
-            >
+              </span>
+              <button
+                className={classNames('btn btn-default', {
+                  'btn-primary': daysSinceLastLog > deviceLogReportingFreqDays
+                })}
+                onClick={onClickOpen}
+                href={reportingAppURI}
+              >
               Report Now
-            </button>
+              </button>
 
-          </div>
-          : <div className={`panel device-summary ok`}>
-            <span>
-              <ActionIcon className='action-icon' size='28px' variant={VARIANTS.PASS} />
-              Status reported to Sprinto {daysSinceLastLog} {daysSinceLastLog === 1 ? 'day': 'days'} ago.
-            </span>
-            <button
-              className={classNames('btn btn-default')}
-              onClick={onClickOpen}
-              href={reportingAppURI}
-            >
+              </div>
+            : <div className='panel device-summary ok'>
+              <span>
+                <ActionIcon className='action-icon' size='28px' variant={VARIANTS.PASS} />
+              Status reported to Sprinto {daysSinceLastLog} {daysSinceLastLog === 1 ? 'day' : 'days'} ago.
+              </span>
+              <button
+                className={classNames('btn btn-default')}
+                onClick={onClickOpen}
+                href={reportingAppURI}
+              >
               Report Now
-            </button>
+              </button>
 
-          </div>}
+              </div>}
           <div className={`panel device-summary ${deviceClass}`}>
             {deviceMessages[deviceClass](this.props.strings[deviceClass])}
             <button

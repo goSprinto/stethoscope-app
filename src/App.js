@@ -30,7 +30,7 @@ const log = remote.getGlobal('log')
 const platform = os.platform()
 
 const appName = ipcRenderer.sendSync('get:app:name')
-const settings = new Store({name: 'settings'})
+const settings = new Store({ name: 'settings' })
 
 class App extends Component {
   state = {

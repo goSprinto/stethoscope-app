@@ -128,7 +128,7 @@ export default {
       platform = result.system.distroId
     }
 
-    if(platform in args.osVersion){
+    if (platform in args.osVersion) {
       const { ok, nudge } = Object(args.osVersion[platform])
       // Ubuntu versions look like 18.04.5. Convert it to
       // 18.4.5 so that semver likes it.

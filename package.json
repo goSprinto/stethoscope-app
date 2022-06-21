@@ -132,8 +132,8 @@
     "not op_mini all"
   ],
   "build": {
-	  "afterSign": "electron-builder-notarize",
-	  "appId": "com.sprinto.drsprinto",
+    "afterSign": "electron-builder-notarize",
+    "appId": "com.sprinto.drsprinto",
     "extends": null,
     "productName": "DrSprinto",
     "directories": {
@@ -205,7 +205,7 @@
           "drsprinto"
         ]
       }
-    ],    
+    ],
     "publish": [
       {
         "provider": "generic",

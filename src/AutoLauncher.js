@@ -3,7 +3,7 @@ import AutoLaunch from 'auto-launch'
 import config from './config.json'
 import os from 'os'
 
-const settings = new Store({name: 'settings'})
+const settings = new Store({ name: 'settings' })
 export default class AutoLauncher {
   constructor (appName) {
     const autoLaunchOpts = {

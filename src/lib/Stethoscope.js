@@ -68,6 +68,7 @@ export default class Stethoscope {
 
     return handleValidate(result, partitions, device, practices, platform)
   }
+
   // privately retry request until a response is given
   static __repeatRequest (policy, resolve, reject) {
     const query = `query ValidateDevice($policy: DevicePolicy!) {

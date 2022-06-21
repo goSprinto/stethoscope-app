@@ -19,10 +19,6 @@ jobs:
         with:
           node-version: 16
 
-      - name: Lint code
-        run: |
-          CI=true yarn lint
-
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
