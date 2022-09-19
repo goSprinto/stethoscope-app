@@ -14,9 +14,7 @@
   margin-bottom: 15px;
   width: 100%;
 }
-.device-name {
-  font-weight: bold;
-}
+
 .last-updated {
   font-size: 12px;
   color: #aaa;
@@ -41,7 +39,6 @@ ul.mac-addresses {
 }
 .device-info dt {
   width: 20%;
-  font-weight: bold;
   text-align: right;
   box-sizing: border-box;
   margin-right: 10px;
@@ -138,15 +135,9 @@ div.instructions li {
   padding-right: 20px;
 }
 
-.action-icon {
-  display: inline-block;
-  margin-right: 7px;
-  position: relative;
-  top: 3px;
-}
 
 pre.description {
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: 'UntitledSans';
   font-size: 14px;
   white-space: pre-wrap;
 }
@@ -166,7 +157,7 @@ a.btn {
   vertical-align: baseline;
   background: #e0e1e2 none;
   color: rgba(0,0,0,.6);
-  font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;
+  font-family: 'UntitledSans';
   margin: 0 .25em 0 0;
   padding: .78571429em 1.5em .78571429em;
   text-transform: none;

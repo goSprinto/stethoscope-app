@@ -17,10 +17,18 @@ strings:
 practices:
   firewall:
     title: >
+      Your Firewall should be enabled
+    subTitle: >
       {{#if passing}}
         Your Firewall is enabled
       {{else}}
         Your Firewall should be enabled
+      {{/if}}
+    shortDescription: >
+      {{#if passing}}
+        Your Firewall is enabled
+      {{else}}
+        Your Firewall is not enabled
       {{/if}}
     description: >
       Firewalls control network traffic into and out of a system. Enabling the firewall on your device can prevent network-based attacks on your system, and is especially important if you make use of insecure wireless networks (such as at coffee shops and airports).
@@ -41,13 +49,20 @@ practices:
       linux: |
         1. Open a terminal.
         1. Enter the command: "sudo ufw enable".
-
   stethoscopeVersion:
     title: >
+      {{appName}} updated
+    subTitle: >
       {{#if passing}}
         {{appName}} is up-to-date
       {{else}}
         {{appName}} needs to be updated
+      {{/if}}
+    shortDescription: >
+      {{#if passing}}
+        {{appName}} is up-to-date
+      {{else}}
+        {{appName}} is not updated
       {{/if}}
     description: >
       Keeping the app up-to-date gives you access to the latest features, security patches, and performance improvements.
@@ -58,13 +73,20 @@ practices:
         <a href='{{appName}}://update' class="btn">Update {{appName}}</a>.
       linux: |
         <a href='{{appName}}://update' class="btn">Update {{appName}}</a>.
-
   remoteLogin:
     title: >
+      Remote Login should be disabled
+    subTitle: >
       {{#if passing}}
         Remote Login is disabled
       {{else}}
         Remote Login should be disabled
+      {{/if}}
+    shortDescription: >
+      {{#if passing}}
+        Remote Login is disabled
+      {{else}}
+        Remote Login is not disabled
       {{/if}}
     description: >
       The 'Remote Login' setting on your device controls whether users can login remotely to the system. If you don't know what this is or why you would want it, you should disable 'Remote Login'.
@@ -79,13 +101,20 @@ practices:
         1. Under "Remote Desktop" heading, select "Don't allow remote connections to this computer".
         1. Click Apply.
         1. Click OK.
-
   diskEncryption:
     title: >
+      Disk encryption
+    subTitle: >
       {{#if passing}}
-        Disk Encryption is enabled
+        Disk encryption is enabled
       {{else}}
-        Disk Encryption should be enabled [Required]
+        Disk encryption is not enabled
+      {{/if}}
+    shortDescription: >
+      {{#if passing}}
+        Disk encryption is enabled
+      {{else}}
+        Disk encryption is not enabled
       {{/if}}
     description: >
       Full-disk encryption protects data at rest from being accessed by a party who does not know the password or decryption key. Systems containing internal data should be encrypted. It is every employee's responsibility to keep internal data safe.
@@ -121,6 +150,14 @@ practices:
         For other distributions, please consult the documentation.
   automaticUpdates:
     title: >
+      Automatic Updates should be enabled
+    subTitle: >
+      {{#if passing}}
+        Automatic Updates are enabled
+      {{else}}
+        Automatic Updates should be enabled
+      {{/if}}
+    shortDescription: >
       {{#if passing}}
         Automatic Updates are enabled
       {{else}}
@@ -160,13 +197,20 @@ practices:
         1. Expand: Computer Configuration > Administrative Templates > Windows Components > Windows Update
         1. Find and double-click on "Configure Automatic Updates"
         1. Select "Enabled" or "Not Configured" to turn automatic updates back on
-
   screenLock:
-    title:  >
+    title: >
+      Screen lock
+    subTitle: >
       {{#if passing}}
-        Screen Lock is enabled
+        Screen lock enabled
       {{else}}
-        Screen Lock should be enabled [Required]
+        Screen lock disabled
+      {{/if}}
+    shortDescription: >
+      {{#if passing}}
+        Screen lock enabled for {{this.screenLockDelay}}
+      {{else}}
+        Automatic Updates should be enabled
       {{/if}}
     description: >
       Screen locks, or screen saver locks, prevent unauthorized third-parties from accessing your laptop when unattended by requiring a password to dismiss the screen saver or wake from "sleep" mode.
@@ -202,13 +246,20 @@ practices:
         1. Set "Automatic Screen Lock" to ON.
         1. For "Automatic Screen Lock Delay", select "Screen Turns Off".
         1. Set "Lock Screen on Suspend" to ON.
-
   screenIdle:
-    title:  >
+    title: >
+      Auto lock in 15 minutes
+    subTitle: >
       {{#if passing}}
         Screen will lock in 15 minutes if the system is idle.
       {{else}}
-        Screen should lock within 15 minutes if the system is idle. [Required]
+        Screen should lock within 15 minutes if the system is idle.
+      {{/if}}
+    shortDescription: >
+      {{#if passing}}
+        Screen lock enabled for {{this.screenLockDelay}}
+      {{else}}
+        Automatic Updates should be enabled
       {{/if}}
     description: >
       Screens which lock automatically when your laptop is unattended prevent unauthorized access from third-parties by requiring a password to dismiss the screen saver or wake from "sleep" mode. Your timeout setting should be 15 minutes or less.
@@ -238,13 +289,20 @@ practices:
         1. Open [Lock screen settings](ms-settings:lockscreen).
         1. Scroll down and click on "Screen saver settings".
         1. Make sure the wait time is less than or equal to 15 minutes.
-
   osVersion:
     title: >
+      Operating System
+    subTitle: >
       {{#if passing}}
-        System is up-to-date
+        System is up to date
       {{else}}
-        System needs to be updated [Required]
+        System is out of date
+      {{/if}}
+    shortDescription: >
+      {{#if passing}}
+        your current Os version - {{this.os.Version}}
+      {{else}}
+        System is out of date
       {{/if}}
     description: >
       One of the most important things you can do to secure your device(s) is to keep your operating system and software up to date. New vulnerabilities and weaknesses are found every day, so frequent updates are essential to ensuring your device(s) include the latest fixes and preventative measures.
@@ -272,9 +330,16 @@ practices:
         If you don't see any available updates, you may need to upgrade to a release of your distribution that is still supported and is receiving security patches from the vendor.
 
         {{requirement "osVersion" "linux"}}
-
   applications:
     title: >
+      Applications are not following requirements
+    subTitle: >
+      {{#if passing}}
+        Applications are following requirements
+      {{else}}
+        Applications are not following requirements
+      {{/if}}
+    shortDescription: >
       {{#if passing}}
         Applications are following requirements
       {{else}}
@@ -288,13 +353,20 @@ practices:
 
       win32: |
         See the following requirements:
-
   antivirus:
     title: >
+      Antivirus
+    subTitle: >
       {{#if passing}}
         Antivirus is running
       {{else}}
-        Antivirus should be running [Optional]
+        Antivirus is disabled (Optional)
+      {{/if}}
+    shortDescription: >
+      {{#if passing}}
+        Antivirus is running
+      {{else}}
+        Antivirus is not running
       {{/if}}
     description: >
       An antivirus software protects you from viruses, malware and spyware.
@@ -321,9 +393,16 @@ practices:
         1. sudo apt-get install clamav clamav-daemon
         1. sudo service clamav-freshclam restart (wait for 3-5 minutes)
         1. sudo service clamav-daemon restart && sudo service clamav-daemon status (The output should show the status as running)
-
   openWifiConnections:
     title: >
+      There are open Wi-Fi networks cached locally
+    subTitle: >
+      {{#if passing}}
+        There are no open Wi-Fi networks cached locally
+      {{else}}
+        There are open Wi-Fi networks cached locally
+      {{/if}}
+    shortDescription: >
       {{#if passing}}
         There are no open Wi-Fi networks cached locally
       {{else}}
