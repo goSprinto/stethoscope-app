@@ -444,6 +444,10 @@ class App extends Component {
           showStack={isDev}
           message={error.message}
           stack={error.stack}
+          reportingErrorLogAppURI={reportingErrorLogAppURI}
+          onClickOpen={this.handleOpenExternal}
+          onCancelReloadApp={this.onCancelReloadApp}
+          onRescan={this.handleScan}
         >
           {helpOptions}
         </ErrorMessage>
