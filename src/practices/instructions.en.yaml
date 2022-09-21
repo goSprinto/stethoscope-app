@@ -251,9 +251,9 @@ practices:
       Auto lock in 15 minutes
     subTitle: >
       {{#if passing}}
-        Screen will lock in 15 minutes if the system is idle.
+        Screen locks in 15 min is enabled
       {{else}}
-        Screen should lock within 15 minutes if the system is idle.
+        Screen locks in 15 min is disabled
       {{/if}}
     shortDescription: >
       {{#if passing}}

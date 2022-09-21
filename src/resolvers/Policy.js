@@ -1,95 +1,102 @@
-import Security from './Security'
-import { PASS, FAIL, NUDGE, SUGGESTED, NEVER, UNKNOWN } from '../constants'
+import Security from "./Security";
+import { PASS, FAIL, NUDGE, SUGGESTED, NEVER, UNKNOWN } from "../constants";
 
 export default {
-  async validate (root, args, context) {
-    const { policy } = Object.assign({}, args)
-    const response = {}
+  async validate(root, args, context) {
+    const { policy } = Object.assign({}, args);
+    const response = {};
 
     for (const verification in policy) {
       // get policy requirement for current property
-      const requirement = policy[verification]
+      const requirement = policy[verification];
 
-      if (!Security[verification]) continue
+      if (!Security[verification]) continue;
 
-      let passing = true
+      let passing = true;
       // determine device state
-      passing = await Security[verification](root, policy, context)
+      try {
+        passing = await Security[verification](root, policy, context);
+      } catch (error) {
+        response[`${verification}Error`] = error;
+      }
+
       // this handles multiplicable items like applications, etc.
       if (Array.isArray(passing)) {
         // convert verification result to PASS|FAIL
-        response[verification] = passing.map(({ name, version, installed, state, passing }, index) => {
-          const policyType = requirement[index].assertion
-          const failStatus = policyType === SUGGESTED ? NUDGE : FAIL
-          return {
-            name,
-            version,
-            installed,
-            state,
-            status: passing ? PASS : failStatus
+        response[verification] = passing.map(
+          ({ name, version, installed, state, passing }, index) => {
+            const policyType = requirement[index].assertion;
+            const failStatus = policyType === SUGGESTED ? NUDGE : FAIL;
+            return {
+              name,
+              version,
+              installed,
+              state,
+              status: passing ? PASS : failStatus,
+            };
           }
-        })
-      } else if (verification === 'antivirus') {
+        );
+      } else if (verification === "antivirus") {
         // Keep Antivirus on nudge for now since it is not needed for everyone
-        response[verification] = passing.status ? PASS : NUDGE
+        response[verification] = passing.status ? PASS : NUDGE;
       } else {
         // default item to PASS
-        response[verification] = PASS
+        response[verification] = PASS;
 
         if (passing === false) {
           // test failure against policy requirement
           switch (requirement) {
             // passing is suggested, NUDGE user
             case SUGGESTED:
-              response[verification] = NUDGE
-              break
+              response[verification] = NUDGE;
+              break;
 
             // failure is required
             case NEVER:
-              break
+              break;
 
             // handles ALWAYS and some semver requirement failures
             default:
-              response[verification] = FAIL
-              break
+              response[verification] = FAIL;
+              break;
           }
         }
 
         // passing tests are only a FAIL if the policy forbids it (e.g. remote login enabled)
         if (passing && requirement === NEVER) {
-          response[verification] = FAIL
+          response[verification] = FAIL;
         }
 
         if (passing === NUDGE) {
-          response[verification] = NUDGE
+          response[verification] = NUDGE;
         }
         if (passing === UNKNOWN) {
-          response[verification] = UNKNOWN
+          response[verification] = UNKNOWN;
         }
       }
     }
 
     // set the global validation status based on the individual policy evaluation results
-    const values = Object.values(response)
-    const deviceResults = new Set(values)
+    const values = Object.values(response);
+    const deviceResults = new Set(values);
 
     // need to also add any multiplicable statuses (e.g. applications)
-    values.forEach(val => {
+    values.forEach((val) => {
       if (Array.isArray(val)) {
         val.forEach(({ status }) => {
-          deviceResults.add(status)
-        })
+          deviceResults.add(status);
+        });
       }
-    })
+    });
 
     if (deviceResults.has(FAIL)) {
-      response.status = FAIL
+      response.status = FAIL;
     } else if (deviceResults.has(NUDGE)) {
-      response.status = NUDGE
+      response.status = NUDGE;
     } else {
-      response.status = PASS
+      response.status = PASS;
     }
 
-    return response
-  }
-}
+    return response;
+  },
+};

@@ -31,6 +31,8 @@ osVersion:
     ok: ">=20.x || 19.x"
   kali:
     ok: "2021.3"
+  elementary:
+    ok: ">=5.x || >=6.x"
   linux:
     ok: ">=20.4.3 || ~18.4.6"
     nudge: "20.4.x || 18.4.x"
