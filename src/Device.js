@@ -83,7 +83,7 @@ const DeviceDetails = ({
   return (
     <>
       <div
-        className="flex items-center border-solid rounded-md justify-between mt-5 p-2"
+        className="flex items-center border-solid rounded-md justify-between mt-5 pt-3 pb-3 pl-3 pr-3"
         style={{ borderColor: "#e5e7eb" }}
       >
         <div className="flex items-center">
@@ -93,11 +93,10 @@ const DeviceDetails = ({
             )}
           </div>
           <div className="ml-3">
-            <div className="text-xl font-bold">{friendlyName}</div>
+            <div className="text-lg font-medium">{friendlyName}</div>
             <div className="text-base">{identifier}</div>
             <div className="text-xs text-slate-400">
-              {lastScan} {scannedBy} {lastScanTime} (
-              {Math.round(lastScanDuration * 100) / 100} seconds)
+              {lastScan} {lastScanTime}
             </div>
           </div>
         </div>
@@ -199,6 +198,7 @@ class Device extends Component {
         onRescan: this.props.onRescan,
         reportingErrorLogAppURI: this.props.reportingErrorLogAppURI,
         onClickOpen: this.props.onClickOpen,
+        scanResult: this.props.scanResult,
       };
 
       const hasResults = Array.isArray(action.results);
@@ -312,6 +312,7 @@ class Device extends Component {
     }
 
     const actions = [
+      // ...this.actions(device.error, "error", device),
       ...this.actions(device.unknown, "unknown", device),
       ...this.actions(device.critical, "critical", device),
       ...this.actions(device.suggested, "suggested", device),

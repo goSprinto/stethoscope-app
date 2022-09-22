@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import ReactDOMServer from "react-dom/server";
+import LinkOutIcon from "./icons/LinkOutIcon";
 import Drawer from "react-modern-drawer";
 import ActionIcon, { VARIANTS, VARIANT_COLORS } from "./ActionIcon";
 import semver from "./lib/patchedSemver";
@@ -31,7 +32,7 @@ class Action extends Component {
       return VARIANTS.BLOCK;
     } else if (type === "done") {
       return VARIANTS.PASS;
-    } else if (type === "suggested" || type === "unknown") {
+    } else if (type === "suggested" || type === "unknown" || type === "error") {
       return VARIANTS.SUGGEST;
     }
   }
@@ -41,7 +42,7 @@ class Action extends Component {
       return "Failed";
     } else if (type === "done") {
       return "Passed";
-    } else if (type === "suggested" || type === "unknown") {
+    } else if (type === "suggested" || type === "unknown" || type === "error") {
       return "Warning";
     }
   }
@@ -204,7 +205,8 @@ class Action extends Component {
   };
 
   render() {
-    const { action, type, reportingErrorLogAppURI, onClickOpen } = this.props;
+    const { action, type, reportingErrorLogAppURI, onClickOpen, scanResult } =
+      this.props;
 
     const description = (
       <div className="py-8 px-4 text-left">
@@ -222,7 +224,16 @@ class Action extends Component {
                 className={`ml-1 `}
                 style={{ color: VARIANT_COLORS[this.getIconVariant(type)] }}
               >
-                {this.parseSubTitle()}
+                {type === "error" ? (
+                  <>
+                    We detected some error.{" "}
+                    <a href={reportingErrorLogAppURI} onClick={onClickOpen}>
+                      Report <LinkOutIcon />
+                    </a>
+                  </>
+                ) : (
+                  this.parseSubTitle()
+                )}
               </div>
             </div>
             <div
@@ -293,15 +304,17 @@ class Action extends Component {
           >
             <div className="flex items-center">
               <ActionIcon
-                height={12}
-                width={12}
+                height={14}
+                width={14}
                 variant={this.getIconVariant(type)}
               />
-              <div className="text-sm font-bold ml-1">{this.parseTitle()}</div>
+              <div className="text-sm font-medium ml-1">
+                {this.parseTitle()}
+              </div>
             </div>
             <div
               className="text-xs font-extralight "
-              style={{ marginLeft: "15px" }}
+              style={{ marginLeft: "18px" }}
             >
               {this.parseSubTitle()}
             </div>

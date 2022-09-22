@@ -1,5 +1,13 @@
 import Security from "./Security";
-import { PASS, FAIL, NUDGE, SUGGESTED, NEVER, UNKNOWN } from "../constants";
+import {
+  PASS,
+  FAIL,
+  NUDGE,
+  SUGGESTED,
+  NEVER,
+  ERROR,
+  UNKNOWN,
+} from "../constants";
 
 export default {
   async validate(root, args, context) {
@@ -73,6 +81,14 @@ export default {
         if (passing === UNKNOWN) {
           response[verification] = UNKNOWN;
         }
+      }
+
+      // mutating reponse[verification] = ERROR if security() throw an error
+      if (
+        response[`${verification}Error`] != undefined ||
+        response[`${verification}Error`] != null
+      ) {
+        response[verification] = ERROR;
       }
     }
 

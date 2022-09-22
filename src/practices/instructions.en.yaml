@@ -12,7 +12,7 @@ strings:
     Click the arrow next to each recommendation for instructions.
   policyDescription: baseline policy
   rescanButton: Rescan
-  lastScan: Last scanned by
+  lastScan: Last scanned
 
 practices:
   firewall:
