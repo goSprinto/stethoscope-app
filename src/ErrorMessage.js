@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import "./ErrorMessage.css";
+import ReportErrorLog from "./components/reportErrorLog";
 
 let clipboard;
 let ipcRenderer;

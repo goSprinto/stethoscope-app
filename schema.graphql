@@ -8,7 +8,7 @@ type Query {
 }
 
 type Policy {
-  validate(policy:DevicePolicy): PolicyResult!
+  validate(policy: DevicePolicy): PolicyResult!
 }
 
 # Available information about user device
@@ -51,7 +51,7 @@ type Device {
   osqueryVersion: String
   # available hard disks
   disks: [Disk]
-  security(policy:DevicePolicy): SecurityInfo
+  security(policy: DevicePolicy): SecurityInfo
   policyResult: FeatureState
 }
 
@@ -268,6 +268,7 @@ input PlatformBracketRequirement {
   manjaro: VersionBracket
   linux: VersionBracket
   awsWorkspace: VersionBracket
+  elementary: VersionBracket
   all: VersionBracket
 }
 
