@@ -211,9 +211,9 @@ class Action extends Component {
     const description = (
       <div className="py-8 px-4 text-left">
         <>
-          <div className="text-xl font-bold">{this.parseTitle()}</div>
+          <div className="text-lg font-medium">{this.parseTitle()}</div>
           <div className="pl-2">
-            <div className="text-base font-bold mt-4 mb-1">Status</div>
+            <div className="text-sm font-medium mt-4 mb-1">Status</div>
             <div className="flex text-xs">
               <ActionIcon
                 variant={this.getIconVariant(type)}
@@ -251,7 +251,7 @@ class Action extends Component {
 
             {action.directions && (
               <>
-                <div className="text-base font-bold mt-2">
+                <div className="text-sm font-medium mt-2">
                   {type === "done" ? "How to configure" : "How to fix"}
                 </div>
                 <div
@@ -271,7 +271,7 @@ class Action extends Component {
             <div className="flex justify-between mt-4">
               <div>
                 <button
-                  className="bg-grayMid py-2 px-2 space-x-2 text-grayUltraDark rounded-lg m-0"
+                  className="bg-grayMid py-2 px-4 space-x-2 text-grayUltraDark rounded m-0"
                   onClick={this.toggleDrawer}
                 >
                   Cancel
@@ -279,7 +279,7 @@ class Action extends Component {
               </div>
               <div>
                 <button
-                  className="bg-orangeOne py-2 px-2 space-x-2 text-white rounded-lg m-0"
+                  className="bg-orangeOne py-2 px-4 space-x-2 text-white rounded m-0"
                   onClick={this.props.onRescan}
                 >
                   Rescan

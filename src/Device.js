@@ -83,7 +83,7 @@ const DeviceDetails = ({
   return (
     <>
       <div
-        className="flex items-center border-solid rounded-md justify-between mt-5 pt-3 pb-3 pl-3 pr-3"
+        className="flex items-center border-solid rounded-md justify-between mt-5 p-3"
         style={{ borderColor: "#e5e7eb" }}
       >
         <div className="flex items-center">
@@ -102,7 +102,7 @@ const DeviceDetails = ({
         </div>
         <div>
           <button
-            className={classNames("btn btn-default mr-0", {
+            className={classNames("btn btn-default mr-0 py-2 px-4 rounded", {
               "btn-primary": daysSinceLastLog > deviceLogReportingFreqDays,
             })}
             onClick={onClickOpen}
@@ -312,7 +312,7 @@ class Device extends Component {
     }
 
     const actions = [
-      // ...this.actions(device.error, "error", device),
+      ...this.actions(device.error, "error", device),
       ...this.actions(device.unknown, "unknown", device),
       ...this.actions(device.critical, "critical", device),
       ...this.actions(device.suggested, "suggested", device),
@@ -343,11 +343,11 @@ class Device extends Component {
           </div>
 
           <div
-            className={`flex border-solid rounded-md p-2 justify-between items-center mt-8`}
+            className={`flex border-solid rounded-md p-3 justify-between items-center mt-8`}
             style={{ borderColor: "#e5e7eb" }}
           >
             <div>
-              <span className="text-sm flex flex-row">
+              <span className="text-sm font-small flex flex-row">
                 {enableReportNow
                   ? `Send health report in 00:${countDown
                       .toString()
@@ -356,11 +356,11 @@ class Device extends Component {
               </span>
               <div className="flex flex-row">
                 {daysSinceLastLog > deviceLogReportingFreqDays ? (
-                  <span className="text-xs">
+                  <span className="text-xs font-medium">
                     Device status not reported to Sprinto
                   </span>
                 ) : (
-                  <span className="text-xs">
+                  <span className="text-xs text-slate-400">
                     {daysSinceLastLog === 0
                       ? "Last reported today."
                       : `Last reported ${daysSinceLastLog}
@@ -371,7 +371,7 @@ class Device extends Component {
             </div>
 
             <button
-              className="bg-orangeOne text-white rounded-lg mr-0"
+              className="bg-orangeOne text-white rounded mr-0 py-2 px-4"
               onClick={onClickOpen}
               disabled={!enableReportNow}
               href={reportingAppURI}
