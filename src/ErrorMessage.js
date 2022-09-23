@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import "./ErrorMessage.css";
 import ReportErrorLog from "./components/reportErrorLog";
+import Button from "./components/Button";
 
 let clipboard;
 let ipcRenderer;
@@ -38,20 +39,20 @@ export default class ErrorMessage extends Component {
         </div>
         <div className="flex justify-between mt-4">
           <div>
-            <button
-              className="bg-grayMid py-2 px-2 space-x-2 text-grayUltraDark rounded-lg m-0"
-              onClick={onCancelReloadApp}
-            >
-              Cancel
-            </button>
+            <Button
+              title={"Cancel"}
+              isPrimary={true}
+              onClickOpen={onCancelReloadApp}
+              className="bg-grayMid text-grayUltraDark m-0"
+            />
           </div>
           <div>
-            <button
-              className="bg-orangeOne py-2 px-2 space-x-2 text-white rounded-lg m-0"
-              onClick={() => ipcRenderer.send("app:restart")}
-            >
-              Restart
-            </button>
+            <Button
+              title={"Restart"}
+              isPrimary={true}
+              onClickOpen={() => ipcRenderer.send("app:restart")}
+              className="bg-orangeOne text-white m-0"
+            />
           </div>
         </div>
       </div>

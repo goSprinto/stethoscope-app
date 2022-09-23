@@ -9,6 +9,7 @@ import showdown from "showdown";
 import Handlebars from "handlebars/dist/handlebars.min.js";
 import "react-modern-drawer/dist/index.css";
 import ReportErrorLog from "./components/reportErrorLog";
+import Button from "./components/Button";
 
 const { ipcRenderer } = window.require("electron");
 const appName = ipcRenderer.sendSync("get:app:name");
@@ -269,20 +270,20 @@ class Action extends Component {
 
             <div className="flex justify-between mt-4">
               <div>
-                <button
-                  className="bg-grayMid py-2 px-4 space-x-2 text-grayUltraDark rounded m-0"
-                  onClick={this.toggleDrawer}
-                >
-                  Cancel
-                </button>
+                <Button
+                  title={"Cancel"}
+                  isPrimary={true}
+                  onClickOpen={this.toggleDrawer}
+                  className="bg-grayMid text-grayUltraDark m-0"
+                />
               </div>
               <div>
-                <button
-                  className="bg-orangeOne py-2 px-4 space-x-2 text-white rounded m-0"
-                  onClick={this.props.onRescan}
-                >
-                  Rescan
-                </button>
+                <Button
+                  title={"Rescan"}
+                  isPrimary={true}
+                  onClickOpen={this.props.onRescan}
+                  className="bg-orangeOne text-white m-0"
+                />
               </div>
             </div>
           </div>

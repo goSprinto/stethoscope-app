@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import classNames from "classnames";
 import Action from "./Action";
 import ActionIcon, { VARIANTS } from "./ActionIcon";
 import semver from "./lib/patchedSemver";
@@ -20,7 +19,7 @@ import PopOSIcon from "./icons/PopOsIcon";
 import UbuntuOSIcon from "./icons/UbuntuOsIcon";
 import LinuxMintOSIcon from "./icons/LinuxMintOsIcon";
 import FedoraLinuxOSIcon from "./icons/FedoraLinuxOSIcon";
-import RefreshIcon from "./icons/RefreshIcon";
+import Button from "./components/Button";
 
 const WelcomeMessage = () => {
   return (
@@ -101,14 +100,12 @@ const DeviceDetails = ({
           </div>
         </div>
         <div>
-          <button
-            className={classNames("btn btn-default mr-0 py-2 px-4 rounded", {
-              "btn-primary": daysSinceLastLog > deviceLogReportingFreqDays,
-            })}
-            onClick={onClickOpen}
-          >
-            <RefreshIcon /> {label}
-          </button>
+          <Button
+            title={label}
+            isPrimary={daysSinceLastLog > deviceLogReportingFreqDays}
+            onClickOpen={onClickOpen}
+            icon={true}
+          />
         </div>
       </div>
     </>
@@ -370,14 +367,14 @@ class Device extends Component {
               </div>
             </div>
 
-            <button
-              className="bg-orangeOne text-white rounded mr-0 py-2 px-4"
-              onClick={onClickOpen}
+            <Button
+              title={"Send report"}
+              isPrimary={true}
+              onClickOpen={onClickOpen}
+              redirectURI={reportingAppURI}
               disabled={!enableReportNow}
-              href={reportingAppURI}
-            >
-              Send report
-            </button>
+              className="bg-orangeOne text-white"
+            />
           </div>
         </div>
       </div>
