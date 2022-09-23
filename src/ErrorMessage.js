@@ -26,7 +26,9 @@ export default class ErrorMessage extends Component {
 
     return (
       <div className="p-5">
-        Looks like we have run into an unknown issue.
+        <div className="text-base">
+          Looks like we have run into an unknown issue.
+        </div>
         <div className="mt-5">
           <ReportErrorLog
             title={"Get help"}

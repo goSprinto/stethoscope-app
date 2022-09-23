@@ -36,6 +36,10 @@ osVersion:
   linux:
     ok: ">=20.4.3 || ~18.4.6"
     nudge: "20.4.x || 18.4.x"
+  neon:
+    ok: ">=5.25"
+  ol:
+    ok: ">=9.x || >=8.x || >=7.x"
 diskEncryption: ALWAYS
 screenLock: IF_SUPPORTED
 screenIdle: "<=900"

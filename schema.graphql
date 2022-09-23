@@ -284,6 +284,8 @@ input PlatformBracketRequirement {
   linux: VersionBracket
   awsWorkspace: VersionBracket
   elementary: VersionBracket
+  neon: VersionBracket
+  ol: VersionBracket
   all: VersionBracket
 }
 

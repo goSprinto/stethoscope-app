@@ -205,8 +205,7 @@ class Action extends Component {
   };
 
   render() {
-    const { action, type, reportingErrorLogAppURI, onClickOpen, scanResult } =
-      this.props;
+    const { action, type, reportingErrorLogAppURI, onClickOpen } = this.props;
 
     const description = (
       <div className="py-8 px-4 text-left">
