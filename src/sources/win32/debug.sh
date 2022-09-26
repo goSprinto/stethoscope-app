@@ -14,13 +14,13 @@ save debug.bitlocker
 remove output
 remove path
 
-exec powershell 'Get-WmiObject win32_operatingsystem | select Caption,Version | Format-List'
+exec powershell 'Get-CimInstance win32_operatingsystem | select Caption,Version | Format-List'
 save output
 trim
 save debug.os
 remove output
 
-exec powershell 'Get-WmiObject win32_desktop | where name -eq (whoami)'
+exec powershell 'Get-CimInstance win32_desktop | where name -eq (whoami)'
 save output
 trim
 save debug.screensaver
