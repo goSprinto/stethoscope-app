@@ -20,6 +20,7 @@ import UbuntuOSIcon from "./icons/UbuntuOsIcon";
 import LinuxMintOSIcon from "./icons/LinuxMintOsIcon";
 import FedoraLinuxOSIcon from "./icons/FedoraLinuxOSIcon";
 import Button from "./components/Button";
+import LaptopIcon from "./icons/LaptopIcon";
 
 const WelcomeMessage = () => {
   return (
@@ -86,11 +87,7 @@ const DeviceDetails = ({
         style={{ borderColor: "#e5e7eb" }}
       >
         <div className="flex items-center">
-          <div>
-            {IconNameForRespectiveOS || (
-              <img src="./laptop.png" width={51} height={51} alt="laptop" />
-            )}
-          </div>
+          <div>{IconNameForRespectiveOS || <LaptopIcon />}</div>
           <div className="ml-3">
             <div className="text-lg font-medium">{friendlyName}</div>
             <div className="text-base">{identifier}</div>
