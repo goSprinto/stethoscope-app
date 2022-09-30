@@ -279,7 +279,7 @@ class Action extends Component {
               </div>
               <div>
                 <Button
-                  title={"Rescan"}
+                  title={"Re-scan"}
                   isPrimary={true}
                   onClickOpen={this.props.onRescan}
                   className="bg-orangeOne text-white m-0"
@@ -324,7 +324,7 @@ class Action extends Component {
             open={this.state.isOpen}
             onClose={this.toggleDrawer}
             direction="right"
-            size={500}
+            size={"80%"}
             enableOverlay={true}
             className="justify-left"
           >

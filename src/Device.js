@@ -343,9 +343,9 @@ class Device extends Component {
             <div>
               <span className="text-sm font-small flex flex-row">
                 {enableReportNow
-                  ? `Send health report in 00:${countDown
+                  ? `Device scan is valid for ${countDown
                       .toString()
-                      .padStart(2, "0")}:00`
+                      .padStart(2, "0")}:00 ${countDown === 1 ? "min" : "mins"}`
                   : "Scan device to send health report"}
               </span>
               <div className="flex flex-row">

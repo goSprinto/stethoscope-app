@@ -40,15 +40,18 @@ practices:
         1. Unlock the pane by clicking the lock in the lower-left corner and enter the administrator username and password.
         1. Click "Turn On Firewall" or "Start" to enable the firewall.
         1. Click Advanced to customize the firewall configuration.
+        1. Rescan to update the status
 
       win32: |
         1. Open [Windows Firewall Settings](ps://wf.msc)
         1. Click "Windows Defender Firewall Properties" in the center pane
         1. Ensure "Firewall state" is set to "On (recommended)" on the Domain, Public, and Private Profile tabs
         1. Click OK
+        1. Rescan to update the status
       linux: |
         1. Open a terminal.
         1. Enter the command: "sudo ufw enable".
+        1. Rescan to update the status
   stethoscopeVersion:
     title: >
       {{appName}} updated
@@ -95,12 +98,14 @@ practices:
         1. Choose System Preferences from the Apple menu.
         1. Click [Sharing](x-apple.systempreferences:com.apple.preferences.sharing?Services_RemoteLogin).
         1. Uncheck "Remote Login" on the left.
+        1. Rescan to update the status
 
       win32: |
         1. Open [Advanced System Preferences](ps://SystemPropertiesRemote).
         1. Under "Remote Desktop" heading, select "Don't allow remote connections to this computer".
         1. Click Apply.
         1. Click OK.
+        1. Rescan to update the status
   diskEncryption:
     title: >
       Disk encryption
@@ -125,6 +130,7 @@ practices:
         1. Click the [FileVault](x-apple.systempreferences:com.apple.preference.security?FDE) tab.
         1. Unlock the pane by clicking the lock in the lower-left corner and enter the administrator username and password.
         1. Click "Turn On FileVault" to start the process.
+        1. Rescan to update the status
 
         {{#each disks}}
           <li>
@@ -141,6 +147,7 @@ practices:
 
           1. Open [BitLocker Drive Encryption](prefs://BitLocker).
           1. Click "Turn on BitLocker".
+          1. Rescan to update the status
 
       linux: |
         The recommended option for full disk encryption for Linux is <a target="_blank" href="https://gitlab.com/cryptsetup/cryptsetup/-/wikis/home">LUKS</a>. You can find instructions for Ubuntu 19.04 and 20.04 below.
@@ -183,6 +190,7 @@ practices:
           - {{{statusIcon automaticAppUpdates 'Install app updates from the App Store'}}}
           - {{{statusIcon automaticSecurityUpdates 'Install system data files and \*security updates\*'}}}
         {{/unless}}
+        1. Rescan to update the status
 
       win32: |
         1. Open [Services](ps://services.msc) (Start > Run > services.msc).
@@ -190,6 +198,7 @@ practices:
         1. Change "Startup Type" from "DISABLED" to "MANUAL" or "AUTOMATIC".
         1. Click "Apply".
         1. Click "OK".
+        1. Rescan to update the status
 
         If you manually disabled Windows Update using Group Policy Editor:
 
@@ -197,6 +206,7 @@ practices:
         1. Expand: Computer Configuration > Administrative Templates > Windows Components > Windows Update
         1. Find and double-click on "Configure Automatic Updates"
         1. Select "Enabled" or "Not Configured" to turn automatic updates back on
+        1. Rescan to update the status
   screenLock:
     title: >
       Screen lock
@@ -222,11 +232,13 @@ practices:
         1. Unlock the pane by clicking the lock in the lower-left corner and enter the administrator username and password.
         1. Check the "Require password" box and set the pull down menu to to "immediately" after sleep or screen saver begins.
         1. Make sure the Screen Saver is enabled as well.
+        1. Rescan to update the status
       win32: |
         1. Open [Lock screen settings](ms-settings:lockscreen).
         1. Scroll down and click on "Screen saver settings".
         1. Select a screen saver of your choice and a wait time of less than 15 minutes.
         1. Select the option "On resume, display logon screen".
+        1. Rescan to update the status
       linux: |
         **Ubuntu 18.04**
 
@@ -237,6 +249,7 @@ practices:
         1. For "Lock screen after blank for", select "Screen Turns Off".
         1. In the left-hand menu, select Power.
         1. Under Power Saving -> Blank screen, select a value less than 15 minutes.
+        1. Rescan to update the status
 
         **Ubuntu 20.04**
 
@@ -246,6 +259,7 @@ practices:
         1. Set "Automatic Screen Lock" to ON.
         1. For "Automatic Screen Lock Delay", select "Screen Turns Off".
         1. Set "Lock Screen on Suspend" to ON.
+        1. Rescan to update the status
   screenIdle:
     title: >
       Auto lock in 15 minutes
@@ -270,6 +284,7 @@ practices:
         1. Click the Screen Saver tab.
         1. Adjust the "Start after" dropdown to 15 minutes or less.
         1. Also make sure that on [General](x-apple.systempreferences:com.apple.preference.security?General) tab, the pull down menu is set to "immediately".
+        1. Rescan to update the status
       linux: |
         ** Ubuntu 18.04 **
         1. From the upper-right drop-down menu, click the Settings icon.
@@ -278,17 +293,20 @@ practices:
         1. For "Lock screen after blank for", select "Screen Turns Off".
         1. In the left-hand menu, select Power.
         1. Under Power Saving -> Blank screen, select a value less than 15 minutes.
+        1. Rescan to update the status
 
         ** Ubuntu 20.04 **
         1. From the upper-right drop-down menu, click the Settings icon.
         1. In the left-hand pane, select Privacy -> Screen Lock.
         1. For "Blank Screen Delay", select a value less than 15 minutes.
         1. For "Automatic Screen Lock Delay", select "Screen Turns Off".
+        1. Rescan to update the status
 
       win32: |
         1. Open [Lock screen settings](ms-settings:lockscreen).
         1. Scroll down and click on "Screen saver settings".
         1. Make sure the wait time is less than or equal to 15 minutes.
+        1. Rescan to update the status
   osVersion:
     title: >
       Operating System
@@ -373,11 +391,17 @@ practices:
       <p class="highlight">If you have access to the company production servers or if you handle customer data, you must have an antivirus software running on your system.</p>
     directions:
       darwin: |
-        Please install one of the following:
-        1. <a target="_blank" href="https://www.avg.com/en-in/avg-antivirus-for-mac#pc">AVG Antivirus</a> [Free]
-        1. <a target="_blank" href="https://home.sophos.com/en-us/download-mac-anti-virus.aspx">Sophos Antivirus</a> [Free]
-        1. <a target="_blank" href="https://www.mcafee.com/en-in/antivirus/mac.html">McAfee Endpoint Security for Mac</a>
-        1. <a target="_blank" href="https://www.clamxav.com/">ClamXAV</a>
+        <ol>
+        <li> Please install one of the following:
+          <ol>    
+          <li> <a target="_blank" href="https://www.avg.com/en-in/avg-antivirus-for-mac#pc">AVG Antivirus</a> [Free]</li>
+          <li> <a target="_blank" href="https://home.sophos.com/en-us/download-mac-anti-virus.aspx">Sophos Antivirus</a> [Free]</li>
+          <li><a target="_blank" href="https://www.mcafee.com/en-in/antivirus/mac.html">McAfee Endpoint Security for Mac</a></li>
+          <li><a target="_blank" href="https://www.clamxav.com/">ClamXAV</a></li>
+          </ol>
+          </li>
+        <li>Rescan to update the status</li>
+        </ol>
 
       win32: |
         <a target="_blank" href="https://support.microsoft.com/en-us/windows/stay-protected-with-windows-security-2ae0363d-0ada-c064-8b56-6a39afb6a963">Enable Windows Defender using these steps</a>
@@ -417,3 +441,4 @@ practices:
         1. Click on the Wi-Fi connection in the left pane
         1. Click on "Advanced..."
         1. Find and remove the networks that has Security set to "None"
+        1. Rescan to update the status
