@@ -27,7 +27,7 @@ const WelcomeMessage = () => {
     <div>
       <div className="text-sm">Welcome,</div>
       <p className="text-sm">
-        To ensure your device complies with the companies end point security
+        To ensure your device complies with the company's end point security
         policy. you need to scan the device and send the health report to
         Sprinto.
       </p>
