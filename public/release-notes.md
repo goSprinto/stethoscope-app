@@ -1,7 +1,11 @@
 Features:
-- Added support for detecting Kaspersky Endpoint Security Antivirus on macOS
-- Windows installation no longer requires admin permissions
-- Build a separate package for M1 Macs.
+
+- Support for Oracle Linux, Elementry OS & kde Neo OS support
+- Report error log from app to sprinto
+- Better Error handing
 
 Updates:
+
 - Updated policy OS requirements for various OSes
+- Better Error handing
+- Enhanced UI
