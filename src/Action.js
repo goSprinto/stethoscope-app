@@ -10,6 +10,7 @@ import Handlebars from "handlebars/dist/handlebars.min.js";
 import "react-modern-drawer/dist/index.css";
 import ReportErrorLog from "./components/reportErrorLog";
 import Button from "./components/Button";
+import { Scrollbars } from "react-custom-scrollbars";
 
 const { ipcRenderer } = window.require("electron");
 const appName = ipcRenderer.sendSync("get:app:name");
@@ -209,86 +210,88 @@ class Action extends Component {
     const { action, type, reportingErrorLogAppURI, onClickOpen } = this.props;
 
     const description = (
-      <div className="py-8 px-4 text-left">
-        <>
-          <div className="text-lg font-medium">{this.parseTitle()}</div>
-          <div className="pl-2">
-            <div className="text-sm font-medium mt-4 mb-1">Status</div>
-            <div className="flex text-xs">
-              <ActionIcon
-                variant={this.getIconVariant(type)}
-                height={15}
-                width={15}
-              />
-              <div
-                className={`ml-1 `}
-                style={{ color: VARIANT_COLORS[this.getIconVariant(type)] }}
-              >
-                {type === "error" ? (
-                  <>
-                    We detected some error.{" "}
-                    <a href={reportingErrorLogAppURI} onClick={onClickOpen}>
-                      Report <LinkOutIcon />
-                    </a>
-                  </>
-                ) : (
-                  this.parseSubTitle()
-                )}
-              </div>
-            </div>
-            <div
-              className="text-sm mt-1"
-              dangerouslySetInnerHTML={{ __html: action.description }}
-            />
-            {action.details && (
-              <pre className="description text-sm">{action.details}</pre>
-            )}
-            {action.link && (
-              <a href={action.link} target="_blank" rel="noopener noreferrer">
-                More info
-              </a>
-            )}
-
-            {action.directions && (
-              <>
-                <div className="text-sm font-medium mt-2">
-                  {type === "done" ? "How to configure" : "How to fix"}
-                </div>
+      <Scrollbars>
+        <div className="py-8 px-4 text-left">
+          <>
+            <div className="text-lg font-medium">{this.parseTitle()}</div>
+            <div className="pl-2">
+              <div className="text-sm font-medium mt-4 mb-1">Status</div>
+              <div className="flex text-xs">
+                <ActionIcon
+                  variant={this.getIconVariant(type)}
+                  height={15}
+                  width={15}
+                />
                 <div
-                  className="text-sm"
-                  dangerouslySetInnerHTML={{ __html: this.parseDirections() }}
-                />
-              </>
-            )}
-            {this.props.children}
-
-            <ReportErrorLog
-              title={"Unable to fix"}
-              redirectURI={reportingErrorLogAppURI}
-              onClickOpen={onClickOpen}
-            />
-
-            <div className="flex justify-between mt-4">
-              <div>
-                <Button
-                  title={"Cancel"}
-                  isPrimary={true}
-                  onClickOpen={this.toggleDrawer}
-                  className="bg-grayMid text-grayUltraDark m-0"
-                />
+                  className={`ml-1 `}
+                  style={{ color: VARIANT_COLORS[this.getIconVariant(type)] }}
+                >
+                  {type === "error" ? (
+                    <>
+                      We detected some error.{" "}
+                      <a href={reportingErrorLogAppURI} onClick={onClickOpen}>
+                        Report <LinkOutIcon />
+                      </a>
+                    </>
+                  ) : (
+                    this.parseSubTitle()
+                  )}
+                </div>
               </div>
-              <div>
-                <Button
-                  title={"Re-scan"}
-                  isPrimary={true}
-                  onClickOpen={this.props.onRescan}
-                  className="bg-orangeOne text-white m-0"
-                />
+              <div
+                className="text-sm mt-1"
+                dangerouslySetInnerHTML={{ __html: action.description }}
+              />
+              {action.details && (
+                <pre className="description text-sm">{action.details}</pre>
+              )}
+              {action.link && (
+                <a href={action.link} target="_blank" rel="noopener noreferrer">
+                  More info
+                </a>
+              )}
+
+              {action.directions && (
+                <>
+                  <div className="text-sm font-medium mt-2">
+                    {type === "done" ? "How to configure" : "How to fix"}
+                  </div>
+                  <div
+                    className="text-sm"
+                    dangerouslySetInnerHTML={{ __html: this.parseDirections() }}
+                  />
+                </>
+              )}
+              {this.props.children}
+
+              <ReportErrorLog
+                title={"Unable to fix"}
+                redirectURI={reportingErrorLogAppURI}
+                onClickOpen={onClickOpen}
+              />
+
+              <div className="flex justify-between mt-4">
+                <div>
+                  <Button
+                    title={"Cancel"}
+                    isPrimary={true}
+                    onClickOpen={this.toggleDrawer}
+                    className="bg-grayMid text-grayUltraDark m-0"
+                  />
+                </div>
+                <div>
+                  <Button
+                    title={"Re-scan"}
+                    isPrimary={true}
+                    onClickOpen={this.props.onRescan}
+                    className="bg-orangeOne text-white m-0"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </>
-      </div>
+          </>
+        </div>
+      </Scrollbars>
     );
     const actionkey = String(action.title).replace(/[^a-zA-Z]+/g, "");
 
