@@ -94,6 +94,7 @@ export default class Stethoscope {
         platformName
         distroName
         osVersion
+        osName
         firmwareVersion
         hardwareModel
         friendlyName
@@ -104,6 +105,11 @@ export default class Stethoscope {
           diskEncryption
           screenLock
           screenIdle
+          antivirus {
+            activeProviders {
+              name
+            }
+          }
         }
       }
     }`;

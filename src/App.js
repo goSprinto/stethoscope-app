@@ -15,6 +15,8 @@ import pkg from "../package.json";
 import ErrorMessage from "./ErrorMessage";
 import yaml from "js-yaml";
 import "./App.css";
+import ConnectToSprintoApp from "./components/ConnectToSprintoApp";
+
 const socket = openSocket(HOST);
 
 // CRA doesn't like importing native node modules
@@ -61,6 +63,10 @@ class App extends Component {
     enableReportNow: true,
     countDown: 10,
     myInterval: null,
+    // auth related states
+    isConnected: false,
+    firstName: null,
+    policyLastSyncedOn: null,
   };
 
   componentWillUnmount = () => {
@@ -76,14 +82,33 @@ class App extends Component {
     const deviceLogLastReportedOnTS = await settings.get(
       "deviceLogLastReportedOn"
     );
+
     const deviceLogLastReportedOn = deviceLogLastReportedOnTS
       ? new Date(deviceLogLastReportedOnTS)
       : null;
+
+    // To sync policy once every day
+    const policyLastSyncedOnTs = await settings.get("policyLastSyncedOn");
+
+    const policyLastSyncedOn = policyLastSyncedOnTs
+      ? new Date(policyLastSyncedOnTs)
+      : null;
+
     this.setState({
       recentHang: settings.get("recentHang", 0) > 1,
       deviceLogLastReportedOn,
+      policyLastSyncedOn,
+      isConnected: settings.get("isConnected", false),
+      firstName: settings.get("firstName", null),
     });
+
+    // check if policy sync required (once per day)
+    if (this.shouldPolicySync(policyLastSyncedOn)) {
+      await this.syncUpdatedPolicy();
+    }
+
     ipcRenderer.send("scan:init");
+
     // perform the initial policy load & scan
     try {
       await this.loadPractices();
@@ -118,6 +143,12 @@ class App extends Component {
     socket.on("scan:complete", this.onScanComplete);
     socket.on("scan:error", this.onScanError);
     socket.on("sprinto:devicelogrecorded", this.onDeviceLogRecorded);
+
+    // Handler for device connected / registered from sprinto account
+    socket.on("sprinto:deviceConnected", this.onDeviceConnected);
+    // handler for device disconnected or deregister from sprinto account
+    socket.on("sprinto:deviceDisconnected", this.onDeviceDisconnected);
+
     // the focus/blur handlers are used to update the last scanned time
     window.addEventListener("focus", () => this.setState({ focused: true }));
     window.addEventListener("blur", () => this.setState({ focused: false }));
@@ -125,15 +156,15 @@ class App extends Component {
     document.addEventListener("drop", (event) => event.preventDefault());
 
     this.myInterval = setInterval(() => {
-      if (this.remainginTimeInMinute() <= 10) {
+      if (this.remainingTimeInMinute() <= 10) {
         this.setState({
-          countDown: 10 - this.remainginTimeInMinute(),
+          countDown: 10 - this.remainingTimeInMinute(),
           actionButtonTitle: "Scan",
           enableReportNow: true,
         });
       }
 
-      if (this.remainginTimeInMinute() > 10) {
+      if (this.remainingTimeInMinute() > 10) {
         this.setState({
           countDown: 10,
           actionButtonTitle: "Re-Scan",
@@ -143,6 +174,86 @@ class App extends Component {
       }
     }, 60000);
   }
+
+  shouldPolicySync = (policyLastSyncedOn) => {
+    // we will sync policy once per day
+    const policySyncFreqDays = 1;
+
+    if (policyLastSyncedOn === null) {
+      return true;
+    }
+
+    const today = new Date();
+    const daysSincePolicySync = policyLastSyncedOn
+      ? Math.round(
+          (today.getTime() - policyLastSyncedOn.getTime()) / (1000 * 3600 * 24)
+        )
+      : policySyncFreqDays + 1;
+    if (daysSincePolicySync >= 1) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  shouldReportDevice = (deviceLogLastReportedOn) => {
+    // We will sync device status per once day
+    const deviceLogReportingFreqDays = 1;
+
+    if (deviceLogLastReportedOn === null) {
+      return true;
+    }
+
+    const today = new Date();
+    const daysSinceLastLog = deviceLogLastReportedOn
+      ? Math.round(
+          (today.getTime() - deviceLogLastReportedOn.getTime()) /
+            (1000 * 3600 * 24)
+        )
+      : deviceLogReportingFreqDays + 1;
+    if (daysSinceLastLog >= 1) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  syncUpdatedPolicy = async () => {
+    const policy = ipcRenderer.sendSync("api:getPolicy");
+    if (policy === null || policy === undefined) {
+      return;
+    }
+    // update policy synced time to now
+    const ts = new Date();
+    settings.set("policyLastSyncedOn", ts);
+    this.setState({ policy: policy, policyLastSyncedOn: ts });
+  };
+
+  onDeviceConnected = ({ data }) => {
+    // TODO: get user profile api (will do if required)
+    // store token in safe storage
+    const status = ipcRenderer.sendSync("auth:storeToken", data.accessToken);
+
+    if (status === true) {
+      settings.set("isConnected", true);
+      settings.set("firstName", data.firstName);
+      this.setState({
+        isConnected: true,
+        firstName: data.firstName,
+      });
+    }
+  };
+
+  onDeviceDisconnected = () => {
+    // rmeove token stored from safestorage & state
+    settings.set("isConnected", false);
+    settings.set("firstName", null);
+    ipcRenderer.sendSync("auth:logout");
+    this.setState({
+      isConnected: false,
+      firstName: null,
+    });
+  };
 
   onDeviceLogRecorded = () => {
     const ts = new Date();
@@ -197,7 +308,7 @@ class App extends Component {
     });
   };
 
-  remainginTimeInMinute = () => {
+  remainingTimeInMinute = () => {
     return moment(new Date()).diff(moment(this.state.lastScanTime), "minutes");
   };
 
@@ -236,7 +347,7 @@ class App extends Component {
     }
 
     const {
-      data: { policy = {} },
+      data: { policy = {}, device = {} },
     } = Object(result);
     const scannedBy = remote ? remoteLabel : appName;
 
@@ -257,6 +368,14 @@ class App extends Component {
         note.onerror = (err) => console.error(err);
       }
     });
+
+    // TODO: check here if lastest policy synced or not
+    if (
+      this.shouldReportDevice(this.state.deviceLogLastReportedOn) &&
+      this.state.isConnected
+    ) {
+      ipcRenderer.sendSync("api:reportDevice", policy.validate, device);
+    }
   };
 
   handleErrorYAML = (
@@ -342,24 +461,24 @@ class App extends Component {
             }
           );
           // to restart the scan
-          if (this.remainginTimeInMinute() <= 10) {
+          if (this.remainingTimeInMinute() <= 10) {
             this.setState({
-              countDown: 10 - this.remainginTimeInMinute(),
+              countDown: 10 - this.remainingTimeInMinute(),
               actionButtonTitle: "Scan",
               enableReportNow: true,
             });
           }
 
           this.myInterval2 = setInterval(() => {
-            if (this.remainginTimeInMinute() <= 10) {
+            if (this.remainingTimeInMinute() <= 10) {
               this.setState({
-                countDown: 10 - this.remainginTimeInMinute(),
+                countDown: 10 - this.remainingTimeInMinute(),
                 actionButtonTitle: "Scan",
                 enableReportNow: true,
               });
             }
 
-            if (this.remainginTimeInMinute() > 10) {
+            if (this.remainingTimeInMinute() > 10) {
               this.setState({
                 countDown: 10,
                 actionButtonTitle: "Re-Scan",
@@ -412,6 +531,8 @@ class App extends Component {
       actionButtonTitle,
       enableReportNow,
       countDown,
+      isConnected,
+      firstName,
     } = this.state;
 
     const isDev = ipcRenderer.sendSync("get:env:isDev");
@@ -423,6 +544,10 @@ class App extends Component {
     const reportingErrorLogAppURI = isDev
       ? "http://localhost:5000/app/intranet/endpointScanLogs?reportDrSprintoError=true"
       : appConfig.deviceDebugLogReportingAppURI;
+
+    const deviceConnectAppURI = isDev
+      ? "http://localhost:5000/app/intranet/endpointScanLogs?connectSprintoApp=true"
+      : appConfig.deviceConnectAppURI;
 
     let content = null;
 
@@ -474,6 +599,17 @@ class App extends Component {
       );
     }
 
+    if (isConnected === false) {
+      content = (
+        <>
+          <ConnectToSprintoApp
+            redirectURI={deviceConnectAppURI}
+            onClickOpen={this.handleOpenExternal}
+          />
+        </>
+      );
+    }
+
     // if none of the overriding content has been added
     // assume no errors and loaded state
     if (!content) {
@@ -510,6 +646,7 @@ class App extends Component {
               actionButtonTitle={actionButtonTitle}
               enableReportNow={enableReportNow}
               countDown={countDown}
+              firstName={firstName}
             />
           </div>
         );

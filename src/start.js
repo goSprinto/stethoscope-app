@@ -39,6 +39,8 @@ import startGraphQLServer from "./server";
 import { IS_MAC, IS_WIN } from "./lib/platform";
 import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
+import AuthService from "./services/authService";
+import ApiService from "./services/apiService";
 
 app.disableHardwareAcceleration();
 
@@ -87,6 +89,7 @@ const windowPrefs = {
     webSecurity: false,
     contextIsolation: false,
     sandbox: false,
+    // preload: path.join(__dirname, "main_preload.js"),
   },
 };
 
@@ -447,6 +450,67 @@ ipcMain.on("get:env:isDev", (event, arg) => {
 
 ipcMain.on("get:app:name", (event, arg) => {
   event.returnValue = app.name;
+});
+
+// Auth related ops
+ipcMain.on("auth:storeToken", (event, token) => {
+  try {
+    AuthService.storeAccessToken(token);
+    event.returnValue = true;
+  } catch (err) {
+    log.error("auth:storeToken crash", err);
+  }
+});
+
+ipcMain.on("auth:logout", (event) => {
+  try {
+    AuthService.logout();
+    event.returnValue = true;
+  } catch (err) {
+    log.error("auth:logout crash", err);
+  }
+});
+
+// Not using this for now
+// ipcMain.on("api:userProfile", async (event, token) => {
+//   try {
+//     const response = await ApiService.getUserProfile(token);
+//     event.returnValue = response;
+//   } catch (err) {
+//     console.log("in api:userProfile", err);
+//   }
+// });
+
+// External API calls
+ipcMain.on("api:getPolicy", async (event) => {
+  // Get latest policy json from sprinto
+  try {
+    const isDev = process.env.STETHOSCOPE_ENV === "development";
+    const token = AuthService.getAccessToken();
+    const response = await ApiService.getPolicy(token, isDev);
+    event.returnValue = response;
+  } catch (err) {
+    log.error("api:getPolicy crash", err);
+  }
+});
+
+ipcMain.on("api:reportDevice", async (event, result, device) => {
+  try {
+    const isDev = process.env.STETHOSCOPE_ENV === "development";
+    const token = AuthService.getAccessToken();
+    if (token === null || token === undefined) {
+      log.error(
+        "api:reportDevice - critical should not call this api when token is empty or not connected"
+      );
+      return;
+    }
+    const data = { ...result, device };
+    await ApiService.reportDevice(token, data, isDev);
+
+    event.returnValue = true;
+  } catch (err) {
+    log.error("api:reportDevice crash", err);
+  }
 });
 
 export {};

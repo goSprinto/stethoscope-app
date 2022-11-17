@@ -192,6 +192,14 @@ svg {
   margin-top: 2rem;
 }
 
+.mb-9 {
+  margin-bottom: 2.25rem;
+}
+
+.mt-9 {
+  margin-top: 2.25rem;
+}
+
 .block {
   display: block;
 }

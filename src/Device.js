@@ -22,10 +22,10 @@ import FedoraLinuxOSIcon from "./icons/FedoraLinuxOSIcon";
 import Button from "./components/Button";
 import LaptopIcon from "./icons/LaptopIcon";
 
-const WelcomeMessage = () => {
+const WelcomeMessage = ({ name }) => {
   return (
     <div>
-      <div className="text-sm">Welcome,</div>
+      <div className="text-sm">Welcome {name},</div>
       <p className="text-sm">
         To ensure your device complies with the company's endpoint security
         policy, you need to scan the device and send the health report to
@@ -284,6 +284,7 @@ class Device extends Component {
       actionButtonTitle,
       countDown,
       enableReportNow,
+      firstName,
     } = this.props;
 
     const deviceLogReportingFreqDays = 90;
@@ -316,7 +317,7 @@ class Device extends Component {
     return (
       <div className="device-wrapper">
         <div className={`panel device ${deviceClass}`}>
-          <WelcomeMessage />
+          <WelcomeMessage name={firstName} />
           <DeviceDetails
             friendlyName={device.friendlyName}
             identifier={device.identifier}
