@@ -375,6 +375,8 @@ class App extends Component {
       this.state.isConnected
     ) {
       ipcRenderer.sendSync("api:reportDevice", policy.validate, device);
+      // update deviceLogLastReportedOn
+      this.onDeviceLogRecorded();
     }
   };
 

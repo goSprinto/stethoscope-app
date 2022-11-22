@@ -23,6 +23,7 @@ import {
   session,
   Tray,
   nativeImage,
+  safeStorage,
 } from "electron";
 import url from "url";
 import log from "./lib/logger";
@@ -348,6 +349,8 @@ if (!gotTheLock) {
   // issues on Windows
   app.on("ready", () =>
     setTimeout(() => {
+      safeStorage.isEncryptionAvailable();
+
       createWindow();
       initProtocols(mainWindow);
 
