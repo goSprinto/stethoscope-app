@@ -39,8 +39,8 @@ import startGraphQLServer from "./server";
 import { IS_MAC, IS_WIN } from "./lib/platform";
 import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
-import AuthService from "./services/authService";
-import ApiService from "./services/apiService";
+import AuthService from "./authService";
+import ApiService from "./apiService";
 
 app.disableHardwareAcceleration();
 

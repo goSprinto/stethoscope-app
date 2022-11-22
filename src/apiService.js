@@ -1,5 +1,5 @@
 import axios from "axios";
-import appConfig from "../config.json";
+import appConfig from "./config.json";
 
 export default class ApiService {
   static async reportDevice(token, data, isDev) {
