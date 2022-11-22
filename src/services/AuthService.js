@@ -1,4 +1,4 @@
-import appConfig from "./config.json";
+import appConfig from "../config.json";
 import Store from "electron-store";
 import { safeStorage } from "electron";
 
