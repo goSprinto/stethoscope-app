@@ -177,6 +177,7 @@ class App extends Component {
 
   shouldPolicySync = (policyLastSyncedOn) => {
     // we will sync policy once per day
+
     const policySyncFreqDays = 1;
 
     if (policyLastSyncedOn === null) {
@@ -189,7 +190,7 @@ class App extends Component {
           (today.getTime() - policyLastSyncedOn.getTime()) / (1000 * 3600 * 24)
         )
       : policySyncFreqDays + 1;
-    if (daysSincePolicySync >= 1) {
+    if (daysSincePolicySync >= 1 && this.state.isConnected === true) {
       return true;
     } else {
       return false;
