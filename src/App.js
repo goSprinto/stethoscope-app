@@ -180,7 +180,7 @@ class App extends Component {
 
     const policySyncFreqDays = 1;
 
-    if (policyLastSyncedOn === null) {
+    if (policyLastSyncedOn === null && this.state.isConnected === true) {
       return true;
     }
 
