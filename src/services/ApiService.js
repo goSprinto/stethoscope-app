@@ -22,6 +22,7 @@ export default class ApiService {
       }
     } catch (err) {
       log.error("services-->api:reportDevice", err);
+      throw err;
     }
   }
 
@@ -42,6 +43,7 @@ export default class ApiService {
       return response.data.policy;
     } catch (err) {
       log.error("services-->api:getPolicy", err);
+      throw err;
     }
   }
 }

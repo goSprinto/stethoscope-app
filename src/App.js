@@ -67,12 +67,15 @@ class App extends Component {
     isConnected: false,
     firstName: null,
     policyLastSyncedOn: null,
+    // app rescan interval
+    appAutoRescanInterval: null,
   };
 
   componentWillUnmount = () => {
     this.setState({ scanIsRunning: false });
     clearInterval(this.myInterval);
     clearInterval(this.myInterval2);
+    clearInterval(this.appAutoRescanInterval);
   };
 
   async componentDidMount() {
@@ -173,6 +176,17 @@ class App extends Component {
         clearInterval(this.myInterval);
       }
     }, 60000);
+
+    // scanning after 8 hours if any suggestion - to increase touchpoint
+    // TODO; check with abhaya if any alternae suggestion
+    this.appAutoRescanInterval = setInterval(() => {
+      this.syncUpdatedPolicy();
+      if (Object.keys(this.state.policy).length) {
+        this.handleScan();
+      } else {
+        this.loadPractices();
+      }
+    }, 480 * 60000); // 8 hours
   }
 
   shouldPolicySync = (policyLastSyncedOn) => {
@@ -370,14 +384,21 @@ class App extends Component {
       }
     });
 
-    // TODO: check here if lastest policy synced or not
+    // Report the device now
     if (
       this.shouldReportDevice(this.state.deviceLogLastReportedOn) &&
       this.state.isConnected
     ) {
-      ipcRenderer.sendSync("api:reportDevice", policy.validate, device);
-      // update deviceLogLastReportedOn
-      this.onDeviceLogRecorded();
+      const status = ipcRenderer.sendSync(
+        "api:reportDevice",
+        policy.validate,
+        device
+      );
+
+      // update deviceLogLastReportedOn if api call success
+      if (status === true) {
+        this.onDeviceLogRecorded();
+      }
     }
   };
 
