@@ -17,9 +17,7 @@ export default class ApiService {
         }
       );
 
-      if (response.status === 200) {
-        return true;
-      }
+      return true;
     } catch (err) {
       log.error("services-->api:reportDevice", err);
       throw err;

@@ -490,10 +490,18 @@ ipcMain.on("api:getPolicy", async (event) => {
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
     const token = AuthService.getAccessToken();
+    if (token === null || token === undefined) {
+      log.error(
+        "api:reportDevice - critical should not call this api when token is empty or not connected"
+      );
+      event.returnValue = false;
+      return;
+    }
     const response = await ApiService.getPolicy(token, isDev);
     event.returnValue = response;
   } catch (err) {
     log.error("api:getPolicy crash", err);
+    event.returnValue = null;
   }
 });
 
@@ -505,6 +513,7 @@ ipcMain.on("api:reportDevice", async (event, result, device) => {
       log.error(
         "api:reportDevice - critical should not call this api when token is empty or not connected"
       );
+      event.returnValue = false;
       return;
     }
     const data = { ...result, device };
@@ -513,6 +522,7 @@ ipcMain.on("api:reportDevice", async (event, result, device) => {
     event.returnValue = true;
   } catch (err) {
     log.error("api:reportDevice crash", err);
+    event.returnValue = false;
   }
 });
 

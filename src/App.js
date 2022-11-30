@@ -16,6 +16,7 @@ import ErrorMessage from "./ErrorMessage";
 import yaml from "js-yaml";
 import "./App.css";
 import ConnectToSprintoApp from "./components/ConnectToSprintoApp";
+import OfflineSprintoApp from "./components/OfflineSprintoApp";
 
 const socket = openSocket(HOST);
 
@@ -69,6 +70,7 @@ class App extends Component {
     policyLastSyncedOn: null,
     // app rescan interval
     appAutoRescanInterval: null,
+    offline: false,
   };
 
   componentWillUnmount = () => {
@@ -155,6 +157,8 @@ class App extends Component {
     // the focus/blur handlers are used to update the last scanned time
     window.addEventListener("focus", () => this.setState({ focused: true }));
     window.addEventListener("blur", () => this.setState({ focused: false }));
+    window.addEventListener("offline", () => this.setState({ offline: true }));
+    window.addEventListener("online", () => this.setState({ offline: false }));
     document.addEventListener("dragover", (event) => event.preventDefault());
     document.addEventListener("drop", (event) => event.preventDefault());
 
@@ -176,9 +180,9 @@ class App extends Component {
         clearInterval(this.myInterval);
       }
     }, 60000);
-
-    // scanning after 8 hours if any suggestion - to increase touchpoint
-    // TODO; check with abhaya if any alternae suggestion
+    this.syncUpdatedPolicy();
+    // scanning after 4 hours if any suggestion - to increase touchpoint
+    // TODO; check with abhaya if any alternate suggestion
     this.appAutoRescanInterval = setInterval(() => {
       this.syncUpdatedPolicy();
       if (Object.keys(this.state.policy).length) {
@@ -186,8 +190,10 @@ class App extends Component {
       } else {
         this.loadPractices();
       }
-    }, 480 * 60000); // 8 hours
+    }, 14400000); // 4 hours
   }
+
+  // update policy
 
   shouldPolicySync = (policyLastSyncedOn) => {
     // we will sync policy once per day
@@ -327,12 +333,25 @@ class App extends Component {
     return moment(new Date()).diff(moment(this.state.lastScanTime), "minutes");
   };
 
+  isScanResultDiff = (oldResult, newResult) => {
+    let result = false;
+    Object.keys(oldResult)
+      .concat(Object.keys(newResult || {}))
+      .forEach((key) => {
+        if (newResult[key] !== oldResult[key]) {
+          result = true;
+        }
+      });
+    return result;
+  };
+
   onScanComplete = (payload) => {
     const { noResults = false } = payload;
     // device only scan with no policy completed
     if (noResults) {
       return this.setState({ loading: false, scannedBy: appName });
     }
+    const oldScanResult = this.state.result;
 
     const {
       errors = [],
@@ -384,9 +403,18 @@ class App extends Component {
       }
     });
 
+    const isUpdatedScanResult = this.isScanResultDiff(
+      oldScanResult,
+      this.state.result
+    );
+
     // Report the device now
+    // report only if
+    // 1. shouldReportDevice - is true & device connected
+    // 2. Or. Last scan result is different than new one
     if (
-      this.shouldReportDevice(this.state.deviceLogLastReportedOn) &&
+      (this.shouldReportDevice(this.state.deviceLogLastReportedOn) ||
+        isUpdatedScanResult) &&
       this.state.isConnected
     ) {
       const status = ipcRenderer.sendSync(
@@ -557,6 +585,8 @@ class App extends Component {
       countDown,
       isConnected,
       firstName,
+      offline,
+      reportingSuccess,
     } = this.state;
 
     const isDev = ipcRenderer.sendSync("get:env:isDev");
@@ -634,9 +664,17 @@ class App extends Component {
       );
     }
 
-    // if none of the overriding content has been added
-    // assume no errors and loaded state
+    if (offline === true) {
+      content = (
+        <>
+          <OfflineSprintoApp />
+        </>
+      );
+    }
+
     if (!content) {
+      // if none of the overriding content has been added
+      // assume no errors and loaded state
       const args = [policy, result, device, instructions.practices, platform];
       try {
         const secInfo = Stethoscope.partitionSecurityInfo(...args);
@@ -671,6 +709,7 @@ class App extends Component {
               enableReportNow={enableReportNow}
               countDown={countDown}
               firstName={firstName}
+              isConnected={isConnected}
             />
           </div>
         );

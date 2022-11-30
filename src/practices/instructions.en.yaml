@@ -231,7 +231,6 @@ practices:
         1. Select the [General](x-apple.systempreferences:com.apple.preference.security?General) tab.
         1. Unlock the pane by clicking the lock in the lower-left corner and enter the administrator username and password.
         1. Check the "Require password" box and set the pull down menu to to "immediately" after sleep or screen saver begins.
-        1. Make sure the Screen Saver is enabled as well.
         1. Rescan to update the status
       win32: |
         1. Open [Lock screen settings](ms-settings:lockscreen).
@@ -283,7 +282,6 @@ practices:
         1. Click Desktop & Screen Saver.
         1. Click the Screen Saver tab.
         1. Adjust the "Start after" dropdown to 15 minutes or less.
-        1. Also make sure that on [General](x-apple.systempreferences:com.apple.preference.security?General) tab, the pull down menu is set to "immediately".
         1. Rescan to update the status
       linux: |
         ** Ubuntu 18.04 **
