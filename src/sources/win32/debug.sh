@@ -20,7 +20,7 @@ trim
 save debug.os
 remove output
 
-exec powershell 'Get-CimInstance win32_desktop | where name -eq (whoami)'
+exec powershell 'Get-CimInstance win32_desktop | where name -eq (whoami) | Format-List'
 save output
 trim
 save debug.screensaver
