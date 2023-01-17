@@ -23,6 +23,6 @@ save system.machineGuid
 
 remove out
 
-exec powershell 'Get-WmiObject win32_operatingsystem | select SerialNumber | Format-List'
+exec powershell 'Get-CimInstance win32_operatingsystem | select SerialNumber | Format-List'
 extract SerialNumber\s+:\s+([\d\-A-Z]+)
 save system.serialNumber
