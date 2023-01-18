@@ -8,7 +8,7 @@ type Query {
 }
 
 type Policy {
-  validate(policy:DevicePolicy): PolicyResult!
+  validate(policy: DevicePolicy): PolicyResult!
 }
 
 # Available information about user device
@@ -51,7 +51,7 @@ type Device {
   osqueryVersion: String
   # available hard disks
   disks: [Disk]
-  security(policy:DevicePolicy): SecurityInfo
+  security(policy: DevicePolicy): SecurityInfo
   policyResult: FeatureState
 }
 
@@ -269,6 +269,9 @@ input PlatformBracketRequirement {
   linux: VersionBracket
   awsWorkspace: VersionBracket
   all: VersionBracket
+  elementary: VersionBracket
+  neon: VersionBracket
+  ol: VersionBracket
 }
 
 # a platform boolean requirement defines a target boolean value for specific platforms
