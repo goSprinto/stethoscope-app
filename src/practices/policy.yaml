@@ -112,3 +112,8 @@ antivirus:
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"
+    # Malwarebytes Endpoint Detection and Response
+    - name: "Malwarebytes Endpoint Detection and Response"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
