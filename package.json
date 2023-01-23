@@ -181,8 +181,7 @@
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ],
       "maintainer": "Sprinto",
       "icon": "build/drsprinto-icons",
