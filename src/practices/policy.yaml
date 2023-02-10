@@ -46,6 +46,9 @@ osVersion:
     ok: ">=5.26"
   ol:
     ok: ">=9.1 || ^8.7 || ^7.9"
+  deepin:
+    # https://www.deepin.org/en/category/release-notes/
+    ok: ">=20.8"
 diskEncryption: ALWAYS
 screenLock: IF_SUPPORTED
 screenIdle: "<=900"
@@ -114,6 +117,10 @@ antivirus:
         darwin: ">=10.13"
     # Malwarebytes Endpoint Detection and Response
     - name: "Malwarebytes Endpoint Detection and Response"
+      assertion: SUGGESTED
+      platform:
+        darwin: ">=10.13"
+    - name: "XProtect"
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"
