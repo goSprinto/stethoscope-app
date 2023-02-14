@@ -272,7 +272,7 @@ input PlatformBracketRequirement {
   elementary: VersionBracket
   neon: VersionBracket
   ol: VersionBracket
-  deepin: VersionBracket
+  Deepin: VersionBracket
 }
 
 # a platform boolean requirement defines a target boolean value for specific platforms
