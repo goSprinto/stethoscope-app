@@ -46,7 +46,7 @@ osVersion:
     ok: ">=5.26"
   ol:
     ok: ">=9.1 || ^8.7 || ^7.9"
-  deepin:
+  Deepin:
     # https://www.deepin.org/en/category/release-notes/
     ok: ">=20.8"
 diskEncryption: ALWAYS
