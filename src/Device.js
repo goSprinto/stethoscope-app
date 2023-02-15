@@ -385,13 +385,12 @@ class Device extends Component {
 
     const deviceLogReportingFreqDays = 90;
     const today = new Date();
-    const daysSinceLastLog = 10;
-    //  deviceLogLastReportedOn
-    //   ? Math.round(
-    //       (today.getTime() - deviceLogLastReportedOn.getTime()) /
-    //         (1000 * 3600 * 24)
-    //     )
-    //   : deviceLogReportingFreqDays + 1;
+    const daysSinceLastLog = deviceLogLastReportedOn
+      ? Math.round(
+          (today.getTime() - deviceLogLastReportedOn.getTime()) /
+            (1000 * 3600 * 24)
+        )
+      : deviceLogReportingFreqDays + 1;
 
     if (!this.props.stethoscopeVersion) return null;
 
