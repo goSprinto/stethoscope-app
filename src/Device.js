@@ -1,94 +1,273 @@
-import React, { Component } from 'react'
-import classNames from 'classnames'
-import Accessible from './Accessible'
-import Action from './Action'
-import ActionIcon, { VARIANTS } from './ActionIcon'
-import semver from './lib/patchedSemver'
-import { INVALID_INSTALL_STATE, INVALID_VERSION, SUGGESTED_INSTALL, SUGGESTED_UPGRADE, PASS } from './constants'
-import './Device.css'
+import React, { Component } from "react";
+import Action from "./Action";
+import ActionIcon, { VARIANTS } from "./ActionIcon";
+import semver from "./lib/patchedSemver";
+import _ from "lodash";
+import {
+  INVALID_INSTALL_STATE,
+  INVALID_VERSION,
+  SUGGESTED_INSTALL,
+  SUGGESTED_UPGRADE,
+  PASS,
+} from "./constants";
+import "./Device.css";
+import WindowsOSIcon from "./icons/WindowsOSIcon";
+import MacOSIcon from "./icons/MacOsIcon";
+import LinuxIcon from "./icons/LinuxIcon";
+import ManjaroLinuxOSIcon from "./icons/ManjaroLinuxOSIcon";
+import PopOSIcon from "./icons/PopOsIcon";
+import UbuntuOSIcon from "./icons/UbuntuOsIcon";
+import LinuxMintOSIcon from "./icons/LinuxMintOsIcon";
+import FedoraLinuxOSIcon from "./icons/FedoraLinuxOSIcon";
+import Button from "./components/Button";
+import ButtonLink from "./components/ButtonLink";
+import LaptopIcon from "./icons/LaptopIcon";
 
-const deviceMessages = {
-  ok (msg) {
-    return (
-      <span>
-        <ActionIcon className='action-icon' size='28px' variant={VARIANTS.PASS} />
-        <span>{msg}</span>
-      </span>
-    )
-  },
-  warning (msg) {
-    return (
-      <span>
-        <span>{msg}</span>
-      </span>
-    )
-  },
-  critical (msg) {
-    return (
-      <span>
-        <span>{msg}</span>
-      </span>
-    )
-  }
-}
+const WelcomeMessage = ({ name }) => {
+  return (
+    <div>
+      <div className="text-sm">Welcome {name},</div>
+
+      <p className="text-sm">
+        To ensure your device complies with the company's endpoint security
+        policy, you need to scan the device and send the health report to
+        Sprinto.
+      </p>
+    </div>
+  );
+};
+
+const mapOsToRegex = {
+  windows: /windows/i,
+  macOS: /mac/i,
+  popOS: /pop/i,
+  linuxMint: /mint/i,
+  manjaroLinux: /manjaro/i,
+  fedoraLinux: /fedora/i,
+  ubuntu: /ubuntu/i,
+  oracleLinux: /oracle/i,
+};
+
+const mapOsToIcon = {
+  windows: <WindowsOSIcon height={51} width={51} />,
+  macOS: <MacOSIcon height={51} width={51} />,
+  popOS: <PopOSIcon height={51} width={51} />,
+  linuxMint: <LinuxMintOSIcon height={51} width={51} />,
+  manjaroLinux: <ManjaroLinuxOSIcon height={51} width={51} />,
+  fedoraLinux: <FedoraLinuxOSIcon height={51} width={51} />,
+  ubuntu: <UbuntuOSIcon height={51} width={51} />,
+  oracleLinux: <LinuxIcon height={51} width={51} />,
+};
+
+const DeviceDetails = ({
+  daysSinceLastLog,
+  deviceLogReportingFreqDays,
+  onClickOpen,
+  friendlyName,
+  identifier,
+  label,
+  lastScan,
+  lastScanTime,
+  platformName,
+}) => {
+  const _getOSIconName = (osName) => {
+    for (const [_os, _regex] of _.entries(mapOsToRegex)) {
+      if (_regex.test(osName)) {
+        return _.get(mapOsToIcon, _os);
+      }
+    }
+  };
+
+  const IconNameForRespectiveOS = _getOSIconName(platformName);
+
+  return (
+    <>
+      <div
+        className="flex items-center border-solid rounded-md justify-between mt-5 p-3"
+        style={{ borderColor: "#e5e7eb" }}
+      >
+        <div className="flex items-center">
+          <div>{IconNameForRespectiveOS || <LaptopIcon />}</div>
+          <div className="ml-3">
+            <div className="text-lg font-sm font-medium">{friendlyName}</div>
+            <div className="text-sm">{identifier}</div>
+            <div className="text-xs text-slate-400">
+              {lastScan} {lastScanTime}
+            </div>
+          </div>
+        </div>
+        <div>
+          <Button
+            title={label}
+            isPrimary={daysSinceLastLog > deviceLogReportingFreqDays}
+            onClickOpen={onClickOpen}
+            icon={true}
+          />
+        </div>
+      </div>
+    </>
+  );
+};
+
+const ShowAutoReportingStatus = ({
+  daysSinceLastLog,
+  deviceLogReportingFreqDays,
+  onClickOpen,
+  reportingAppURI,
+}) => {
+  return (
+    <>
+      <div
+        className={`${
+          daysSinceLastLog === 0 ? "bg-green-200" : "bg-yellow-200"
+        } text-sm border rounded relative center p-1 mt-6`}
+        role="alert"
+      >
+        {daysSinceLastLog > deviceLogReportingFreqDays + 1 ? (
+          <span className="text-sm font-medium">
+            Device status not reported to Sprinto
+          </span>
+        ) : (
+          <span className="text-sm font-small">
+            {daysSinceLastLog === 0
+              ? "Last reported today."
+              : `Last reported ${daysSinceLastLog}
+                     ${daysSinceLastLog === 1 ? " day" : " days"} ago`}
+          </span>
+        )}
+        <div className="text-xs text-slate-400">
+          Next report will be submitted tomorrow
+        </div>
+      </div>
+
+      {daysSinceLastLog === 0 && (
+        <div className="flex justify-end text-xs text-slate-600">
+          <ButtonLink
+            isPrimary={true}
+            title={"Report this device manually"}
+            onClickOpen={onClickOpen}
+            redirectURI={reportingAppURI}
+          />
+        </div>
+      )}
+    </>
+  );
+};
+
+const FooterAction = ({
+  deviceLogReportingFreqDays,
+  daysSinceLastLog,
+  onClickOpen,
+  reportingAppURI,
+  enableReportNow,
+  reportingErrorLogAppURI,
+}) => {
+  if (daysSinceLastLog === 0) return null;
+  return (
+    <>
+      <div
+        className="border-solid rounded-md mt-5 p-3"
+        style={{ borderColor: "#e5e7eb" }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex flex-row items-center">
+            <ActionIcon
+              className="action-icon"
+              height="20"
+              width="20"
+              variant={"SUGGEST"}
+            />
+            <div className="text-sm font-small ml-3">Device not reporting</div>
+          </div>
+
+          <div>
+            <Button
+              isPrimary={true}
+              title={"Report manually"}
+              onClickOpen={onClickOpen}
+              redirectURI={reportingAppURI}
+              disabled={!enableReportNow}
+              className="m-0 bg-orangeOne rounded space-x-2 justify-center content-box inline-flex items-center text-white"
+            />
+          </div>
+        </div>
+        <div className="text-xs text-slate-600 flex justify-end m-1">
+          <ButtonLink
+            onClickOpen={onClickOpen}
+            redirectURI={reportingErrorLogAppURI}
+            title={"let us know about this issue"}
+          />
+        </div>
+      </div>
+    </>
+  );
+};
 
 class Device extends Component {
-  constructor (props) {
-    super(props)
+  constructor(props) {
+    super(props);
     this.state = {
-      showInfo: false
-    }
+      showInfo: false,
+    };
   }
 
   renderAppVersionSuggestion = (installed, suggested) => {
     return (
-      <table style={{ width: 'auto', marginTop: '10px' }}>
+      <table style={{ width: "auto", marginTop: "10px" }}>
         <tbody>
           <tr>
             <td>Suggested version:</td>
             <td>
-              <span className='suggested-value'>{String(suggested)}</span>
+              <span className="suggested-value">{String(suggested)}</span>
             </td>
           </tr>
           <tr>
             <td>Your version:</td>
             <td>
-              <span className='suggested-value'>{String(installed)}</span>
+              <span className="suggested-value">{String(installed)}</span>
             </td>
           </tr>
         </tbody>
       </table>
-    )
-  }
+    );
+  };
 
-  renderApplicationStateMessage = ({ state, version, installed, policy = {} }) => {
+  renderApplicationStateMessage = ({
+    state,
+    version,
+    installed,
+    policy = {},
+  }) => {
     const installPrompt = policy.installFrom ? (
       <p>
-        Install from{' '}
-        <a href={policy.installFrom} target='_blank' rel='noopener noreferrer'>
+        Install from{" "}
+        <a href={policy.installFrom} target="_blank" rel="noopener noreferrer">
           here
         </a>
       </p>
-    ) : null
+    ) : null;
     if (state === INVALID_INSTALL_STATE && !installed) {
-      return <p>You must have this application installed.{installPrompt}</p>
+      return <p>You must have this application installed.{installPrompt}</p>;
     } else if (state === INVALID_INSTALL_STATE && installed) {
-      return <p>You must not have this application installed</p>
+      return <p>You must not have this application installed</p>;
     } else if (state === INVALID_VERSION || state === SUGGESTED_UPGRADE) {
       return (
         <>
-          {this.renderAppVersionSuggestion(version, semver.coerce(policy.version))}
+          {this.renderAppVersionSuggestion(
+            version,
+            semver.coerce(policy.version)
+          )}
           {installPrompt && <p>{installPrompt}</p>}
         </>
-      )
+      );
     } else if (state === SUGGESTED_INSTALL) {
-      return <p>It is suggested that this applicaiton is installed</p>
+      return <p>It is suggested that this applicaiton is installed</p>;
     }
-    return null
-  }
+    return null;
+  };
 
-  actions (actions, type, device) {
-    const status = type === 'done' ? 'PASS' : 'FAIL'
+  actions(actions, type, device) {
+    const status = type === "done" ? "PASS" : "FAIL";
 
     return actions.map((action, index) => {
       const actionProps = {
@@ -101,211 +280,178 @@ class Device extends Component {
         platform: this.props.platform,
         policy: this.props.policy,
         security: this.props.security,
-        expandedByDefault: type === 'critical' && index === 0
-      }
+        expandedByDefault: type === "critical" && index === 0,
+        onShowActionDescription: this.props.onShowActionDescription,
+        onCancelReloadApp: this.props.onCancelReloadApp,
+        onRescan: this.props.onRescan,
+        reportingErrorLogAppURI: this.props.reportingErrorLogAppURI,
+        onClickOpen: this.props.onClickOpen,
+        scanResult: this.props.scanResult,
+      };
 
-      const hasResults = Array.isArray(action.results)
-      let results = action.results
+      const hasResults = Array.isArray(action.results);
+      let results = action.results;
 
-      if (hasResults && action.name.endsWith('applications')) {
+      if (hasResults && action.name.endsWith("applications")) {
         results = results.map((result, index) => {
-          if (action.name in this.props.policy && Array.isArray(this.props.policy[action.name])) {
-            const target = this.props.policy[action.name][index]
+          if (
+            action.name in this.props.policy &&
+            Array.isArray(this.props.policy[action.name])
+          ) {
+            const target = this.props.policy[action.name][index];
             if (target) {
-              result.policy = target
+              result.policy = target;
             }
           }
-          return result
-        })
+          return result;
+        });
       }
 
       if (hasResults) {
         return (
           <Action {...actionProps} key={`action-container-${action.name}`}>
-            <ul className='result-list' key={`action-ul-${action.name}`}>
+            <ul className="result-list" key={`action-ul-${action.name}`}>
               {results.map((data, index) => {
-                const { name, status, state, policy = {} } = data
-                const { description } = policy
-                let iconVariant = status === PASS ? VARIANTS.PASS : VARIANTS.BLOCK
+                const { name, status, state, policy = {} } = data;
+                const { description } = policy;
+                let iconVariant =
+                  status === PASS ? VARIANTS.PASS : VARIANTS.BLOCK;
 
-                if (state === SUGGESTED_INSTALL || state === SUGGESTED_UPGRADE) {
-                  iconVariant = VARIANTS.SUGGEST
+                if (
+                  state === SUGGESTED_INSTALL ||
+                  state === SUGGESTED_UPGRADE
+                ) {
+                  iconVariant = VARIANTS.SUGGEST;
                 }
 
                 return (
-                  <li className='result-list-item' key={`action-li-${name}`}>
-                    <div className='result-heading'>
+                  <li className="result-list-item" key={`action-li-${name}`}>
+                    <div className="result-heading">
                       <strong>
-                        <ActionIcon className='action-icon' size='15px' variant={iconVariant} /> {name}
-                      </strong>{' '}
+                        <ActionIcon
+                          className="action-icon"
+                          size="15px"
+                          variant={iconVariant}
+                        />{" "}
+                        {name}
+                      </strong>{" "}
                     </div>
                     {description ? <p>{description}</p> : null}
                     {this.renderApplicationStateMessage(data)}
                     {index !== results.length - 1 ? <hr /> : null}
                   </li>
-                )
+                );
               })}
             </ul>
           </Action>
-        )
+        );
       } else {
-        return <Action {...actionProps} key={`action-container-${action.name}`} />
+        return (
+          <Action {...actionProps} key={`action-container-${action.name}`} />
+        );
       }
-    })
+    });
   }
 
-  process (device) {
-    const d = Object.assign({}, device)
-    d.friendlyName = d.friendlyName || 'Unknown device'
-    d.identifier = d.deviceName || d.hardwareSerial || (d.macAddresses || []).join(' ')
+  process(device) {
+    const d = Object.assign({}, device);
+    d.friendlyName = d.friendlyName || "Unknown device";
+    d.identifier =
+      d.deviceName || d.hardwareSerial || (d.macAddresses || []).join(" ");
 
-    return d
+    return d;
   }
 
   handleToggleInfo = () => {
     this.setState({
-      showInfo: !this.state.showInfo
-    })
-  }
+      showInfo: !this.state.showInfo,
+    });
+  };
 
-  render () {
+  render() {
     const {
-      deviceLogLastReportedOn, highlightRescan, scanResult, instructions,
-      onClickOpen, onRescan, reportingAppURI
-    } = this.props
+      deviceLogLastReportedOn,
+      scanResult,
+      onClickOpen,
+      onRescan,
+      reportingAppURI,
+      actionButtonTitle,
+      countDown,
+      enableReportNow,
+      firstName,
+      reportingSuccess,
+      reportingErrorLogAppURI,
+    } = this.props;
 
-    const deviceLogReportingFreqDays = 90
-    const today = new Date()
-    const daysSinceLastLog = deviceLogLastReportedOn
-      ? Math.round((today.getTime() - deviceLogLastReportedOn.getTime()) / (1000 * 3600 * 24))
-      : (deviceLogReportingFreqDays + 1)
+    const deviceLogReportingFreqDays = 90;
+    const today = new Date();
+    const daysSinceLastLog = 10;
+    //  deviceLogLastReportedOn
+    //   ? Math.round(
+    //       (today.getTime() - deviceLogLastReportedOn.getTime()) /
+    //         (1000 * 3600 * 24)
+    //     )
+    //   : deviceLogReportingFreqDays + 1;
 
-    // const reportingStatusMsg = daysSinceLastLog === 0
-    //   ? `Last recorded today`
-    //   : daysSinceLastLog === 1
-    //     ? `Last recorded 1 day ago.`
-    //     : `Last recorded ${daysSinceLastLog} days ago.`
+    if (!this.props.stethoscopeVersion) return null;
 
-    if (!this.props.stethoscopeVersion) return null
+    const device = Object.assign({}, this.props, this.process(this.props));
 
-    const device = Object.assign({}, this.props, this.process(this.props))
+    let deviceClass = "ok";
 
-    let deviceInfo = null
-
-    if (this.state.showInfo) {
-      deviceInfo = (
-        <div className='deviceInfo'>
-          <dl className='device-info'>
-            <dt>Type</dt>
-            <dd>{device.hardwareModel}&nbsp;</dd>
-            <dt>Manufacturer</dt>
-            <dd>{device.platformName}&nbsp;</dd>
-            <dt>Model</dt>
-            <dd>{device.hardwareModel}&nbsp;</dd>
-            <dt>Platform</dt>
-            <dd>{device.platform}&nbsp;</dd>
-            <dt>OS Version</dt>
-            <dd>{device.osVersion}&nbsp;</dd>
-            <dt>Name</dt>
-            <dd>{device.deviceName}&nbsp;</dd>
-            <dt>Serial</dt>
-            <dd>{device.hardwareSerial}&nbsp;</dd>
-            <dt>UDID</dt>
-            <dd>{device.deviceId}&nbsp;</dd>
-            <dt>Status</dt>
-            <dd>{scanResult.status}&nbsp;</dd>
-          </dl>
-        </div>
-      )
+    if (scanResult.status !== "PASS") {
+      deviceClass = scanResult.status === "NUDGE" ? "warning" : "critical";
     }
 
-    let deviceClass = 'ok'
-
-    if (scanResult.status !== 'PASS') {
-      deviceClass = scanResult.status === 'NUDGE' ? 'warning' : 'critical'
-    }
+    const actions = [
+      ...this.actions(device.error, "error", device),
+      ...this.actions(device.unknown, "unknown", device),
+      ...this.actions(device.critical, "critical", device),
+      ...this.actions(device.suggested, "suggested", device),
+      ...this.actions(device.done, "done", device),
+    ];
 
     return (
-      <div className='device-wrapper'>
+      <div className="device-wrapper">
         <div className={`panel device ${deviceClass}`}>
-          <header>
-            <h2 className='device-name'>{device.friendlyName}</h2>
-            <h3 className='device-identifier'>{device.identifier}&nbsp;</h3>
-            <Accessible
-              expanded={this.state.showInfo}
-              label={`Toggle and review ${device.deviceRating} device information for ${device.friendlyName}`}
-            >
-              <a
-                href='#toggle'
-                className={`device-info-toggle ${this.state.showInfo ? 'open' : 'closed'}`}
-                onClick={this.handleToggleInfo}
-              >
-                &#9660;
-              </a>
-            </Accessible>
-          </header>
-
-          {deviceInfo}
-          {daysSinceLastLog > deviceLogReportingFreqDays ?
-          <div className={`panel device-summary critical`}>
-            <span>
-              <ActionIcon className='action-icon' size='28px' variant={VARIANTS.BLOCK} />
-              Device status not reported to Sprinto
-            </span>
-            <button
-              className={classNames('btn btn-default', {
-                'btn-primary': daysSinceLastLog > deviceLogReportingFreqDays
-              })}
-              onClick={onClickOpen}
-              href={reportingAppURI}
-            >
-              Report Now
-            </button>
-
+          <WelcomeMessage name={firstName} />
+          <ShowAutoReportingStatus
+            daysSinceLastLog={daysSinceLastLog}
+            deviceLogReportingFreqDays={deviceLogReportingFreqDays}
+            onClickOpen={onClickOpen}
+            reportingAppURI={reportingAppURI}
+          />
+          <DeviceDetails
+            friendlyName={device.friendlyName}
+            identifier={device.identifier}
+            deviceLogReportingFreqDays={deviceLogReportingFreqDays}
+            daysSinceLastLog={daysSinceLastLog}
+            reportingAppURI={reportingAppURI}
+            onClickOpen={onRescan}
+            label={actionButtonTitle}
+            lastScan={this.props.strings.lastScan}
+            scannedBy={this.props.scannedBy}
+            lastScanTime={this.props.lastScanTime}
+            lastScanDuration={this.props.lastScanDuration}
+            platformName={device.platformName}
+          />
+          <div className="grid gap-2 grid-cols-2 grid-rows-3 mt-8">
+            {actions}
           </div>
-          : <div className={`panel device-summary ok`}>
-            <span>
-              <ActionIcon className='action-icon' size='28px' variant={VARIANTS.PASS} />
-              Status reported to Sprinto {daysSinceLastLog} {daysSinceLastLog === 1 ? 'day': 'days'} ago.
-            </span>
-            <button
-              className={classNames('btn btn-default')}
-              onClick={onClickOpen}
-              href={reportingAppURI}
-            >
-              Report Now
-            </button>
-
-          </div>}
-          <div className={`panel device-summary ${deviceClass}`}>
-            {deviceMessages[deviceClass](this.props.strings[deviceClass])}
-            <button
-              className={classNames('btn btn-default', {
-                'btn-primary': highlightRescan && scanResult.status !== 'PASS'
-              })}
-              onClick={onRescan}
-            >
-              <span className='icon icon-arrows-ccw' />
-              {instructions && instructions.strings && instructions.strings.rescanButton}
-            </button>
-          </div>
-
-          <div className='action-list'>
-            <ul key='action-list-main-ul'>
-              {this.actions(device.unknown, 'unknown', device)}
-              {this.actions(device.critical, 'critical', device)}
-              {this.actions(device.suggested, 'suggested', device)}
-              {this.actions(device.done, 'done', device)}
-            </ul>
-          </div>
-
-          <div className='last-updated'>
-            {this.props.strings.lastScan} {this.props.scannedBy} {this.props.lastScanTime} (
-            {Math.round(this.props.lastScanDuration * 100) / 100} seconds)
-          </div>
+          <FooterAction
+            deviceLogLastReportedOn={deviceLogLastReportedOn}
+            onClickOpen={onClickOpen}
+            daysSinceLastLog={daysSinceLastLog}
+            onRescan={onRescan}
+            reportingAppURI={reportingAppURI}
+            countDown={countDown}
+            enableReportNow={enableReportNow}
+            reportingSuccess={reportingSuccess}
+            reportingErrorLogAppURI={reportingErrorLogAppURI}
+          />
         </div>
       </div>
-    )
+    );
   }
 }
 
@@ -315,7 +461,7 @@ Device.defaultProps = {
   critical: [],
   suggested: [],
   messages: {},
-  done: []
-}
+  done: [],
+};
 
-export default Device
+export default Device;

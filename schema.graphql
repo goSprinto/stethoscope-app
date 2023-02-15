@@ -188,6 +188,14 @@ type PolicyResult {
   stethoscopeVersion: FeatureState
   # Open Wi-Fi
   openWifiConnections: FeatureState
+
+  # TraceError
+  osVersionError: String
+  firewallError: String
+  diskEncryptionError: String
+  screenLockError: String
+  screenIdleError: String
+  remoteLoginError: String
 }
 
 type Security {
@@ -211,6 +219,13 @@ type Security {
   privateFirewall(requirement: RequirementOption!): Boolean!
   domainFirewall(requirement: RequirementOption!): Boolean!
   openWifiConnections(requirement: RequirementOption!): Boolean!
+  # TraceError
+  osVersionError(requirement: PlatformBracketRequirement!): String
+  firewallError(requirement: RequirementOption!): String
+  diskEncryptionError(requirement: RequirementOption!): String
+  screenLockError(requirement: RequirementOption!): String
+  screenIdleError(requirement: NumericRange!): String
+  remoteLoginError(requirement: RequirementOption!): String
 }
 
 type IpAddress {
@@ -304,6 +319,7 @@ enum FeatureState {
   NUDGE
   ON
   OFF
+  ERROR
   UNKNOWN
 }
 
