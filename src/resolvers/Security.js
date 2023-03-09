@@ -1,5 +1,5 @@
-import semver from '../lib/patchedSemver'
-import pkg from '../../package.json'
+import semver from "../lib/patchedSemver";
+import pkg from "../../package.json";
 import {
   NUDGE,
   UNSUPPORTED,
@@ -12,220 +12,248 @@ import {
   INVALID_VERSION,
   VALID,
   SUGGESTED_INSTALL,
-  SUGGESTED_UPGRADE
-} from '../constants'
-import kmd from '../lib/kmd'
-import { PlatformSecurity } from './platform/'
-import config from '../config'
-import applicationPlatformFilter from '../lib/applicationPlatformFilter'
+  SUGGESTED_UPGRADE,
+} from "../constants";
+import kmd from "../lib/kmd";
+import { PlatformSecurity } from "./platform/";
+import config from "../config";
+import applicationPlatformFilter from "../lib/applicationPlatformFilter";
 
 export default {
-  async automaticAppUpdates (root, args, context) {
-    if ('automaticAppUpdates' in PlatformSecurity) {
-      return PlatformSecurity.automaticAppUpdates(root, args, context)
+  async automaticAppUpdates(root, args, context) {
+    if ("automaticAppUpdates" in PlatformSecurity) {
+      return PlatformSecurity.automaticAppUpdates(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async automaticDownloadUpdates (root, args, context) {
-    if ('automaticDownloadUpdates' in PlatformSecurity) {
-      return PlatformSecurity.automaticDownloadUpdates(root, args, context)
+  async automaticDownloadUpdates(root, args, context) {
+    if ("automaticDownloadUpdates" in PlatformSecurity) {
+      return PlatformSecurity.automaticDownloadUpdates(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async automaticConfigDataInstall (root, args, context) {
-    if ('automaticConfigDataInstall' in PlatformSecurity) {
-      return PlatformSecurity.automaticConfigDataInstall(root, args, context)
+  async automaticConfigDataInstall(root, args, context) {
+    if ("automaticConfigDataInstall" in PlatformSecurity) {
+      return PlatformSecurity.automaticConfigDataInstall(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async automaticCheckEnabled (root, args, context) {
-    if ('automaticCheckEnabled' in PlatformSecurity) {
-      return PlatformSecurity.automaticCheckEnabled(root, args, context)
+  async automaticCheckEnabled(root, args, context) {
+    if ("automaticCheckEnabled" in PlatformSecurity) {
+      return PlatformSecurity.automaticCheckEnabled(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async automaticSecurityUpdates (root, args, context) {
-    if ('automaticSecurityUpdates' in PlatformSecurity) {
-      return PlatformSecurity.automaticSecurityUpdates(root, args, context)
+  async automaticSecurityUpdates(root, args, context) {
+    if ("automaticSecurityUpdates" in PlatformSecurity) {
+      return PlatformSecurity.automaticSecurityUpdates(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async automaticOsUpdates (root, args, context) {
-    if ('automaticOsUpdates' in PlatformSecurity) {
-      return PlatformSecurity.automaticOsUpdates(root, args, context)
+  async automaticOsUpdates(root, args, context) {
+    if ("automaticOsUpdates" in PlatformSecurity) {
+      return PlatformSecurity.automaticOsUpdates(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async automaticUpdates (root, args, context) {
-    if ('automaticUpdates' in PlatformSecurity) {
-      return PlatformSecurity.automaticUpdates(root, args, context)
+  async automaticUpdates(root, args, context) {
+    if ("automaticUpdates" in PlatformSecurity) {
+      return PlatformSecurity.automaticUpdates(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async remoteLogin (root, args, context) {
-    if ('remoteLogin' in PlatformSecurity) {
-      return PlatformSecurity.remoteLogin(root, args, context)
+  async remoteLogin(root, args, context) {
+    if ("remoteLogin" in PlatformSecurity) {
+      return PlatformSecurity.remoteLogin(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async diskEncryption (root, args, context) {
-    if ('diskEncryption' in PlatformSecurity) {
-      return PlatformSecurity.diskEncryption(root, args, context)
+  async diskEncryption(root, args, context) {
+    if ("diskEncryption" in PlatformSecurity) {
+      return PlatformSecurity.diskEncryption(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async stethoscopeVersion (root, args, context) {
-    return semver.satisfies(pkg.version, args.stethoscopeVersion, { includePrerelease: config.allowPrerelease })
+  async stethoscopeVersion(root, args, context) {
+    return semver.satisfies(pkg.version, args.stethoscopeVersion, {
+      includePrerelease: config.allowPrerelease,
+    });
   },
 
-  async screenLock (root, args, context) {
-    if ('screenLock' in PlatformSecurity) {
-      return PlatformSecurity.screenLock(root, args, context)
+  async screenLock(root, args, context) {
+    if ("screenLock" in PlatformSecurity) {
+      return PlatformSecurity.screenLock(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async screenIdle (root, args, context) {
-    if ('screenIdle' in PlatformSecurity) {
-      return PlatformSecurity.screenIdle(root, args, context)
+  async screenIdle(root, args, context) {
+    if ("screenIdle" in PlatformSecurity) {
+      return PlatformSecurity.screenIdle(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async osVersion (root, args, context) {
-    const result = await kmd('os', context)
-    let { platform, version } = result.system
+  async osVersion(root, args, context) {
+    const result = await kmd("os", context);
+    let { platform, version } = result.system;
     // aws workspaces are on a different version than Windows 10
-    if (platform === 'awsWorkspace') {
-      platform = 'awsWorkspace'
+    if (platform === "awsWorkspace") {
+      platform = "awsWorkspace";
     } else {
-      platform = process.platform
+      platform = process.platform;
     }
 
     // For linux, use the distro id to get the correct version
     // to compare against
-    if (platform === 'linux') {
-      platform = result.system.distroId
+    if (platform === "linux") {
+      platform = result.system.distroId;
+      if (platform === "manjaro") {
+        const osLsbRelease = await kmd("os-lsb-release", context);
+        version = osLsbRelease.system.lsb_version;
+      }
     }
 
-    if(platform in args.osVersion){
-      const { ok, nudge } = Object(args.osVersion[platform])
+    if (platform in args.osVersion) {
+      const { ok, nudge } = Object(args.osVersion[platform]);
       // Ubuntu versions look like 18.04.5. Convert it to
       // 18.4.5 so that semver likes it.
-      const semverVersion = String(version).split('.').map(i => parseInt(i)).join('.')
+      const semverVersion = String(version)
+        .split(".")
+        .map((i) => parseInt(i))
+        .join(".");
 
       if (semver.satisfies(semver.coerce(semverVersion), ok)) {
-        return true
+        return true;
       } else if (semver.satisfies(semver.coerce(semverVersion), nudge)) {
-        return NUDGE
+        return NUDGE;
       } else {
-        return false
+        return false;
       }
     } else {
-      return UNKNOWN
+      return UNKNOWN;
     }
   },
 
-  async publicFirewall (root, args, context) {
-    if ('publicFirewall' in PlatformSecurity) {
-      return PlatformSecurity.publicFirewall(root, args, context)
+  async publicFirewall(root, args, context) {
+    if ("publicFirewall" in PlatformSecurity) {
+      return PlatformSecurity.publicFirewall(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async privateFirewall (root, args, context) {
-    if ('privateFirewall' in PlatformSecurity) {
-      return PlatformSecurity.privateFirewall(root, args, context)
+  async privateFirewall(root, args, context) {
+    if ("privateFirewall" in PlatformSecurity) {
+      return PlatformSecurity.privateFirewall(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async domainFirewall (root, args, context) {
-    if ('domainFirewall' in PlatformSecurity) {
-      return PlatformSecurity.domainFirewall(root, args, context)
+  async domainFirewall(root, args, context) {
+    if ("domainFirewall" in PlatformSecurity) {
+      return PlatformSecurity.domainFirewall(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async firewall (root, args, context) {
-    if ('firewall' in PlatformSecurity) {
-      return PlatformSecurity.firewall(root, args, context)
+  async firewall(root, args, context) {
+    if ("firewall" in PlatformSecurity) {
+      return PlatformSecurity.firewall(root, args, context);
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async applications (root, args, context, osPlatform, osVersion) {
-    if ('applications' in PlatformSecurity) {
-      const platformApps = await applicationPlatformFilter(args.applications, context, osPlatform, osVersion)
+  async applications(root, args, context, osPlatform, osVersion) {
+    if ("applications" in PlatformSecurity) {
+      const platformApps = await applicationPlatformFilter(
+        args.applications,
+        context,
+        osPlatform,
+        osVersion
+      );
 
-      const results = await PlatformSecurity.applications(root, platformApps, context)
+      const results = await PlatformSecurity.applications(
+        root,
+        platformApps,
+        context
+      );
 
       return results.map((data, idx) => {
-        const config = args.applications[idx]
-        const installed = Boolean(data.version)
-        const versionSatisfied = config.version ? semver.satisfies(semver.coerce(data.version), config.version) : true
+        const config = args.applications[idx];
+        const installed = Boolean(data.version);
+        const versionSatisfied = config.version
+          ? semver.satisfies(semver.coerce(data.version), config.version)
+          : true;
 
-        let validInstall
+        let validInstall;
         switch (config.assertion) {
           case ALWAYS:
-            validInstall = installed
-            break
+            validInstall = installed;
+            break;
           case NEVER:
-            validInstall = !installed
-            break
+            validInstall = !installed;
+            break;
           case SUGGESTED:
           case IF_SUPPORTED:
           default:
-            validInstall = true
-            break
+            validInstall = true;
+            break;
         }
 
-        let validVersion
+        let validVersion;
         switch (config.assertion) {
           case ALWAYS:
-            validVersion = versionSatisfied
-            break
+            validVersion = versionSatisfied;
+            break;
           case NEVER:
-            validVersion = !installed
-            break
+            validVersion = !installed;
+            break;
           case IF_SUPPORTED:
-            validVersion = installed ? versionSatisfied : true
-            break
+            validVersion = installed ? versionSatisfied : true;
+            break;
           case SUGGESTED:
           default:
-            validVersion = true
-            break
+            validVersion = true;
+            break;
         }
 
-        let state
+        let state;
         if (config.assertion === SUGGESTED) {
-          state = !installed ? SUGGESTED_INSTALL : !versionSatisfied ? SUGGESTED_UPGRADE : VALID
+          state = !installed
+            ? SUGGESTED_INSTALL
+            : !versionSatisfied
+            ? SUGGESTED_UPGRADE
+            : VALID;
         } else {
-          state = !validInstall ? INVALID_INSTALL_STATE : !validVersion ? INVALID_VERSION : VALID
+          state = !validInstall
+            ? INVALID_INSTALL_STATE
+            : !validVersion
+            ? INVALID_VERSION
+            : VALID;
         }
 
         return {
@@ -234,29 +262,33 @@ export default {
           installed,
           passing: state === VALID,
           reason: data.reason,
-          state
-        }
-      })
+          state,
+        };
+      });
     }
 
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async openWifiConnections (root, args, context) {
-    if ('openWifiConnections' in PlatformSecurity) {
-      return PlatformSecurity.openWifiConnections(root, args, context)
+  async openWifiConnections(root, args, context) {
+    if ("openWifiConnections" in PlatformSecurity) {
+      return PlatformSecurity.openWifiConnections(root, args, context);
     }
-    return UNSUPPORTED
+    return UNSUPPORTED;
   },
 
-  async antivirus (root, policy, context) {
-    if ('antivirus' in PlatformSecurity) {
-      const activeProviders = await PlatformSecurity.antivirus(root, policy.antivirus, context)
+  async antivirus(root, policy, context) {
+    if ("antivirus" in PlatformSecurity) {
+      const activeProviders = await PlatformSecurity.antivirus(
+        root,
+        policy.antivirus,
+        context
+      );
       return {
         status: activeProviders.length > 0,
-        activeProviders
-      }
+        activeProviders,
+      };
     }
-    return UNSUPPORTED
-  }
-}
+    return UNSUPPORTED;
+  },
+};
