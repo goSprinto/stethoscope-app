@@ -19,4 +19,12 @@ save system.version
 remove output
 
 exec uname -r
+save output
 save system.build
+remove output
+
+exec lsb_release -a
+save output
+extract \nRelease:\s*([\d\.]+)[^\n]*\n
+save system.lsb_version
+remove output

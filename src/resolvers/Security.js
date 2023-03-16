@@ -127,8 +127,7 @@ export default {
     if (platform === 'linux') {
       platform = result.system.distroId
       if (platform === "manjaro") {
-        const osLsbRelease = await kmd("os-lsb-release", context);
-        version = osLsbRelease.system.lsb_version;
+        version = result.system.lsb_version;
       }
     }
 
