@@ -55,7 +55,7 @@ const Device = {
 
   async osVersion (root, args, context) {
     const result = await kmd('os', context)
-    const version = result.system.version
+    const version = result.system.version || result.system.lsb_version
     const [major, minor, patch = 0] = String(version).split('.')
     return `${major}.${minor}.${patch}`
   },
