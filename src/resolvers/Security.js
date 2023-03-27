@@ -126,6 +126,9 @@ export default {
     // to compare against
     if (platform === 'linux') {
       platform = result.system.distroId
+      if (platform === "manjaro") {
+        version = result.system.lsb_version;
+      }
     }
 
     if(platform in args.osVersion){

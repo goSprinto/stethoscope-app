@@ -70,9 +70,9 @@ export default async function startServer(
 
   app.use(helmet());
   app.use(noCache());
-  app.use(express.urlencoded());
+  app.use(express.urlencoded({extended: true}))
   app.use(express.json());
-
+  
   const schema = makeExecutableSchema({
     resolvers: Resolvers,
     typeDefs: Schema,
