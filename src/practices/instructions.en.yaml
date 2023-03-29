@@ -235,8 +235,8 @@ practices:
       darwin: |
         {{#if venturaOrLater}}
         1. Choose System Preferences from the Apple menu.
-        1. Click [Lock Screen](x-apple.systempreferences:com.apple.Lock-Screen-Settings.extension)
-        1. Set the pull down menu to "immediately" for the "Require password after screen saver begins or display is turned off" setting.
+        1. Select [Lock Screen](x-apple.systempreferences:com.apple.Lock-Screen-Settings.extension)
+        1. Set the “Require password after screen saver begins or display is turned off” pull-down menu to "immediately".
         1. Rescan to update the status
         {{else}}
         1. Choose System Preferences from the Apple menu.
@@ -294,8 +294,8 @@ practices:
       darwin: |
         {{#if venturaOrLater}}
         1. Choose System Preferences from the Apple menu.
-        1. Click [Lock Screen](x-apple.systempreferences:com.apple.Lock-Screen-Settings.extension)
-        1. Set the pull down menu to 15 minutes or less for "Start Screen Saver When inactive" setting
+        1. Select [Lock Screen](x-apple.systempreferences:com.apple.Lock-Screen-Settings.extension)
+        1. Set the “Start Screen Saver When inactive” pull-down menu to 15 minutes or less.
         1. Rescan to update the status
         {{else}}
         1. Choose [System Preferences](x-apple.systempreferences:com.apple.systempreferences) from the Apple menu.
