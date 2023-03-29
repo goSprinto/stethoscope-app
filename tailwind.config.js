@@ -870,7 +870,10 @@ module.exports = {
       1: "1",
       2: "2",
     },
-    textColor: ({ theme }) => theme("colors"),
+    textColor: ({ theme }) => ({
+      ...theme("colors"),
+      gray: "#2B2B2B",
+    }),
     textDecorationColor: ({ theme }) => theme("colors"),
     textDecorationThickness: {
       auto: "auto",

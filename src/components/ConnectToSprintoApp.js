@@ -8,8 +8,8 @@ const WelcomeMessage = ({ onClickShowDescription, showDescription }) => {
   return (
     <div>
       <div>
-        <h1 className="text-sm mb-0">Share device info with Sprinto</h1>
-        <div className="text-sm">
+        <h1 className="text-base mb-0">Share device info with Sprinto</h1>
+        <div className="text-xs text-gray">
           Let Sprinto know about the device you are using.
         </div>
       </div>
@@ -27,17 +27,14 @@ const WelcomeMessage = ({ onClickShowDescription, showDescription }) => {
 
       {showDescription ? (
         <div className="action-description">
-          <div className="text-xs">
+          <div className="text-xs text-">
             The following details will be monitored and shared with Sprinto:
           </div>
-          <ol className="text-xs">
-            <li>OS version: The current version of the operating system. </li>
-            <li>Antivirus status: Status of antivirus being enabled.</li>
-            <li>
-              Screen-lock status: Status of screen-lock and auto-lock being
-              enabled.
-            </li>
-            <li>Disk encryption: Status of disk encryption being enabled.</li>
+          <ol className="text-xs text-gray">
+            <li>OS (Current version) </li>
+            <li>Antivirus (Enabled or Disabled).</li>
+            <li>Screen-lock (Enabled or Disabled)</li>
+            <li>Disk encryption (Enabled or Disabled)</li>
           </ol>
         </div>
       ) : null}
@@ -92,7 +89,7 @@ const ConnectToSprintoApp = ({
               <SprintoIcon height={64} width={64} />
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center mt-2">
               <div className="text-xs font-sm font-medium">Sprinto account</div>
             </div>
           </div>
@@ -100,7 +97,7 @@ const ConnectToSprintoApp = ({
       </div>
 
       <div className=" fixed bottom-5 right-0 ">
-        <div className="text-xs flex justify-end mr-3">
+        <div className="text-xs flex justify-end mr-3 text-gray">
           * This will open the Sprinto application in your web browser
         </div>
         <div className="flex justify-end">

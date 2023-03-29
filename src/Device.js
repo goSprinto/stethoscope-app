@@ -39,7 +39,7 @@ const WelcomeMessage = ({ name, showWelcomeDescription, showDescription }) => {
           href="/#"
           onClick={showWelcomeDescription}
         >
-          What will be shared with Sprinto?
+          What is being shared with Sprinto?
         </a>
       </p>
 
@@ -48,14 +48,11 @@ const WelcomeMessage = ({ name, showWelcomeDescription, showDescription }) => {
           <div className="text-xs">
             The following details will be monitored and shared with Sprinto:
           </div>
-          <ol className="text-xs">
-            <li>OS version: The current version of the operating system. </li>
-            <li>Antivirus status: Status of antivirus being enabled.</li>
-            <li>
-              Screen-lock status: Status of screen-lock and auto-lock being
-              enabled.
-            </li>
-            <li>Disk encryption: Status of disk encryption being enabled.</li>
+          <ol className="text-xs text-gray">
+            <li>OS (Current version) </li>
+            <li>Antivirus (Enabled or Disabled).</li>
+            <li>Screen-lock (Enabled or Disabled)</li>
+            <li>Disk encryption (Enabled or Disabled)</li>
           </ol>
         </div>
       ) : null}
