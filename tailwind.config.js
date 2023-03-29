@@ -3,6 +3,7 @@ module.exports = {
   content: ["./src/*.{js,ts}", "./src/**/*.{js,ts}"],
   corePlugins: {
     preflight: false,
+    visibility: false,
   },
   presets: [],
   darkMode: "media", // or 'class'

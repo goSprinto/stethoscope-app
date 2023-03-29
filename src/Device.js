@@ -23,16 +23,42 @@ import Button from "./components/Button";
 import ButtonLink from "./components/ButtonLink";
 import LaptopIcon from "./icons/LaptopIcon";
 
-const WelcomeMessage = ({ name }) => {
+const WelcomeMessage = ({ name, showWelcomeDescription, showDescription }) => {
   return (
-    <div>
+    <div className="pb-3">
       <div className="text-sm">Welcome {name},</div>
-
       <p className="text-sm">
-        To ensure your device complies with the company's endpoint security
-        policy, you need to scan the device and send the health report to
-        Sprinto.
+        Keep Dr Sprinto running in the background to report your laptop security
+        status automatically.
       </p>
+      <p>
+        <a
+          className={`text-xs cursor-pointer  ${
+            showDescription ? "open" : "closed"
+          }`}
+          href="/#"
+          onClick={showWelcomeDescription}
+        >
+          What will be shared with Sprinto?
+        </a>
+      </p>
+
+      {showDescription ? (
+        <div className="text-xs action-description">
+          <div>
+            The following details will be monitored and shared with Sprinto:
+          </div>
+          <ol>
+            <li>OS version: The current version of the operating system. </li>
+            <li>Antivirus status: Status of antivirus being enabled.</li>
+            <li>
+              Screen-lock status: Status of screen-lock and auto-lock being
+              enabled.
+            </li>
+            <li>Disk encryption: Status of disk encryption being enabled.</li>
+          </ol>
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -111,94 +137,77 @@ const DeviceDetails = ({
 
 const ShowAutoReportingStatus = ({
   daysSinceLastLog,
-  deviceLogReportingFreqDays,
   onClickOpen,
-  reportingAppURI,
-}) => {
-  return (
-    <>
-      <div
-        className={`${
-          daysSinceLastLog === 0 ? "bg-green-200" : "bg-yellow-200"
-        } text-sm border rounded relative center p-1 mt-6`}
-        role="alert"
-      >
-        {daysSinceLastLog > deviceLogReportingFreqDays + 1 ? (
-          <span className="text-sm font-medium">
-            Device status not reported to Sprinto
-          </span>
-        ) : (
-          <span className="text-sm font-small">
-            {daysSinceLastLog === 0
-              ? "Last reported today."
-              : `Last reported ${daysSinceLastLog}
-                     ${daysSinceLastLog === 1 ? " day" : " days"} ago`}
-          </span>
-        )}
-        <div className="text-xs text-slate-400">
-          Next report will be submitted tomorrow
-        </div>
-      </div>
-
-      {daysSinceLastLog === 0 && (
-        <div className="flex justify-end text-xs text-slate-600">
-          <ButtonLink
-            isPrimary={true}
-            title={"Report this device manually"}
-            onClickOpen={onClickOpen}
-            redirectURI={reportingAppURI}
-          />
-        </div>
-      )}
-    </>
-  );
-};
-
-const FooterAction = ({
-  deviceLogReportingFreqDays,
-  daysSinceLastLog,
-  onClickOpen,
-  reportingAppURI,
-  enableReportNow,
   reportingErrorLogAppURI,
+  reportingAppURI,
 }) => {
-  if (daysSinceLastLog === 0) return null;
   return (
     <>
-      <div
-        className="border-solid rounded-md mt-5 p-3"
-        style={{ borderColor: "#e5e7eb" }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex flex-row items-center">
-            <ActionIcon
-              className="action-icon"
-              height="20"
-              width="20"
-              variant={"SUGGEST"}
-            />
-            <div className="text-sm font-small ml-3">Device not reporting</div>
+      {daysSinceLastLog === 0 ? (
+        <>
+          <div
+            className="bg-green-200 text-sm border rounded relative p-3"
+            role="alert"
+          >
+            <div>
+              <span className="text-sm font-small">Last reported today.</span>
+              <div className="text-xs text-slate-400">
+                Next report will be automatically submitted tomorrow.
+              </div>
+            </div>
           </div>
-
-          <div>
-            <Button
+          <div className="flex justify-end text-xs text-slate-600">
+            <ButtonLink
               isPrimary={true}
-              title={"Report manually"}
+              title={"Try an alternative way of reporting"}
               onClickOpen={onClickOpen}
               redirectURI={reportingAppURI}
-              disabled={!enableReportNow}
-              className="m-0 bg-orangeOne rounded space-x-2 justify-center content-box inline-flex items-center text-white"
             />
           </div>
-        </div>
-        <div className="text-xs text-slate-600 flex justify-end m-1">
-          <ButtonLink
-            onClickOpen={onClickOpen}
-            redirectURI={reportingErrorLogAppURI}
-            title={"let us know about this issue"}
-          />
-        </div>
-      </div>
+        </>
+      ) : (
+        <>
+          <div
+            className="flex flex-row items-center bg-yellow-200 text-sm border rounded relative p-3 justify-between"
+            role="alert"
+          >
+            <div className="flex items-center">
+              <div>
+                <ActionIcon
+                  className="action-icon"
+                  height="20"
+                  width="20"
+                  variant={"SUGGEST"}
+                />
+              </div>
+              <div className="ml-3">
+                <div className="text-sm font-medium">Device not reporting</div>
+                <div className=" text-sm font-small">
+                  Last reported {daysSinceLastLog}
+                  {daysSinceLastLog === 1 ? " day" : " days"} ago
+                </div>
+                <div className="text-xs text-slate-600">
+                  <ButtonLink
+                    onClickOpen={onClickOpen}
+                    redirectURI={reportingErrorLogAppURI}
+                    title={"let us know about this issue"}
+                  />
+                </div>
+              </div>
+            </div>
+            <div>
+              <Button
+                isPrimary={true}
+                title={"Report manually"}
+                onClickOpen={onClickOpen}
+                redirectURI={reportingAppURI}
+                disabled={false}
+                className="m-0 bg-orangeOne rounded space-x-2 justify-center content-box inline-flex items-center text-white"
+              />
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };
@@ -208,6 +217,7 @@ class Device extends Component {
     super(props);
     this.state = {
       showInfo: false,
+      showDescription: false,
     };
   }
 
@@ -368,6 +378,12 @@ class Device extends Component {
     });
   };
 
+  showWelcomeDescription = () => {
+    this.setState({
+      showDescription: !this.state.showDescription,
+    });
+  };
+
   render() {
     const {
       deviceLogLastReportedOn,
@@ -376,10 +392,7 @@ class Device extends Component {
       onRescan,
       reportingAppURI,
       actionButtonTitle,
-      countDown,
-      enableReportNow,
       firstName,
-      reportingSuccess,
       reportingErrorLogAppURI,
     } = this.props;
 
@@ -413,11 +426,16 @@ class Device extends Component {
     return (
       <div className="device-wrapper">
         <div className={`panel device ${deviceClass}`}>
-          <WelcomeMessage name={firstName} />
+          <WelcomeMessage
+            name={firstName}
+            showWelcomeDescription={this.showWelcomeDescription}
+            showDescription={this.state.showDescription}
+          />
           <ShowAutoReportingStatus
             daysSinceLastLog={daysSinceLastLog}
             deviceLogReportingFreqDays={deviceLogReportingFreqDays}
             onClickOpen={onClickOpen}
+            reportingErrorLogAppURI={reportingErrorLogAppURI}
             reportingAppURI={reportingAppURI}
           />
           <DeviceDetails
@@ -437,17 +455,6 @@ class Device extends Component {
           <div className="grid gap-2 grid-cols-2 grid-rows-3 mt-8">
             {actions}
           </div>
-          <FooterAction
-            deviceLogLastReportedOn={deviceLogLastReportedOn}
-            onClickOpen={onClickOpen}
-            daysSinceLastLog={daysSinceLastLog}
-            onRescan={onRescan}
-            reportingAppURI={reportingAppURI}
-            countDown={countDown}
-            enableReportNow={enableReportNow}
-            reportingSuccess={reportingSuccess}
-            reportingErrorLogAppURI={reportingErrorLogAppURI}
-          />
         </div>
       </div>
     );

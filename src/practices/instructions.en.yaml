@@ -125,13 +125,20 @@ practices:
       Full-disk encryption protects data at rest from being accessed by a party who does not know the password or decryption key. Systems containing internal data should be encrypted. It is every employee's responsibility to keep internal data safe.
     directions:
       darwin: |
+        {{#if venturaOrLater}}
+        1. Choose System Preferences from the Apple menu.
+        1. Click [Privacy & Security](x-apple.systempreferences:com.apple.preference.security).
+        1. Scroll down and look for the FileVault card.
+        1. To begin the procedure, click the "Turn On" button on the card.
+        1. Rescan to update the status
+        {{else}}
         1. Choose System Preferences from the Apple menu.
         1. Click [Security or Security & Privacy](x-apple.systempreferences:com.apple.preference.security).
         1. Click the [FileVault](x-apple.systempreferences:com.apple.preference.security?FDE) tab.
         1. Unlock the pane by clicking the lock in the lower-left corner and enter the administrator username and password.
         1. Click "Turn On FileVault" to start the process.
         1. Rescan to update the status
-
+        {{/if}}
         {{#each disks}}
           <li>
             {{#if this.encrypted}}
@@ -226,12 +233,19 @@ practices:
       Screen locks, or screen saver locks, prevent unauthorized third-parties from accessing your laptop when unattended by requiring a password to dismiss the screen saver or wake from "sleep" mode.
     directions:
       darwin: |
+        {{#if venturaOrLater}}
+        1. Choose System Preferences from the Apple menu.
+        1. Click [Lock Screen](x-apple.systempreferences:com.apple.Lock-Screen-Settings.extension)
+        1. Set the pull down menu to "immediately" for the "Require password after screen saver begins or display is turned off" setting.
+        1. Rescan to update the status
+        {{else}}
         1. Choose System Preferences from the Apple menu.
         1. Click [Security or Security & Privacy](x-apple.systempreferences:com.apple.preference.security).
         1. Select the [General](x-apple.systempreferences:com.apple.preference.security?General) tab.
         1. Unlock the pane by clicking the lock in the lower-left corner and enter the administrator username and password.
         1. Check the "Require password" box and set the pull down menu to to "immediately" after sleep or screen saver begins.
         1. Rescan to update the status
+        {{/if}}
       win32: |
         1. Open [Lock screen settings](ms-settings:lockscreen).
         1. Scroll down and click on "Screen saver settings".
@@ -278,11 +292,18 @@ practices:
       Screens which lock automatically when your laptop is unattended prevent unauthorized access from third-parties by requiring a password to dismiss the screen saver or wake from "sleep" mode. Your timeout setting should be 15 minutes or less.
     directions:
       darwin: |
+        {{#if venturaOrLater}}
+        1. Choose System Preferences from the Apple menu.
+        1. Click [Lock Screen](x-apple.systempreferences:com.apple.Lock-Screen-Settings.extension)
+        1. Set the pull down menu to 15 minutes or less for "Start Screen Saver When inactive" setting
+        1. Rescan to update the status
+        {{else}}
         1. Choose [System Preferences](x-apple.systempreferences:com.apple.systempreferences) from the Apple menu.
         1. Click Desktop & Screen Saver.
         1. Click the Screen Saver tab.
         1. Adjust the "Start after" dropdown to 15 minutes or less.
         1. Rescan to update the status
+        {{/if}}
       linux: |
         ** Ubuntu 18.04 **
         1. From the upper-right drop-down menu, click the Settings icon.

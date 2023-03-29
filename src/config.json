@@ -10,7 +10,7 @@
   "deviceStatusReportingAppURI": "https://app.sprinto.in/app/intranet/endpointScanLogs?drawerOpen=true",
   "deviceDebugLogReportingAppURI": "https://app.sprinto.in/app/intranet/endpointScanLogs?reportDrSprintoError=true",
   "deviceConnectAppURI": "https://app.sprinto.in/app/intranet/endpointScanLogs?connectSprintoApp=true",
-  "rescanIntervalSeconds": 604800,
+  "rescanIntervalSeconds": 14400,
   "autoLaunchPrompt": true,
   "allowPrerelease": false,
   "encryptionKey": "DrtGYm6Lllw",

@@ -151,6 +151,8 @@ class Action extends Component {
    */
   getPlatformAndVersionSpecificFlags({ platform, osVersion }) {
     return {
+      venturaOrLater:
+        platform === "darwin" && semver.satisfies(osVersion, ">=13.0.0"),
       mojaveOrLater:
         platform === "darwin" && semver.satisfies(osVersion, ">=10.14.0"),
     };

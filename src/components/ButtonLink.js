@@ -10,7 +10,7 @@ const ButtonLink = ({
 }) => {
   return (
     <>
-      <button
+      <a
         disabled={disabled}
         href={redirectURI}
         className="m-0 text-blue-500"
@@ -18,12 +18,12 @@ const ButtonLink = ({
           backgroundColor: "unset",
           border: "unset",
           boxShadow: "unset",
-          textDecoration: "underline",
+          textDecoration: "none",
         }}
         onClick={onClickOpen}
       >
         {icon && <RefreshIcon />} {title}
-      </button>
+      </a>
     </>
   );
 };

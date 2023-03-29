@@ -276,21 +276,21 @@ async function createWindow() {
   const rescanDelay = scanSeconds * 1000;
 
   ipcMain.on("scan:init", (event) => {
-    if (!disableAutomaticScanning) {
-      // schedule next automatic scan
-      clearTimeout(rescanTimeout);
-      rescanTimeout = setTimeout(() => {
-        if (event && event.sender) {
-          try {
-            event.sender.send("autoscan:start", {
-              notificationOnViolation: true,
-            });
-          } catch (e) {
-            log.error("start:[WARN] unable to run autoscan", e.message);
-          }
+    // if (!disableAutomaticScanning) {
+    // schedule next automatic scan
+    clearTimeout(rescanTimeout);
+    rescanTimeout = setTimeout(() => {
+      console.log("doing auto reporting");
+      if (event && event.sender) {
+        try {
+          event.sender.send("autoscan:start", {
+            notificationOnViolation: true,
+          });
+        } catch (e) {
+          log.error("start:[WARN] unable to run autoscan", e.message);
         }
-      }, rescanDelay);
-    }
+      }
+    }, rescanDelay);
   });
 
   // restore main window after update is downloaded (if arg = { resize: true })

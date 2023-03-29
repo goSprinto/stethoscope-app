@@ -70,6 +70,8 @@ class App extends Component {
     // app rescan interval
     appAutoRescanInterval: null,
     offline: false,
+
+    showDescription: true,
   };
 
   componentWillUnmount = () => {
@@ -160,26 +162,6 @@ class App extends Component {
     window.addEventListener("offline", () => this.setState({ offline: true }));
     window.addEventListener("online", () => this.setState({ offline: false }));
 
-    this.myInterval = setInterval(() => {
-      if (this.remainingTimeInMinute() <= 10) {
-        this.setState({
-          countDown: 10 - this.remainingTimeInMinute(),
-          actionButtonTitle: "Scan",
-          enableReportNow: true,
-        });
-      }
-
-      if (this.remainingTimeInMinute() > 10) {
-        this.setState({
-          countDown: 10,
-          actionButtonTitle: "Re-Scan",
-          enableReportNow: false,
-        });
-        clearInterval(this.myInterval);
-      }
-    }, 60000);
-
-    this.syncUpdatedPolicy();
     // scanning after 4 hours if any suggestion - to increase touchpoint
     // TODO; check with abhaya if any alternate suggestion
     this.appAutoRescanInterval = setInterval(() => {
@@ -189,7 +171,7 @@ class App extends Component {
       } else {
         this.loadPractices();
       }
-    }, 14400000); // 4 hours
+    }, 14400000); // 4 hours == 14400000
   }
 
   // update policy
@@ -483,6 +465,12 @@ class App extends Component {
     }
   };
 
+  handleShowDescription = () => {
+    this.setState({
+      showDescription: !this.state.showDescription,
+    });
+  };
+
   handleRestartFromLoader = (event) => {
     settings.set("recentHang", settings.get("recentHang", 0) + 1);
     ipcRenderer.send("app:restart");
@@ -492,6 +480,7 @@ class App extends Component {
    * Performs a scan by passing the current policy to the graphql server
    */
   handleScan = () => {
+    console.log("scanning now", new Date());
     const { policy } = this.state;
     this.setState({ loading: true, scanIsRunning: true }, () => {
       Stethoscope.validate(policy)
@@ -511,32 +500,6 @@ class App extends Component {
               ipcRenderer.send("app:loaded");
             }
           );
-          // to restart the scan
-          if (this.remainingTimeInMinute() <= 10) {
-            this.setState({
-              countDown: 10 - this.remainingTimeInMinute(),
-              actionButtonTitle: "Scan",
-              enableReportNow: true,
-            });
-          }
-
-          this.myInterval2 = setInterval(() => {
-            if (this.remainingTimeInMinute() <= 10) {
-              this.setState({
-                countDown: 10 - this.remainingTimeInMinute(),
-                actionButtonTitle: "Scan",
-                enableReportNow: true,
-              });
-            }
-            if (this.remainingTimeInMinute() > 10) {
-              this.setState({
-                countDown: 10,
-                actionButtonTitle: "Re-Scan",
-                enableReportNow: false,
-              });
-              clearInterval(this.myInterval2);
-            }
-          }, 60000);
         })
         .catch((err) => {
           console.log(err);
@@ -656,6 +619,9 @@ class App extends Component {
           <ConnectToSprintoApp
             redirectURI={deviceConnectAppURI}
             onClickOpen={this.handleOpenExternal}
+            onClickShowDescription={this.handleShowDescription}
+            showDescription={this.state.showDescription}
+            device={device}
           />
         </>
       );
