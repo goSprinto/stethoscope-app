@@ -71,7 +71,7 @@ class App extends Component {
     appAutoRescanInterval: null,
     offline: false,
 
-    showDescription: true,
+    showDescription: false,
   };
 
   componentWillUnmount = () => {

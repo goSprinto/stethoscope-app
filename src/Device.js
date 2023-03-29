@@ -45,10 +45,10 @@ const WelcomeMessage = ({ name, showWelcomeDescription, showDescription }) => {
 
       {showDescription ? (
         <div className="text-xs action-description">
-          <div>
+          <div className="text-xs">
             The following details will be monitored and shared with Sprinto:
           </div>
-          <ol>
+          <ol className="text-xs">
             <li>OS version: The current version of the operating system. </li>
             <li>Antivirus status: Status of antivirus being enabled.</li>
             <li>
