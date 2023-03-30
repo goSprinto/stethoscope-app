@@ -187,7 +187,6 @@ export default async function startServer(
 
   app.post("/disconnect", cors(corsOptions), async (req, res) => {
     io.sockets.emit("sprinto:deviceDisconnected");
-    io.sockets.emit("auth:logout");
     res.status(200).send("Updated");
   });
 

@@ -36,7 +36,8 @@ const WelcomeMessage = ({ name, showWelcomeDescription, showDescription }) => {
           className={`text-xs cursor-pointer  ${
             showDescription ? "open" : "closed"
           }`}
-          href="javascript:void(0);"
+          href="javascript:void(0)"
+          type="button"
           onClick={showWelcomeDescription}
         >
           What is being shared with Sprinto?
