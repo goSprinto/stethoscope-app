@@ -84,6 +84,7 @@ const windowPrefs = {
   maximizable: false,
   autoHideMenuBar: true,
   skipTaskbar: true,
+  show: true,
   webPreferences: {
     nodeIntegration: true,
     webSecurity: false,
@@ -121,12 +122,13 @@ const focusOrCreateWindow = (mainWindow) => {
   return mainWindow;
 };
 
-async function createWindow() {
+async function createWindow(show = true) {
   // used to show initial launch messages to user
   if (!settings.has("userHasLaunchedApp")) {
     isFirstLaunch = true;
     settings.set("userHasLaunchedApp", true);
   }
+  windowPrefs.show = show;
   // wait for process to load before hiding in dock, prevents the app
   // from flashing into view and then hiding
   if (!IS_DEV && IS_MAC) setImmediate(() => app.dock.hide());
@@ -276,12 +278,19 @@ async function createWindow() {
   const rescanDelay = scanSeconds * 1000;
 
   ipcMain.on("scan:init", (event) => {
-    // if (!disableAutomaticScanning) {
     // schedule next automatic scan
     clearTimeout(rescanTimeout);
     rescanTimeout = setTimeout(() => {
-      console.log("doing auto reporting");
-      if (event && event.sender) {
+      if (event.sender.isDestroyed()) {
+        console.log(
+          "doing auto reporting - object destroyed?...creating object again"
+        );
+        server.close(() => {
+          console.log("Server closed");
+        });
+        createWindow(false);
+      }
+      if (event && event.sender && !event.sender.isDestroyed()) {
         try {
           event.sender.send("autoscan:start", {
             notificationOnViolation: true,

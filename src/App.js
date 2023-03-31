@@ -62,23 +62,17 @@ class App extends Component {
     actionButtonTitle: "Scan",
     enableReportNow: true,
     countDown: 10,
-    myInterval: null,
+
     // auth related states
     isConnected: false,
     firstName: null,
     policyLastSyncedOn: null,
-    // app rescan interval
-    appAutoRescanInterval: null,
     offline: false,
-
     showDescription: false,
   };
 
   componentWillUnmount = () => {
     this.setState({ scanIsRunning: false });
-    clearInterval(this.myInterval);
-    clearInterval(this.myInterval2);
-    clearInterval(this.appAutoRescanInterval);
   };
 
   async componentDidMount() {
@@ -161,17 +155,6 @@ class App extends Component {
     // device offline status
     window.addEventListener("offline", () => this.setState({ offline: true }));
     window.addEventListener("online", () => this.setState({ offline: false }));
-
-    // scanning after 4 hours if any suggestion - to increase touchpoint
-    // TODO; check with abhaya if any alternate suggestion
-    this.appAutoRescanInterval = setInterval(() => {
-      this.syncUpdatedPolicy();
-      if (Object.keys(this.state.policy).length) {
-        this.handleScan();
-      } else {
-        this.loadPractices();
-      }
-    }, 14400000); // 4 hours == 14400000
   }
 
   // update policy
@@ -480,7 +463,6 @@ class App extends Component {
    * Performs a scan by passing the current policy to the graphql server
    */
   handleScan = () => {
-    console.log("scanning now", new Date());
     const { policy } = this.state;
     this.setState({ loading: true, scanIsRunning: true }, () => {
       Stethoscope.validate(policy)
