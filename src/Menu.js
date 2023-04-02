@@ -2,18 +2,11 @@ import { Menu, shell, clipboard } from "electron";
 import fetch from "node-fetch";
 import pkg from "../package.json";
 import config from "./config.json";
-// import AutoLauncher from './AutoLauncher'
-
-// const toggleAutoLaunchMenus = (autoLaunchOn) => {
-//   const autoLaunchMenuOptions = Menu.getApplicationMenu().getMenuItemById('autolaunch').submenu
-//   autoLaunchMenuOptions.getMenuItemById('autolaunchOn').checked = autoLaunchOn
-//   autoLaunchMenuOptions.getMenuItemById('autolaunchOff').checked = !autoLaunchOn
-// }
+import AutoLauncher from "./AutoLauncher";
 
 export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
   const { checkForUpdates } = updater;
-  // const autoLauncher = new AutoLauncher(`${app.name}`)
-  // const isAutoLauncherEnabled = autoLauncher.isEnabled()
+  const autoLauncher = new AutoLauncher();
 
   const contextMenu = [
     { role: "copy", accelerator: "CmdOrCtrl+C" },
@@ -31,32 +24,46 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
         },
       ],
     },
-    // {
-    //   id: 'autolaunch',
-    //   label: 'Launch on Startup',
-    //   submenu: [
-    //     {
-    //       id: 'autolaunchOn',
-    //       label: 'On',
-    //       type: 'checkbox',
-    //       checked: isAutoLauncherEnabled,
-    //       click (event) {
-    //         toggleAutoLaunchMenus(true)
-    //         autoLauncher.enable()
-    //       }
-    //     },
-    //     {
-    //       id: 'autolaunchOff',
-    //       label: 'Off',
-    //       type: 'checkbox',
-    //       checked: !isAutoLauncherEnabled,
-    //       click (event) {
-    //         toggleAutoLaunchMenus(false)
-    //         autoLauncher.disable()
-    //       }
-    //     }
-    //   ]
-    // },
+    {
+      id: "autolaunch",
+      label: "Launch on Startup",
+      submenu: [
+        {
+          id: "autolaunchOn",
+          label: "On",
+          type: "checkbox",
+          click: (menuItem, _, event) => {
+            autoLauncher.enable();
+            menuItem.menu.items[0].checked = true; // Update checkbox UI
+            menuItem.menu.items[1].checked = false; // Uncheck the "Off" option
+
+            menuItem.menu.items[0].enabled = false; // Uncheck the "enable" option
+            menuItem.menu.items[1].enabled = true; // Uncheck the "enable" option
+            // Your code to handle the "On" option
+          },
+          enabled: !autoLauncher.isEnabled(),
+          // Set initial checkbox value based on AutoLauncher state
+          checked: autoLauncher.isEnabled(),
+        },
+        {
+          id: "autolaunchOff",
+          label: "Off",
+          enabled: autoLauncher.isEnabled(),
+          checked: !autoLauncher.isEnabled(),
+          // Set initial checkbox value based on AutoLauncher state
+          type: "checkbox",
+          click: (menuItem, _, event) => {
+            autoLauncher.disable();
+            menuItem.menu.items[0].checked = false; // Uncheck the "On" option
+            menuItem.menu.items[1].checked = true; // Update checkbox UI
+
+            menuItem.menu.items[0].enabled = true; // Uncheck the "enable" option
+            menuItem.menu.items[1].enabled = false; // Uncheck the "enable" option
+            // Your code to handle the "Off" option
+          },
+        },
+      ],
+    },
     {
       label: "Check for Update",
       click(event) {
