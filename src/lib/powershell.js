@@ -1,4 +1,4 @@
-const Shell = require("node-powershell");
+import Shell from "node-powershell";
 import log from "./logger";
 const IS_DEV = process.env.STETHOSCOPE_ENV === "development";
 /*
