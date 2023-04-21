@@ -108,10 +108,11 @@ practices:
         {{/each}}
 
       win32: |
-        **Windows 10 Professional Edition**
-
-          1. Open [BitLocker Drive Encryption](prefs://BitLocker).
-          1. Click "Turn on BitLocker".
+        1. Open the Start menu and search for "BitLocker."
+        1. Select "Manage BitLocker" from the search results.
+        1. Open BitLocker Drive Encryption
+        1. Click "Turn on BitLocker".
+        1. Rescan to update the status
 
       linux: |
         The recommended option for full disk encryption for Linux is <a target="_blank" href="https://gitlab.com/cryptsetup/cryptsetup/-/wikis/home">LUKS</a>. You can find instructions for Ubuntu 19.04 and 20.04 below.
@@ -162,7 +163,7 @@ practices:
         1. Select "Enabled" or "Not Configured" to turn automatic updates back on
 
   screenLock:
-    title:  >
+    title: >
       {{#if passing}}
         Screen Lock is enabled
       {{else}}
@@ -204,7 +205,7 @@ practices:
         1. Set "Lock Screen on Suspend" to ON.
 
   screenIdle:
-    title:  >
+    title: >
       {{#if passing}}
         Screen will lock in 15 minutes if the system is idle.
       {{else}}
