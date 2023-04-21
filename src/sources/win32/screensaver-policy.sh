@@ -1,4 +1,5 @@
-tryExec powershell 'Get-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\Windows\Control Panel\Desktop\" | Format-List'
+# tryExec powershell 'Get-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\Windows\Control Panel\Desktop\" | Format-List'
+tryExec reg query 'HKCU\\\\Software\\\\Policies\\\\Microsoft\\\\Windows\\\\Control Panel\\\\Desktop'
 trim
 save output1
 
