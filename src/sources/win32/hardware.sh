@@ -16,7 +16,7 @@ save system.hardwareVersion
 
 remove out
 
-tryExec reg query 'HKLM\SOFTWARE\MICROSOFT\CRYPTOGRAPHY'
+tryExec reg query 'HKLM\\SOFTWARE\\MICROSOFT\\CRYPTOGRAPHY'
 save out
 extract MachineGuid\s+REG_SZ\s+([\w\d-]+)
 save system.machineGuid
