@@ -187,7 +187,7 @@ export default async function startServer(
 
   app.post("/disconnect", cors(corsOptions), async (req, res) => {
     io.sockets.emit("sprinto:deviceDisconnected");
-    res.status(200).send("Updated");
+    res.status(200).send("Disconnected");
   });
 
   app.use(["/scan", "/graphql"], cors(corsOptions), async (req, res) => {

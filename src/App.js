@@ -8,7 +8,6 @@ import DownloadProgress from "./DownloadProgress";
 import openSocket from "socket.io-client";
 import moment from "moment";
 import classNames from "classnames";
-import serializeError from "serialize-error";
 import { HOST } from "./constants";
 import appConfig from "./config.json";
 import pkg from "../package.json";
@@ -402,7 +401,7 @@ class App extends Component {
   };
 
   handleErrorGraphQL = (err = { message: "Error in GraphQL request" }) => {
-    log.error(`App:GraphQL error ${JSON.stringify(serializeError(err))}`);
+    log.error(`App:GraphQL error ${JSON.stringify(e)}`);
     this.setState({ error: err, loading: false });
   };
 

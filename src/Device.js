@@ -213,6 +213,7 @@ const ShowAutoReportingStatus = ({
 class Device extends Component {
   constructor(props) {
     super(props);
+
     this.state = {
       showInfo: false,
       showDescription: false,

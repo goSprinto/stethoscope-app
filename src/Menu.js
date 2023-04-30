@@ -1,5 +1,5 @@
 import { Menu, shell, clipboard } from "electron";
-import fetch from "node-fetch";
+import axios from "axios";
 import pkg from "../package.json";
 import config from "./config.json";
 import AutoLauncher from "./AutoLauncher";
@@ -33,7 +33,7 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
           label: "On",
           type: "checkbox",
           click: (menuItem, _, event) => {
-            autoLauncher.enable();
+            autoLauncher.enable(app);
             menuItem.menu.items[0].checked = true; // Update checkbox UI
             menuItem.menu.items[1].checked = false; // Uncheck the "Off" option
 
@@ -53,7 +53,7 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
           // Set initial checkbox value based on AutoLauncher state
           type: "checkbox",
           click: (menuItem, _, event) => {
-            autoLauncher.disable();
+            autoLauncher.disable(app);
             menuItem.menu.items[0].checked = false; // Uncheck the "On" option
             menuItem.menu.items[1].checked = true; // Update checkbox UI
 
@@ -89,24 +89,27 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
           {
             label: "Copy Debug Info",
             click() {
-              fetch("http://127.0.0.1:37370/debugger", {
-                headers: {
-                  Origin: `${app.name.toLowerCase()}://main`,
-                },
-              })
-                .then((res) => res.text())
-                .then((data) => clipboard.writeText(data));
+              axios
+                .get("http://127.0.0.1:37370/debugger", {
+                  headers: {
+                    Origin: `${app.name.toLowerCase()}://main`,
+                  },
+                })
+                .then((res) => clipboard.writeText(res.data));
             },
           },
           {
             label: "Disconnect",
             click() {
-              fetch("http://127.0.0.1:37370/disconnect", {
-                method: "POST",
-                headers: {
-                  Origin: `${app.name.toLowerCase()}://main`,
-                },
-              }).then((res) => res.text());
+              axios
+                .post("http://127.0.0.1:37370/disconnect", {
+                  headers: {
+                    Origin: `${app.name.toLowerCase()}://main`,
+                  },
+                })
+                .then((res) => {
+                  console.log(res.data);
+                });
             },
           }
         ),

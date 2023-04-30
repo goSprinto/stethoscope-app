@@ -31,7 +31,6 @@ import config from "./config.json";
 import { MINIMUM_AUTOSCAN_INTERVAL_SECONDS } from "./constants";
 // import settings from 'electron-settings'
 import Store from "electron-store";
-import serializeError from "serialize-error";
 import initProtocols from "./lib/protocolHandlers";
 // import loadReactDevTools from "./lib/loadReactDevTools";
 import iconFinder from "./lib/findIcon";
@@ -167,11 +166,12 @@ async function createWindow(show = true) {
         buttons: ["Yes", "No"],
       })
       .then(({ response }) => {
-        const autoLauncher = new AutoLauncher(app.name);
+        const autoLauncher = new AutoLauncher(app, app.name);
         if (response === 0) {
-          autoLauncher.enable();
+          autoLauncher.enable(app);
+          // handling for windows or mac Os
         } else {
-          autoLauncher.disable();
+          autoLauncher.disable(app);
         }
       });
     isLaunching = false;
@@ -228,7 +228,8 @@ async function createWindow(show = true) {
   // start GraphQL server, close the app if 37370 is already in use
   server = await startGraphQLServer(env, log, language, appHooksForServer);
   server.on("error", (error) => {
-    log.info(`startup:express:error ${JSON.stringify(serializeError(error))}`);
+    const e = new Error(error);
+    log.info(`startup:express:error ${JSON.stringify(e)}`);
     if (error.message.includes("EADDRINUSE")) {
       dialog.showMessageBox({
         message: "Something is already using port 37370",
