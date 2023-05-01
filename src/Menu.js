@@ -102,13 +102,20 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
             label: "Disconnect",
             click() {
               axios
-                .post("http://127.0.0.1:37370/disconnect", {
-                  headers: {
-                    Origin: `${app.name.toLowerCase()}://main`,
-                  },
-                })
+                .post(
+                  "http://127.0.0.1:37370/disconnect",
+                  {},
+                  {
+                    headers: {
+                      Origin: `${app.name.toLowerCase()}://main`,
+                    },
+                  }
+                )
                 .then((res) => {
-                  console.log(res.data);
+                  console.log("respnse from disconnect", res.data);
+                })
+                .catch((err) => {
+                  console.log("error respnse from disconnect", err);
                 });
             },
           }

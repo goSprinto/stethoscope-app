@@ -122,10 +122,6 @@ export default async function startServer(
     },
   };
 
-  // if (IS_DEV) {
-  //   app.use('/graphiql', cors(corsOptions), graphiqlExpress({ endpointURL: '/scan' }))
-  // }
-
   app.get("/debugger", cors(corsOptions), async (req, res) => {
     log.info("Collecting debug info");
     let promise = Promise.resolve();
