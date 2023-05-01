@@ -140,8 +140,7 @@
       "compiled/components/**",
       "compiled/*.json",
       "compiled/*.js",
-      "schema.graphql",
-      "!node_modules"
+      "schema.graphql"
     ],
     "mac": {
       "icon": "build/drsprinto-icons/icon.icns",
