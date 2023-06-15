@@ -199,7 +199,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "http://static.sprinto.com/drsprinto/eu/"
+        "url": "http://static.eu.sprinto.com/drsprinto/"
       }
     ]
   }
