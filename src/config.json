@@ -7,12 +7,12 @@
       }
     ]
   },
-  "deviceStatusReportingAppURI": "https://app.sprinto.in/app/intranet/endpointScanLogs?drawerOpen=true",
-  "deviceDebugLogReportingAppURI": "https://app.sprinto.in/app/intranet/endpointScanLogs?reportDrSprintoError=true",
-  "deviceConnectAppURI": "https://app.sprinto.in/app/intranet/endpointScanLogs?connectSprintoApp=true",
+  "deviceStatusReportingAppURI": "https://eu.sprinto.com/app/intranet/endpointScanLogs?drawerOpen=true",
+  "deviceDebugLogReportingAppURI": "https://eu.sprinto.com/app/intranet/endpointScanLogs?reportDrSprintoError=true",
+  "deviceConnectAppURI": "https://eu.sprinto.com/app/intranet/endpointScanLogs?connectSprintoApp=true",
   "rescanIntervalSeconds": 10800,
   "autoLaunchPrompt": true,
   "allowPrerelease": false,
   "encryptionKey": "DrtGYm6Lllw",
-  "apiBaseUrl": "https://app.sprinto.com"
+  "apiBaseUrl": "https://eu.sprinto.com"
 }
