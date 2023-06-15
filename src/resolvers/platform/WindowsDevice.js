@@ -1,4 +1,5 @@
 import kmd from "../../lib/kmd";
+import { safeParseInt } from "../../lib/scripts";
 
 export default {
   async friendlyName(root, args, context) {
@@ -12,10 +13,10 @@ export default {
 
   async screenLockDelay(root, args, context) {
     const lock = await kmd("screensaver", context);
-    const screenlockDelay = parseInt(lock.screenlockDelay, 10);
+    const screenlockDelay = safeParseInt(lock.screenlockDelay);
 
     const lockwithPolicy = await kmd("screensaver-policy", context);
-    const screenSaveTimeout = parseInt(lockwithPolicy.screenSaveTimeout, 10);
+    const screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
 
     if (screenlockDelay === -1) return screenSaveTimeout;
     else return screenlockDelay;
@@ -28,7 +29,7 @@ export default {
       .filter(({ productState }) => {
         // Convert productState to Hex of 6 digits. The 3rd character
         // indicates if the antivirus is enable or not.
-        const state = parseInt(productState, 10).toString(16).padStart(6, 0);
+        const state = safeParseInt(productState).toString(16).padStart(6, 0);
         return state.substr(2, 1) === "1";
       })
       .map(({ name }) => {

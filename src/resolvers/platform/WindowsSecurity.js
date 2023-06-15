@@ -2,6 +2,7 @@ import semver from "../../lib/patchedSemver";
 import kmd from "../../lib/kmd";
 import { UNKNOWN, DEFAULT_WIN32_APP_REGISTRY_PATH } from "../../constants";
 import WindowsDevice from "./WindowsDevice";
+import { safeParseInt } from "../../lib/scripts";
 
 export default {
   async automaticUpdates(root, args, context) {
@@ -43,11 +44,10 @@ export default {
 
     const lockwithPolicy = await kmd("screensaver-policy", context);
 
-    const screenSaverIsSecure = parseInt(
-      lockwithPolicy.screenSaverIsSecure,
-      10
+    const screenSaverIsSecure = safeParseInt(
+      lockwithPolicy.screenSaverIsSecure
     );
-    const screenSaveActive = parseInt(lockwithPolicy.screenSaveActive, 10);
+    const screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
 
     return (
       (lock.screensaverEnabled === "True" &&
@@ -60,7 +60,7 @@ export default {
     const { screenIdle } = args;
 
     const lock = await kmd("screensaver", context);
-    const screenlockDelay = parseInt(lock.screenlockDelay, 10);
+    const screenlockDelay = safeParseInt(lock.screenlockDelay);
     const delayOk = semver.satisfies(
       semver.coerce(screenlockDelay.toString()),
       screenIdle
@@ -68,16 +68,15 @@ export default {
 
     const lockwithPolicy = await kmd("screensaver-policy", context);
 
-    const screenSaveTimeout = parseInt(lockwithPolicy.screenSaveTimeout, 10);
+    const screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
     const newdelayOk = semver.satisfies(
       semver.coerce(screenSaveTimeout.toString()),
       screenIdle
     );
-    const screenSaverIsSecure = parseInt(
-      lockwithPolicy.screenSaverIsSecure,
-      10
+    const screenSaverIsSecure = safeParseInt(
+      lockwithPolicy.screenSaverIsSecure
     );
-    const screenSaveActive = parseInt(lockwithPolicy.screenSaveActive, 10);
+    const screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
 
     return (
       (delayOk &&
