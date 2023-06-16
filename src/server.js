@@ -77,7 +77,7 @@ export default async function startServer(
     resolvers: Resolvers,
     typeDefs: Schema,
   });
-
+  
   const { allowHosts = [], hostLabels = [] } = defaultConfig;
 
   // wide open in dev, limited to hosts specified in './practices/config.yaml' in production
@@ -237,7 +237,7 @@ export default async function startServer(
       io.sockets.emit("scan:init", { remote: isRemote, remoteLabel });
     }
 
-    graphql(schema, query, null, context, policy)
+    graphql({schema, source: query, rootValue: null, contextValue: context, variableValues: policy})
       .then((result) => {
         const total = performance.now() - start;
         const { data = {}, errors } = result;
