@@ -74,7 +74,7 @@
     "js-yaml": "4.1.0",
     "kmd-script": "^0.0.11",
     "moment": "^2.29.4",
-    "nocache": "3.0.4",
+    "nocache": "^4.0.0",
     "node-powershell": "5.0.1",
     "npm": "^9.6.5",
     "react": "18.2.0",

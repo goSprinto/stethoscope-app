@@ -9367,10 +9367,10 @@ no-case@^3.0.4:
     lower-case "^2.0.2"
     tslib "^2.0.3"
 
-nocache@3.0.4:
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/nocache/-/nocache-3.0.4.tgz"
-  integrity sha512-WDD0bdg9mbq6F4mRxEYcPWwfA1vxd0mrvKOyxI7Xj/atfRHVeutzuWByG//jfm4uPzp0y4Kj051EORCBSQMycw==
+nocache@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/nocache/-/nocache-4.0.0.tgz#d6c6f34bee4600f63f852dccfeb29c9a96cf85c0"
+  integrity sha512-AntnTbmKZvNYIsTVPPwv7dfZdAfo/6H/2ZlZACK66NAOQtIApxkB/6pf/c+s+ACW8vemGJzUCyVTssrzNUK6yQ==
 
 node-abi@^3.0.0:
   version "3.40.0"
