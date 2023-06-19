@@ -67,7 +67,7 @@
     "express": "^4.16.2",
     "extend": "^3.0.2",
     "fast-glob": "^3.2.5",
-    "glob": "7.2.0",
+    "glob": "^10.2.7",
     "graphql": "^16.6.0",
     "handlebars": "^4.0.11",
     "helmet": "^7.0.0",
