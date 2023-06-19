@@ -21,7 +21,7 @@ const socket = openSocket(HOST);
 // CRA doesn't like importing native node modules
 // have to use window.require AFAICT
 const os = window.require("os");
-const glob = window.require("glob");
+const { globSync } = window.require("glob");
 const { readFileSync } = window.require("fs");
 const path = window.require("path");
 const { shell, ipcRenderer } = window.require("electron");
@@ -414,9 +414,10 @@ class App extends Component {
       this.setState({ loading: true }, () => {
         const basePath = ipcRenderer.sendSync("get:env:basePath");
 
-        glob(`${basePath}/*.yaml`, (err, files) => {
-          if (err || !files.length) {
-            reject(err);
+        try {
+          const files = globSync(`${basePath}/*.yaml`);
+          if(!files.length){
+            reject("No files found")
           }
           const configs = {};
           files.forEach((filePath) => {
@@ -432,7 +433,9 @@ class App extends Component {
           });
 
           resolve();
-        });
+        } catch (err) {
+          reject(err);
+        }
       })
     );
   };
