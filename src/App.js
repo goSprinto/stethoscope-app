@@ -447,7 +447,8 @@ class App extends Component {
     }
   };
 
-  handleShowDescription = () => {
+  handleShowDescription = (e) => {
+    e.preventDefault()
     this.setState({
       showDescription: !this.state.showDescription,
     });
