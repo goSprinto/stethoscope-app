@@ -2,7 +2,6 @@ import { app } from "electron";
 import winston from "winston";
 import path from "path";
 import moment from "moment";
-import chalk from "chalk";
 require("winston-daily-rotate-file");
 const IS_DEV = process.env.STETHOSCOPE_ENV === "development";
 
@@ -64,7 +63,6 @@ if (!global.log) {
               const index = logLevels.indexOf(level);
               if (index > -1) {
                 color = logColors[index];
-                transform = (s) => chalk[color](s);
               }
             }
             if (typeof o === "string") return transform(o);
