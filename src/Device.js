@@ -376,8 +376,8 @@ class Device extends Component {
     });
   };
 
-  showWelcomeDescription = (e) => {
-    e.preventDefault()
+  showWelcomeDescription = (event) => {
+    event.preventDefault()
     this.setState({
       showDescription: !this.state.showDescription,
     });
