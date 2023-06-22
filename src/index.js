@@ -11,6 +11,5 @@ const root = createRoot(node);
 root.render(
   <ErrorBoundary>
     <App />
-  </ErrorBoundary>,
-  node
+  </ErrorBoundary>
 );

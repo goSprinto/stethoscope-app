@@ -459,6 +459,10 @@ svg {
   line-height: 1rem;
 }
 
+.text-underline {
+  text-decoration-line: underline;
+}
+
 .font-extralight {
   font-weight: 200;
 }

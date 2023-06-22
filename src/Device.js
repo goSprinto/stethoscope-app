@@ -33,10 +33,9 @@ const WelcomeMessage = ({ name, showWelcomeDescription, showDescription }) => {
       </p>
       <p>
         <a
-          className={`text-xs cursor-pointer  ${
+          className={`text-xs cursor-pointer text-underline ${
             showDescription ? "open" : "closed"
           }`}
-          href="javascript:void(0)"
           type="button"
           onClick={showWelcomeDescription}
         >
@@ -377,7 +376,8 @@ class Device extends Component {
     });
   };
 
-  showWelcomeDescription = () => {
+  showWelcomeDescription = (event) => {
+    event.preventDefault()
     this.setState({
       showDescription: !this.state.showDescription,
     });
