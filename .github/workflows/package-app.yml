@@ -44,7 +44,7 @@ jobs:
               -v ${{ github.workspace }}:/project \
               -v ${{ runner.home }}/.cache/electron:/root/.cache/electron \
               -v ${{ runner.home }}/.cache/electron-builder:/root/.cache/electron-builder \
-              electronuserland/builder:wine \
+              electronuserland/builder:18-wine \
               /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn build"
           else
             yarn build:mac
