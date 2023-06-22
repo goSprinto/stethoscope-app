@@ -76,7 +76,6 @@
     "moment": "^2.29.4",
     "nocache": "^4.0.0",
     "node-powershell": "5.0.1",
-    "npm": "^9.6.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-modern-drawer": "^1.2.0",
