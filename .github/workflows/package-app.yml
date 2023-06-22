@@ -23,6 +23,9 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Install dependencies
+        run: yarn install
+
       - name: Cache dependencies
         uses: actions/cache@v2
         with:
@@ -30,11 +33,11 @@ jobs:
             node_modules
             ${{ runner.home }}/.cache/electron
             ${{ runner.home }}/.cache/electron-builder
-          key: ${{ runner.os }}-dependencies-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ matrix.os }}-dependencies-${{ hashFiles('**/yarn.lock') }}
 
       - name: Build and Release
         run: |
-          if [[ "${{ runner.os }}" == "ubuntu-latest" ]]; then
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             docker run --rm \
               -e ELECTRON_CACHE="${{ runner.home }}/.cache/electron" \
               -e ELECTRON_BUILDER_CACHE="${{ runner.home }}/.cache/electron-builder" \
