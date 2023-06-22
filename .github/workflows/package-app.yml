@@ -50,6 +50,12 @@ jobs:
             yarn build:mac
           fi
 
+      - name: Save artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Dist
+          path: dist
+
       - name: Cleanup old cache
         if: runner.os == 'ubuntu-latest'
         run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
