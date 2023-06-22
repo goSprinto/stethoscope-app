@@ -21,7 +21,7 @@ const socket = openSocket(HOST);
 // CRA doesn't like importing native node modules
 // have to use window.require AFAICT
 const os = window.require("os");
-const glob = window.require("glob");
+const glob = window.require("fast-glob");
 const { readFileSync } = window.require("fs");
 const path = window.require("path");
 const { shell, ipcRenderer } = window.require("electron");
@@ -414,25 +414,27 @@ class App extends Component {
       this.setState({ loading: true }, () => {
         const basePath = ipcRenderer.sendSync("get:env:basePath");
 
-        glob(`${basePath}/*.yaml`, (err, files) => {
-          if (err || !files.length) {
-            reject(err);
-          }
-          const configs = {};
-          files.forEach((filePath) => {
-            const parts = path.parse(filePath);
-            const handle = readFileSync(filePath, "utf8");
-            configs[parts.name.split(".").shift()] = yaml.load(handle);
-          });
-
-          this.setState({ ...configs, loading: false }, () => {
-            if (!this.state.scanIsRunning) {
-              this.handleScan();
+        glob(`${basePath}/*.yaml`)
+          .then((files) => {
+            if (!files.length) {
+              reject("No files found");
             }
-          });
+            const configs = {};
+            files.forEach((filePath) => {
+              const parts = path.parse(filePath);
+              const handle = readFileSync(filePath, "utf8");
+              configs[parts.name.split(".").shift()] = yaml.load(handle);
+            });
 
-          resolve();
-        });
+            this.setState({ ...configs, loading: false }, () => {
+              if (!this.state.scanIsRunning) {
+                this.handleScan();
+              }
+            });
+
+            resolve();
+          })
+          .catch(reject);
       })
     );
   };
