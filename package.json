@@ -1,6 +1,6 @@
 {
   "name": "DrSprinto",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "private": true,
   "homepage": ".",
   "author": "Sprinto",
@@ -155,7 +155,7 @@
       ]
     },
     "win": {
-      "target": "nsis",
+      "target": "msi",
       "icon": "build/drsprinto-icons/icon.png",
       "extraResources": [
         "src/practices",
