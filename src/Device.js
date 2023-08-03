@@ -298,6 +298,8 @@ class Device extends Component {
         scanResult: this.props.scanResult,
       };
 
+      if(action.name === 'stethoscopeVersion'){return null}
+
       const hasResults = Array.isArray(action.results);
       let results = action.results;
 
