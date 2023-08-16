@@ -146,7 +146,7 @@ export default async function startServer(
         const file = readFileSync(log.getLogFile());
         const noColor = String(file).replace(/\[[\d]+m?:?/g, "") + "\n";
         const str = JSON.stringify(extend(true, {}, ...checkData), null, 3);
-        const version = `Stethoscope version: ${pkg.version}`;
+        const version = `DrSprinto version: ${pkg.version}`;
         res.send(`${version}\nLOGS${sep}${noColor}DEVICE DATA${sep}${str}`);
       })
       .catch(() => {
