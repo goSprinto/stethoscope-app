@@ -71,17 +71,23 @@ export default {
       screenIdle
     );
 
-    const lockwithPolicy = await kmd("screensaver-policy", context);
+    let newdelayOk =false
+    let screenSaverIsSecure, screenSaveActive
+    try {
+      const lockwithPolicy = await kmd("screensaver-policy", context);
+      const screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
+       newdelayOk = semver.satisfies(
+          semver.coerce(screenSaveTimeout.toString()),
+          screenIdle
+      );
+       screenSaverIsSecure = safeParseInt(
+          lockwithPolicy.screenSaverIsSecure
+      );
+       screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
+    }catch (e){
+      console.log("error - screenIdle- lockwithPolicy", e.toString())
+    }
 
-    const screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
-    const newdelayOk = semver.satisfies(
-      semver.coerce(screenSaveTimeout.toString()),
-      screenIdle
-    );
-    const screenSaverIsSecure = safeParseInt(
-      lockwithPolicy.screenSaverIsSecure
-    );
-    const screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
 
     return (
       (delayOk &&
