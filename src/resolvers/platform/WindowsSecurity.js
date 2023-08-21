@@ -42,11 +42,11 @@ export default {
 
     const lock = await kmd("screensaver", context);
 
-    const lockwithPolicy = await kmd("screensaver-policy", context);
-
     let screenSaverIsSecure = null
     let screenSaveActive = null
     try {
+      const lockwithPolicy = await kmd("screensaver-policy", context);
+
       const screenSaverIsSecure = safeParseInt(
           lockwithPolicy.screenSaverIsSecure
       );
