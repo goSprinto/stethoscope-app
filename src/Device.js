@@ -445,7 +445,7 @@ class Device extends Component {
             reportingAppURI={reportingAppURI}
             onClickOpen={onRescan}
             label={actionButtonTitle}
-            lastScan={this.props.strings.lastScan}
+            lastScan={this.props.lastScan}
             scannedBy={this.props.scannedBy}
             lastScanTime={this.props.lastScanTime}
             lastScanDuration={this.props.lastScanDuration}
