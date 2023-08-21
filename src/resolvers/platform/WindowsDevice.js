@@ -14,9 +14,13 @@ export default {
   async screenLockDelay(root, args, context) {
     const lock = await kmd("screensaver", context);
     const screenlockDelay = safeParseInt(lock.screenlockDelay);
-
-    const lockwithPolicy = await kmd("screensaver-policy", context);
-    const screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
+    let screenSaveTimeout
+    try{
+      const lockwithPolicy = await kmd("screensaver-policy", context);
+      const screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
+    }catch(e){
+      console.log("screenLockDelay: lockwithPolicy", e.toString() )
+    }
 
     if (screenlockDelay === -1) return screenSaveTimeout;
     else return screenlockDelay;
