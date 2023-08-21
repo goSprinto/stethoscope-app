@@ -44,11 +44,16 @@ export default {
 
     const lockwithPolicy = await kmd("screensaver-policy", context);
 
-    const screenSaverIsSecure = safeParseInt(
-      lockwithPolicy.screenSaverIsSecure
-    );
-    const screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
-
+    let screenSaverIsSecure = null
+    let screenSaveActive = null
+    try {
+      const screenSaverIsSecure = safeParseInt(
+          lockwithPolicy.screenSaverIsSecure
+      );
+      const screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
+    }catch (e){
+      console.log("error in screenLock", lockwithPolicy)
+    }
     return (
       (lock.screensaverEnabled === "True" &&
         lock.screenlockEnabled === "True") ||
