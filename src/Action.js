@@ -210,6 +210,11 @@ class Action extends Component {
   render() {
     const { action, type, reportingErrorLogAppURI, onClickOpen } = this.props;
 
+    if(action.name === "stethoscopeVersion"){
+      return null
+    }
+
+
     const description = (
       <div className="py-8 px-4 text-left">
         <>
