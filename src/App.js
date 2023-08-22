@@ -1,5 +1,6 @@
 /* global Notification */
 import React, { Component } from "react";
+import unixify from "unixify"
 import Stethoscope from "./lib/Stethoscope";
 import Device from "./Device";
 import Loader from "./Loader";
@@ -413,8 +414,10 @@ class App extends Component {
     return new Promise((resolve, reject) =>
       this.setState({ loading: true }, () => {
         const basePath = ipcRenderer.sendSync("get:env:basePath");
+        // convert path in unix format (This for windows)
+        const currentBasePath=unixify(basePath)
 
-        glob(`${basePath}/*.yaml`)
+        glob(`${currentBasePath}/*.yaml`)
           .then((files) => {
             if (!files.length) {
               reject("No files found");
