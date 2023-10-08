@@ -298,13 +298,11 @@ class App extends Component {
 
   isScanResultDiff = (oldResult, newResult) => {
     let result = false;
-    Object.keys(oldResult)
-      .concat(Object.keys(newResult || {}))
-      .forEach((key) => {
-        if (newResult[key] !== oldResult[key]) {
-          result = true;
-        }
-      });
+
+    if(oldResult['status']!==newResult['status']){
+      result = true
+    }
+
     return result;
   };
 
@@ -312,7 +310,7 @@ class App extends Component {
     const { noResults = false } = payload;
     // device only scan with no policy completed
     if (noResults) {
-      return this.setState({ loading: false, scannedBy: appName });
+      return this.setState({loading: false, scannedBy: appName});
     }
 
     const oldScanResult = this.state.result;
