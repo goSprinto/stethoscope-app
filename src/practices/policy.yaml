@@ -124,3 +124,8 @@ antivirus:
       assertion: SUGGESTED
       platform:
         darwin: ">=10.13"
+    # support seqrite antivirus
+    - name: "accasrvc"
+      assertion: SUGGESTED
+      platform:
+        linux: ">=16.04"
