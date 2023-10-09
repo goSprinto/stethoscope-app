@@ -173,11 +173,7 @@ class App extends Component {
           (today.getTime() - policyLastSyncedOn.getTime()) / (1000 * 3600 * 24)
         )
       : policySyncFreqDays + 1;
-    if (daysSincePolicySync >= 1 && this.state.isConnected === true) {
-      return true;
-    } else {
-      return false;
-    }
+    return daysSincePolicySync >= 1 && this.state.isConnected === true;
   };
 
   shouldReportDevice = (deviceLogLastReportedOn) => {
@@ -195,11 +191,7 @@ class App extends Component {
             (1000 * 3600 * 24)
         )
       : deviceLogReportingFreqDays + 1;
-    if (daysSinceLastLog >= 1) {
-      return true;
-    } else {
-      return false;
-    }
+    return daysSinceLastLog >= 1;
   };
 
   syncUpdatedPolicy = async () => {

@@ -15,27 +15,19 @@
  *    - 'download:completed' - update has finished downloading
  */
 import path from "path";
-import {
-  app,
-  ipcMain,
-  dialog,
-  BrowserWindow,
-  session,
-  Tray,
-  nativeImage,
-} from "electron";
+import {app, BrowserWindow, dialog, ipcMain, nativeImage, session, Tray,} from "electron";
 import url from "url";
 import log from "./lib/logger";
 import initMenu from "./Menu";
 import config from "./config.json";
-import { MINIMUM_AUTOSCAN_INTERVAL_SECONDS } from "./constants";
+import {MINIMUM_AUTOSCAN_INTERVAL_SECONDS} from "./constants";
 // import settings from 'electron-settings'
 import Store from "electron-store";
 import initProtocols from "./lib/protocolHandlers";
 // import loadReactDevTools from "./lib/loadReactDevTools";
 import iconFinder from "./lib/findIcon";
 import startGraphQLServer from "./server";
-import { IS_MAC, IS_WIN } from "./lib/platform";
+import {IS_MAC, IS_WIN} from "./lib/platform";
 import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
@@ -448,13 +440,11 @@ app.on("window-all-closed", () => {
 
 ipcMain.on("get:env:basePath", (event, arg) => {
   const dev = process.env.STETHOSCOPE_ENV === "development";
-  const basePath = `${dev ? "." : process.resourcesPath}/src/practices`;
-  event.returnValue = basePath;
+  event.returnValue = `${dev ? "." : process.resourcesPath}/src/practices`;
 });
 
 ipcMain.on("get:env:isDev", (event, arg) => {
-  const isDev = process.env.STETHOSCOPE_ENV === "development";
-  event.returnValue = isDev;
+  event.returnValue = process.env.STETHOSCOPE_ENV === "development";
 });
 
 ipcMain.on("get:app:name", (event, arg) => {
@@ -493,8 +483,7 @@ ipcMain.on("api:getPolicy", async (event) => {
       event.returnValue = false;
       return;
     }
-    const response = await ApiService.getPolicy(token, isDev);
-    event.returnValue = response;
+    event.returnValue = await ApiService.getPolicy(token, isDev);
   } catch (err) {
     log.error("api:getPolicy crash", err);
     event.returnValue = null;
