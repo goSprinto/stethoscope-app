@@ -52,7 +52,6 @@
     "babel:compile": "cross-env BABEL_ENV=production babel src/ --out-dir compiled/ --copy-files"
   },
   "dependencies": {
-    "@electron/notarize": "2.1.0",
     "@electron/remote": "2.1.0",
     "@graphql-tools/schema": "^10.0.0",
     "applescript": "^1.0.0",
@@ -91,6 +90,7 @@
     "ws": "8.14.2"
   },
   "devDependencies": {
+    "@electron/notarize": "2.1.0",
     "@babel/cli": "7.23.0",
     "@babel/core": "7.23.2",
     "@babel/plugin-proposal-class-properties": "7.18.6",
