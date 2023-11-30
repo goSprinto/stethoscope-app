@@ -471,26 +471,27 @@ ipcMain.on("auth:logout", (event) => {
 });
 
 // External API calls
-ipcMain.on("api:getPolicy", async (event) => {
+ipcMain.on("api:getPolicy", async (event,baseUrl) => {
   // Get latest policy json from sprinto
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
     const token = AuthService.getAccessToken();
     if (token === null || token === undefined) {
       log.error(
-        "api:reportDevice - critical should not call this api when token is empty or not connected"
+        "api:getPolicy - critical should not call this api when token is empty or not connected"
       );
       event.returnValue = false;
       return;
     }
-    event.returnValue = await ApiService.getPolicy(token, isDev);
+
+    event.returnValue = await ApiService.getPolicy(baseUrl, token, isDev);
   } catch (err) {
     log.error("api:getPolicy crash", err);
     event.returnValue = null;
   }
 });
 
-ipcMain.on("api:reportDevice", async (event, result, device) => {
+ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
     const token = AuthService.getAccessToken();
@@ -502,7 +503,7 @@ ipcMain.on("api:reportDevice", async (event, result, device) => {
       return;
     }
     const data = { ...result, device };
-    await ApiService.reportDevice(token, data, isDev);
+    await ApiService.reportDevice(baseUrl, token, data, isDev);
     event.returnValue = true;
   } catch (err) {
     log.error("api:reportDevice crash", err);

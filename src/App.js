@@ -69,6 +69,8 @@ class App extends Component {
     policyLastSyncedOn: null,
     offline: false,
     showDescription: false,
+    // app base URL
+    sprintoAPPBaseUrl: null
   };
 
   componentWillUnmount = () => {
@@ -93,12 +95,18 @@ class App extends Component {
       ? new Date(policyLastSyncedOnTs)
       : null;
 
+    // Setup base URL for first time. (This will be used for all API calls)
+    // appConfig.apiBaseUrl - using for first time
+    const isDev = ipcRenderer.sendSync("get:env:isDev");
+
+
     this.setState({
       recentHang: settings.get("recentHang", 0) > 1,
       deviceLogLastReportedOn,
       policyLastSyncedOn,
       isConnected: settings.get("isConnected", false),
       firstName: settings.get("firstName", null),
+      sprintoAPPBaseUrl : await settings.get("sprintoAPPBaseUrl") ||  isDev ? "http://localhost:5000" : appConfig.apiBaseUrl
     });
 
     // check if policy sync required (once per day)
@@ -195,7 +203,7 @@ class App extends Component {
   };
 
   syncUpdatedPolicy = async () => {
-    const policy = ipcRenderer.sendSync("api:getPolicy");
+    const policy = ipcRenderer.sendSync("api:getPolicy", this.state.sprintoAPPBaseUrl);
     if (policy === null || policy === undefined) {
       return;
     }
@@ -288,17 +296,18 @@ class App extends Component {
     return moment(new Date()).diff(moment(this.state.lastScanTime), "minutes");
   };
 
-  isScanResultDiff = (oldResult, newResult) => {
+  isScanResultDiff =async ( newResult) => {
     let result = false;
-
-    if(oldResult['status']!==newResult['status']){
+    const oldResult =await settings.get("scanResult")
+    console.log({oldResult,newResult })
+    if(oldResult !== newResult['status']){
       result = true
     }
 
     return result;
   };
 
-  onScanComplete = (payload) => {
+  onScanComplete = async (payload) => {
     const { noResults = false } = payload;
     // device only scan with no policy completed
     if (noResults) {
@@ -358,7 +367,6 @@ class App extends Component {
     });
 
     const isUpdatedScanResult = this.isScanResultDiff(
-      oldScanResult,
       this.state.result
     );
 
@@ -374,8 +382,12 @@ class App extends Component {
       const status = ipcRenderer.sendSync(
         "api:reportDevice",
         policy.validate,
-        device
+        device,
+          this.state.sprintoAPPBaseUrl
       );
+
+      // store current result in local storage
+      await settings.set("result",this.state.result['status'])
 
       // update deviceLogLastReportedOn if api call success
       if (status === true) {
@@ -435,10 +447,30 @@ class App extends Component {
   /**
    * Opens a link in the native default browser
    */
-  handleOpenExternal = (event) => {
+  handleOpenExternalForRegister = async (event, baseUrl) => {
+
+    await settings.set("sprintoAPPBaseUrl", baseUrl)
+    const isDev = ipcRenderer.sendSync("get:env:isDev");
+    if(isDev) {
+      baseUrl = 'http://localhost:5000'
+    }
+
     event.preventDefault();
     if (event.target.getAttribute("href")) {
-      shell.openExternal(event.target.getAttribute("href"));
+      shell.openExternal(`${baseUrl}${event.target.getAttribute("href")}`);
+    }
+  };
+
+  /**
+   * Opens a link in the native default browser
+   */
+  handleOpenExternal = async (event) => {
+
+    const url = await settings.get("sprintoAPPBaseUrl")
+
+    event.preventDefault();
+    if (event.target.getAttribute("href")) {
+      shell.openExternal(`${url}${event.target.getAttribute("href")}`);
     }
   };
 
@@ -528,17 +560,9 @@ class App extends Component {
 
     const isDev = ipcRenderer.sendSync("get:env:isDev");
 
-    const reportingAppURI = isDev
-      ? "http://localhost:5000/app/intranet/endpointScanLogs?drawerOpen=true"
-      : appConfig.deviceStatusReportingAppURI;
-
-    const reportingErrorLogAppURI = isDev
-      ? "http://localhost:5000/app/intranet/endpointScanLogs?reportDrSprintoError=true"
-      : appConfig.deviceDebugLogReportingAppURI;
-
-    const deviceConnectAppURI = isDev
-      ? "http://localhost:5000/app/intranet/endpointScanLogs?connectSprintoApp=true"
-      : appConfig.deviceConnectAppURI;
+    const reportingAppURI =  appConfig.deviceStatusReportingAppURI
+    const reportingErrorLogAppURI = appConfig.deviceDebugLogReportingAppURI
+    const deviceConnectAppURI = appConfig.deviceConnectAppURI
 
     let content = null;
 
@@ -595,7 +619,7 @@ class App extends Component {
         <>
           <ConnectToSprintoApp
             redirectURI={deviceConnectAppURI}
-            onClickOpen={this.handleOpenExternal}
+            onClickOpen={this.handleOpenExternalForRegister}
             onClickShowDescription={this.handleShowDescription}
             showDescription={this.state.showDescription}
             device={device}
