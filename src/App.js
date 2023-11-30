@@ -296,9 +296,9 @@ class App extends Component {
     return moment(new Date()).diff(moment(this.state.lastScanTime), "minutes");
   };
 
-  isScanResultDiff =async ( newResult) => {
+  isScanResultDiff = async ( newResult) => {
     let result = false;
-    const oldResult =await settings.get("scanResult")
+    const oldResult = settings.get("scanResult")
     console.log({oldResult,newResult })
     if(oldResult !== newResult['status']){
       result = true
@@ -366,8 +366,8 @@ class App extends Component {
       }
     });
 
-    const isUpdatedScanResult = this.isScanResultDiff(
-      this.state.result
+    const isUpdatedScanResult =await this.isScanResultDiff(
+        policy.validate,
     );
 
     // Report the device now
@@ -387,7 +387,7 @@ class App extends Component {
       );
 
       // store current result in local storage
-      await settings.set("result",this.state.result['status'])
+      await settings.set("scanResult", policy.validate['status'])
 
       // update deviceLogLastReportedOn if api call success
       if (status === true) {
