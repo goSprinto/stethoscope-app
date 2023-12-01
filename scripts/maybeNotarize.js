@@ -8,6 +8,7 @@ const {
   APP_BUNDLE_ID,
   ASC_PROVIDER,
   CSC_IDENTITY_AUTO_DISCOVERY,
+    APPLE_TEAM_ID,
 } = process.env;
 
 exports.default = async function maybeNotarizing(context) {
@@ -32,6 +33,8 @@ exports.default = async function maybeNotarizing(context) {
   const params = {
     appBundleId: APP_BUNDLE_ID || pkg.build.appId,
     appPath: `${appOutDir}/${appName}.app`,
+    tool: 'notarytool',
+    teamId: APPLE_TEAM_ID
   };
 
   if (APPLE_API_KEY) {
@@ -50,6 +53,7 @@ exports.default = async function maybeNotarizing(context) {
   if (ASC_PROVIDER) {
     params.ascProvider = ASC_PROVIDER;
   }
+
 
   console.log("Notarizing app, coffee time?");
   return notarize(params);
