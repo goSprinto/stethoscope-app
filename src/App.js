@@ -404,7 +404,7 @@ class App extends Component {
   };
 
   handleErrorGraphQL = (err = { message: "Error in GraphQL request" }) => {
-    log.error(`App:GraphQL error ${JSON.stringify(e)}`);
+    log.error(`App:GraphQL error ${JSON.stringify(err)}`);
     this.setState({ error: err, loading: false });
   };
 
