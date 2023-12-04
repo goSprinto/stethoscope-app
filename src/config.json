@@ -10,7 +10,7 @@
   "deviceStatusReportingAppURI": "/app/intranet/endpointScanLogs?drawerOpen=true",
   "deviceDebugLogReportingAppURI": "/app/intranet/endpointScanLogs?reportDrSprintoError=true",
   "deviceConnectAppURI": "/app/intranet/endpointScanLogs?connectSprintoApp=true",
-  "rescanIntervalSeconds": 900,
+  "rescanIntervalSeconds": 10800,
   "autoLaunchPrompt": true,
   "allowPrerelease": false,
   "encryptionKey": "DrtGYm6Lllw",
