@@ -106,9 +106,13 @@ class App extends Component {
       policyLastSyncedOn,
       isConnected: settings.get("isConnected", false),
       firstName: settings.get("firstName", null),
-      sprintoAPPBaseUrl : await settings.get("sprintoAPPBaseUrl") ||  isDev ? "http://localhost:5000" : appConfig.apiBaseUrl
     });
 
+    // Set baseUrl if not set in connect Flow
+    const baseUrl = await settings.get("sprintoAPPBaseUrl")
+    if (baseUrl === null || baseUrl === undefined) {
+      await settings.set("sprintoAPPBaseUrl", isDev ? "http://localhost:5000" : appConfig.apiBaseUrl)
+    }
     // check if policy sync required (once per day)
     if (this.shouldPolicySync(policyLastSyncedOn)) {
       await this.syncUpdatedPolicy();
@@ -203,7 +207,8 @@ class App extends Component {
   };
 
   syncUpdatedPolicy = async () => {
-    const policy = ipcRenderer.sendSync("api:getPolicy", this.state.sprintoAPPBaseUrl);
+    const baseUrl = await settings.get("sprintoAPPBaseUrl")
+    const policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
     if (policy === null || policy === undefined) {
       return;
     }
@@ -369,8 +374,7 @@ class App extends Component {
     const isUpdatedScanResult =await this.isScanResultDiff(
         policy.validate,
     );
-
-    // Report the device now
+    const baseUrl = await settings.get("sprintoAPPBaseUrl")    // Report the device now
     // report only if
     // 1. shouldReportDevice - is true & device connected
     // 2. Or. Last scan result is different than new one
@@ -383,7 +387,7 @@ class App extends Component {
         "api:reportDevice",
         policy.validate,
         device,
-          this.state.sprintoAPPBaseUrl
+          baseUrl
       );
 
       // store current result in local storage
