@@ -304,11 +304,12 @@ class App extends Component {
   isScanResultDiff = async ( newResult) => {
     let result = false;
     const oldResult = settings.get("scanResult")
-    console.log({oldResult,newResult })
-    if(oldResult !== newResult['status']){
-      result = true
-    }
 
+    for (const [key, value] of Object.entries(newResult)) {
+      if (value !== oldResult[key]) {
+        result = true
+      }
+    }
     return result;
   };
 
@@ -391,7 +392,7 @@ class App extends Component {
       );
 
       // store current result in local storage
-      await settings.set("scanResult", policy.validate['status'])
+      await settings.set("scanResult", policy.validate)
 
       // update deviceLogLastReportedOn if api call success
       if (status === true) {
@@ -456,7 +457,7 @@ class App extends Component {
     await settings.set("sprintoAPPBaseUrl", baseUrl)
     const isDev = ipcRenderer.sendSync("get:env:isDev");
     if(isDev) {
-      baseUrl = 'http://localhost:5000'
+      baseUrl = 'https://fbdb-117-200-170-73.ngrok-free.app'
     }
 
     event.preventDefault();
