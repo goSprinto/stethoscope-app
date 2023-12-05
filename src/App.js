@@ -223,10 +223,9 @@ class App extends Component {
     // store token in safe storage
     const status = ipcRenderer.sendSync("auth:storeToken", data.accessToken);
     // load url from connecting Webapp
-    const baseUrl = ipcRenderer.sendSync("auth:storeToken", data.baseUrl);
 
     if (status === true) {
-      settings.set("sprintoAPPBaseUrl", baseUrl)
+      settings.set("sprintoAPPBaseUrl", data?.baseUrl)
       settings.set("isConnected", true);
       settings.set("firstName", data.firstName);
       this.setState({
