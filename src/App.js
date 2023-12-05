@@ -218,12 +218,15 @@ class App extends Component {
     this.setState({ policy: policy, policyLastSyncedOn: ts });
   };
 
-  onDeviceConnected = ({ data }) => {
+  onDeviceConnected =  ({ data }) => {
     // TODO: get user profile api (will do if required)
     // store token in safe storage
     const status = ipcRenderer.sendSync("auth:storeToken", data.accessToken);
+    // load url from connecting Webapp
+    const baseUrl = ipcRenderer.sendSync("auth:storeToken", data.baseUrl);
 
     if (status === true) {
+      settings.set("sprintoAPPBaseUrl", baseUrl)
       settings.set("isConnected", true);
       settings.set("firstName", data.firstName);
       this.setState({
@@ -457,7 +460,7 @@ class App extends Component {
     await settings.set("sprintoAPPBaseUrl", baseUrl)
     const isDev = ipcRenderer.sendSync("get:env:isDev");
     if(isDev) {
-      baseUrl = 'https://fbdb-117-200-170-73.ngrok-free.app'
+      baseUrl = 'http://localhost:5000'
     }
 
     event.preventDefault();
@@ -667,7 +670,6 @@ class App extends Component {
               deviceLogLastReportedOn={deviceLogLastReportedOn}
               highlightRescan={highlightRescan}
               instructions={instructions}
-              webScopeLink={appConfig.stethoscopeWebURI}
               reportingAppURI={reportingAppURI}
               onClickOpen={this.handleOpenExternal}
               onRescan={this.handleScan}

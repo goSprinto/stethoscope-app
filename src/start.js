@@ -70,7 +70,7 @@ const statusImages = {
 
 const windowPrefs = {
   width: 520,
-  height: 780,
+  height: 700,
   fullscreenable: false,
   maximizable: false,
   autoHideMenuBar: true,
