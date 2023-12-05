@@ -38,6 +38,13 @@ const Device = {
     }
   },
 
+  async serialNumber (root, args, context) {
+    const result = await kmd('hardware', context)
+    const { platform = process.platform } = context
+
+    return result.system.serialNumber
+  },
+
   async deviceName (root, args, context) {
     const result = await kmd('hostname', context)
     return result.system.hostname

@@ -90,6 +90,7 @@ export default class Stethoscope {
       device {
         deviceId
         deviceName
+        serialNumber
         platform
         platformName
         distroName
