@@ -91,23 +91,23 @@ const [appBaseURL, setTempAppBaseURL] = React.useState(baseUrl || "");
             </div>
           </div>
         </div>
-      </div>
-      <div className="flex flex-row items-center mt-6">
-        <h5 className="text-xs text-gray mt-0 mr-2">
-          * Select region
-        </h5>
-        <div >
-          <select onChange={(e)=> setTempAppBaseURL(e.target.value)} value={appBaseURL} className={" py-1.5 px-1 space-x-1 rounded-md border "}>
-            <option value="">Select</option>
-            <option value="https://app.sprinto.com">US</option>
-            <option value="https://eu.sprinto.com">EU</option>
-            <option value="https://in.sprinto.com">IN</option>
-          </select>
+      {/*</div>*/}
+      {/*<div className="flex flex-row items-center mt-6">*/}
+      {/*  <h5 className="text-xs text-gray mt-0 mr-2">*/}
+      {/*    * Select region*/}
+      {/*  </h5>*/}
+      {/*  <div >*/}
+      {/*    <select onChange={(e)=> setTempAppBaseURL(e.target.value)} value={appBaseURL} className={" py-1.5 px-1 space-x-1 rounded-md border "}>*/}
+      {/*      <option value="">Select</option>*/}
+      {/*      <option value="https://app.sprinto.com">US</option>*/}
+      {/*      <option value="https://eu.sprinto.com">EU</option>*/}
+      {/*      <option value="https://in.sprinto.com">IN</option>*/}
+      {/*    </select>*/}
 
-        </div>
+      {/*  </div>*/}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-9">
         <div className="text-xs flex justify-end mr-3 text-gray">
           * This will open the Sprinto application in your web browser
         </div>
@@ -119,7 +119,7 @@ const [appBaseURL, setTempAppBaseURL] = React.useState(baseUrl || "");
             onClickOpen={(e)=> onClickOpen(e, appBaseURL)}
             redirectURI={redirectURI}
             className="bg-orangeOne text-white"
-            disabled={appBaseURL === null || appBaseURL === ""}
+            // disabled={appBaseURL === null || appBaseURL === ""}
           />
         </div>
       </div>
