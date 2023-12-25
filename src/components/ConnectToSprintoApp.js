@@ -107,7 +107,7 @@ const [appBaseURL, setTempAppBaseURL] = React.useState(baseUrl || "");
       {/*  </div>*/}
       </div>
 
-      <div className="mt-9">
+      <div className=" fixed bottom-5 right-0 ">
         <div className="text-xs flex justify-end mr-3 text-gray">
           * This will open the Sprinto application in your web browser
         </div>
