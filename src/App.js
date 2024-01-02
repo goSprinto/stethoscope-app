@@ -110,7 +110,7 @@ class App extends Component {
 
     // Set baseUrl if not set in connect Flow
     const baseUrl = await settings.get("sprintoAPPBaseUrl")
-    if (baseUrl === null || baseUrl === undefined) {
+    if (baseUrl === null || baseUrl === undefined || baseUrl === "") {
       await settings.set("sprintoAPPBaseUrl", isDev ? "http://localhost:5000" : appConfig.apiBaseUrl)
     }
     // check if policy sync required (once per day)
