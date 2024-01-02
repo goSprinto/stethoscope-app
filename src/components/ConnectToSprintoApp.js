@@ -116,7 +116,7 @@ const [appBaseURL, setTempAppBaseURL] = React.useState(baseUrl || "");
             title={"Share device info"}
             isPrimary={true}
             appBaseURL={appBaseURL}
-            onClickOpen={(e)=> onClickOpen(e, appBaseURL)}
+            onClickOpen={onClickOpen}
             redirectURI={redirectURI}
             className="bg-orangeOne text-white"
             // disabled={appBaseURL === null || appBaseURL === ""}

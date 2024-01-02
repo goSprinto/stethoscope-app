@@ -454,9 +454,8 @@ class App extends Component {
   /**
    * Opens a link in the native default browser
    */
-  handleOpenExternalForRegister = async (event, baseUrl) => {
-
-    await settings.set("sprintoAPPBaseUrl", baseUrl)
+  handleOpenExternalForRegister = async (event) => {
+    let baseUrl = settings.get("sprintoAPPBaseUrl")
     const isDev = ipcRenderer.sendSync("get:env:isDev");
     if(isDev) {
       baseUrl = 'http://localhost:5000'
