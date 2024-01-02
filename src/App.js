@@ -109,9 +109,9 @@ class App extends Component {
     });
 
     // Set baseUrl if not set in connect Flow
-    const baseUrl = await settings.get("sprintoAPPBaseUrl")
+    const baseUrl = settings.get("sprintoAPPBaseUrl")
     if (baseUrl === null || baseUrl === undefined || baseUrl === "") {
-      await settings.set("sprintoAPPBaseUrl", isDev ? "http://localhost:5000" : appConfig.apiBaseUrl)
+      settings.set("sprintoAPPBaseUrl", isDev ? "http://localhost:5000" : appConfig.apiBaseUrl)
     }
     // check if policy sync required (once per day)
     if (this.shouldPolicySync(policyLastSyncedOn)) {
@@ -305,7 +305,7 @@ class App extends Component {
 
   isScanResultDiff = async ( newResult) => {
     let result = false;
-    const oldResult = settings.get("scanResult")
+    const oldResult = settings.get("scanResult", {})
 
     for (const [key, value] of Object.entries(newResult)) {
       if (value !== oldResult[key]) {
