@@ -584,6 +584,7 @@ class App extends Component {
     ));
 
     if (error) {
+      log.info("App:render error", error);
       content = (
         <ErrorMessage
           version={pkg.version}
