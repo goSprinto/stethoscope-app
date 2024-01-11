@@ -13,12 +13,12 @@ try {
 
 export default class ErrorMessage extends Component {
   render() {
-    const { reportingErrorLogAppURI, onClickOpen, message} =
+    const { reportingErrorLogAppURI, onClickOpen, onCancelReloadApp } =
       this.props;
     return (
       <div className="p-5">
         <div className="text-base">
-          Looks like we have run into an unknown issue. - {message}
+          Looks like we have run into an unknown issue.
         </div>
         <div className="mt-5">
           <ReportErrorLog
@@ -27,7 +27,15 @@ export default class ErrorMessage extends Component {
             onClickOpen={onClickOpen}
           />
         </div>
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-between mt-4">
+          <div>
+            <Button
+              title={"Cancel"}
+              isPrimary={true}
+              onClickOpen={onCancelReloadApp}
+              className="bg-grayMid text-grayUltraDark m-0"
+            />
+          </div>
           <div>
             <Button
               title={"Restart"}

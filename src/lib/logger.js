@@ -19,7 +19,7 @@ const logLevels = ["error", "warn", "info", "verbose", "debug", "silly"];
 const logColors = ["red", "yellow", "cyan", "magenta"];
 // logs that will continue to output in prod
 // change if you want more than 'error' and 'warn'
-const productionLogs = logLevels.slice(0, 4);
+const productionLogs = logLevels.slice(0, 2);
 
 if (!global.log) {
   const filename = `${envPrefix}application-%DATE%.log`;

@@ -1,6 +1,6 @@
 /* global Notification */
 import React, { Component } from "react";
-import unixify from "unixify";
+import unixify from "unixify"
 import Stethoscope from "./lib/Stethoscope";
 import Device from "./Device";
 import Loader from "./Loader";
@@ -70,7 +70,7 @@ class App extends Component {
     offline: false,
     showDescription: false,
     // app base URL
-    sprintoAPPBaseUrl: null,
+    sprintoAPPBaseUrl: null
   };
 
   componentWillUnmount = () => {
@@ -99,6 +99,7 @@ class App extends Component {
     // appConfig.apiBaseUrl - using for first time
     const isDev = ipcRenderer.sendSync("get:env:isDev");
 
+
     this.setState({
       recentHang: settings.get("recentHang", 0) > 1,
       deviceLogLastReportedOn,
@@ -108,12 +109,9 @@ class App extends Component {
     });
 
     // Set baseUrl if not set in connect Flow
-    const baseUrl = settings.get("sprintoAPPBaseUrl");
+    const baseUrl = settings.get("sprintoAPPBaseUrl")
     if (baseUrl === null || baseUrl === undefined || baseUrl === "") {
-      settings.set(
-        "sprintoAPPBaseUrl",
-        isDev ? "http://localhost:5000" : appConfig.apiBaseUrl
-      );
+      settings.set("sprintoAPPBaseUrl", isDev ? "http://localhost:5000" : appConfig.apiBaseUrl)
     }
     // check if policy sync required (once per day)
     if (this.shouldPolicySync(policyLastSyncedOn)) {
@@ -209,7 +207,7 @@ class App extends Component {
   };
 
   syncUpdatedPolicy = async () => {
-    const baseUrl = await settings.get("sprintoAPPBaseUrl");
+    const baseUrl = await settings.get("sprintoAPPBaseUrl")
     const policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
     if (policy === null || policy === undefined) {
       return;
@@ -220,14 +218,14 @@ class App extends Component {
     this.setState({ policy: policy, policyLastSyncedOn: ts });
   };
 
-  onDeviceConnected = ({ data }) => {
+  onDeviceConnected =  ({ data }) => {
     // TODO: get user profile api (will do if required)
     // store token in safe storage
     const status = ipcRenderer.sendSync("auth:storeToken", data.accessToken);
     // load url from connecting Webapp
 
     if (status === true) {
-      settings.set("sprintoAPPBaseUrl", data?.baseUrl);
+      settings.set("sprintoAPPBaseUrl", data?.baseUrl)
       settings.set("isConnected", true);
       settings.set("firstName", data.firstName);
       this.setState({
@@ -305,13 +303,13 @@ class App extends Component {
     return moment(new Date()).diff(moment(this.state.lastScanTime), "minutes");
   };
 
-  isScanResultDiff = async (newResult) => {
+  isScanResultDiff = async ( newResult) => {
     let result = false;
-    const oldResult = settings.get("scanResult", {});
+    const oldResult = settings.get("scanResult", {})
 
     for (const [key, value] of Object.entries(newResult)) {
       if (value !== oldResult[key]) {
-        result = true;
+        result = true
       }
     }
     return result;
@@ -321,7 +319,7 @@ class App extends Component {
     const { noResults = false } = payload;
     // device only scan with no policy completed
     if (noResults) {
-      return this.setState({ loading: false, scannedBy: appName });
+      return this.setState({loading: false, scannedBy: appName});
     }
 
     const oldScanResult = this.state.result;
@@ -376,8 +374,10 @@ class App extends Component {
       }
     });
 
-    const isUpdatedScanResult = await this.isScanResultDiff(policy.validate);
-    const baseUrl = await settings.get("sprintoAPPBaseUrl"); // Report the device now
+    const isUpdatedScanResult =await this.isScanResultDiff(
+        policy.validate,
+    );
+    const baseUrl = await settings.get("sprintoAPPBaseUrl")    // Report the device now
     // report only if
     // 1. shouldReportDevice - is true & device connected
     // 2. Or. Last scan result is different than new one
@@ -390,11 +390,11 @@ class App extends Component {
         "api:reportDevice",
         policy.validate,
         device,
-        baseUrl
+          baseUrl
       );
 
       // store current result in local storage
-      await settings.set("scanResult", policy.validate);
+      await settings.set("scanResult", policy.validate)
 
       // update deviceLogLastReportedOn if api call success
       if (status === true) {
@@ -424,7 +424,7 @@ class App extends Component {
       this.setState({ loading: true }, () => {
         const basePath = ipcRenderer.sendSync("get:env:basePath");
         // convert path in unix format (This for windows)
-        const currentBasePath = unixify(basePath);
+        const currentBasePath=unixify(basePath)
 
         glob(`${currentBasePath}/*.yaml`)
           .then((files) => {
@@ -455,10 +455,10 @@ class App extends Component {
    * Opens a link in the native default browser
    */
   handleOpenExternalForRegister = async (event) => {
-    let baseUrl = settings.get("sprintoAPPBaseUrl");
+    let baseUrl = settings.get("sprintoAPPBaseUrl")
     const isDev = ipcRenderer.sendSync("get:env:isDev");
-    if (isDev) {
-      baseUrl = "http://localhost:5000";
+    if(isDev) {
+      baseUrl = 'http://localhost:5000'
     }
 
     event.preventDefault();
@@ -471,7 +471,8 @@ class App extends Component {
    * Opens a link in the native default browser
    */
   handleOpenExternal = async (event) => {
-    const url = await settings.get("sprintoAPPBaseUrl");
+
+    const url = await settings.get("sprintoAPPBaseUrl")
 
     event.preventDefault();
     if (event.target.getAttribute("href")) {
@@ -480,7 +481,7 @@ class App extends Component {
   };
 
   handleShowDescription = (event) => {
-    event.preventDefault();
+    event.preventDefault()
     this.setState({
       showDescription: !this.state.showDescription,
     });
@@ -525,7 +526,8 @@ class App extends Component {
     });
   };
 
-  handleHighlightRescanButton = () => this.setState({ highlightRescan: true });
+  handleHighlightRescanButton = (event) =>
+    this.setState({ highlightRescan: true });
 
   onCancelReloadApp = () => {
     ipcRenderer.send("app:reload");
@@ -564,9 +566,9 @@ class App extends Component {
 
     const isDev = ipcRenderer.sendSync("get:env:isDev");
 
-    const reportingAppURI = appConfig.deviceStatusReportingAppURI;
-    const reportingErrorLogAppURI = appConfig.deviceDebugLogReportingAppURI;
-    const deviceConnectAppURI = appConfig.deviceConnectAppURI;
+    const reportingAppURI =  appConfig.deviceStatusReportingAppURI
+    const reportingErrorLogAppURI = appConfig.deviceDebugLogReportingAppURI
+    const deviceConnectAppURI = appConfig.deviceConnectAppURI
 
     let content = null;
 
