@@ -15,19 +15,27 @@
  *    - 'download:completed' - update has finished downloading
  */
 import path from "path";
-import {app, BrowserWindow, dialog, ipcMain, nativeImage, session, Tray,} from "electron";
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  nativeImage,
+  session,
+  Tray,
+} from "electron";
 import url from "url";
 import log from "./lib/logger";
 import initMenu from "./Menu";
 import config from "./config.json";
-import {MINIMUM_AUTOSCAN_INTERVAL_SECONDS} from "./constants";
+import { MINIMUM_AUTOSCAN_INTERVAL_SECONDS } from "./constants";
 // import settings from 'electron-settings'
 import Store from "electron-store";
 import initProtocols from "./lib/protocolHandlers";
 // import loadReactDevTools from "./lib/loadReactDevTools";
 import iconFinder from "./lib/findIcon";
 import startGraphQLServer from "./server";
-import {IS_MAC, IS_WIN} from "./lib/platform";
+import { IS_MAC, IS_WIN } from "./lib/platform";
 import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
@@ -136,6 +144,8 @@ async function createWindow(show = true) {
   if (enableDebugger || DEBUG_MODE) {
     mainWindow.webContents.openDevTools();
   }
+  // to prevent the app from being throttled when in the background
+  mainWindow.webContents.setBackgroundThrottling(false);
 
   // required at run time so dependencies can be injected
   updater = updateInit(env, mainWindow, log, server, focusOrCreateWindow);
@@ -272,27 +282,32 @@ async function createWindow(show = true) {
 
   ipcMain.on("scan:init", (event) => {
     // schedule next automatic scan
-    clearTimeout(rescanTimeout);
-    rescanTimeout = setTimeout(() => {
-      if (event.sender.isDestroyed()) {
-        console.log(
-          "doing auto reporting - object destroyed?...creating object again"
-        );
-        server.close(() => {
-          console.log("Server closed");
-        });
-        createWindow(false);
-      }
-      if (event && event.sender && !event.sender.isDestroyed()) {
-        try {
-          event.sender.send("autoscan:start", {
-            notificationOnViolation: true,
+    try {
+      clearTimeout(rescanTimeout);
+      rescanTimeout = setTimeout(async () => {
+        if (event.sender.isDestroyed()) {
+          console.log(
+            "doing auto reporting - object destroyed?...creating object again"
+          );
+          server.close(() => {
+            console.log("Server closed");
           });
-        } catch (e) {
-          log.error("start:[WARN] unable to run autoscan", e.message);
+          createWindow(false);
         }
-      }
-    }, rescanDelay);
+        if (event && event.sender && !event.sender.isDestroyed()) {
+          console.log("doing auto reporting");
+          try {
+            event.sender.send("autoscan:start", {
+              notificationOnViolation: true,
+            });
+          } catch (e) {
+            log.error("start:[WARN] unable to run autoscan", e.message);
+          }
+        }
+      }, rescanDelay);
+    } catch (error) {
+      console.log("clearTimeout:: error", error);
+    }
   });
 
   // restore main window after update is downloaded (if arg = { resize: true })
@@ -471,7 +486,7 @@ ipcMain.on("auth:logout", (event) => {
 });
 
 // External API calls
-ipcMain.on("api:getPolicy", async (event,baseUrl) => {
+ipcMain.on("api:getPolicy", async (event, baseUrl) => {
   // Get latest policy json from sprinto
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
