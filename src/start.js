@@ -297,6 +297,15 @@ async function createWindow(show = true) {
         if (event && event.sender && !event.sender.isDestroyed()) {
           console.log("doing auto reporting");
           try {
+            // close the server and create a new window
+            server.close();
+            server = await startGraphQLServer(
+              env,
+              log,
+              language,
+              appHooksForServer
+            );
+
             event.sender.send("autoscan:start", {
               notificationOnViolation: true,
             });
