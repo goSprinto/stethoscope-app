@@ -64,7 +64,7 @@ class App extends Component {
     countDown: 10,
 
     // auth related states
-    isConnected: false,
+    isSprintoAppConnected: false,
     firstName: null,
     policyLastSyncedOn: null,
     offline: false,
@@ -103,7 +103,7 @@ class App extends Component {
       recentHang: settings.get("recentHang", 0) > 1,
       deviceLogLastReportedOn,
       policyLastSyncedOn,
-      isConnected: settings.get("isConnected", false),
+      isSprintoAppConnected: settings.get("isSprintoAppConnected", false),
       firstName: settings.get("firstName", null),
     });
 
@@ -177,7 +177,10 @@ class App extends Component {
 
     const policySyncFreqDays = 1;
 
-    if (policyLastSyncedOn === null && this.state.isConnected === true) {
+    if (
+      policyLastSyncedOn === null &&
+      this.state.isSprintoAppConnected === true
+    ) {
       return true;
     }
 
@@ -187,7 +190,9 @@ class App extends Component {
           (today.getTime() - policyLastSyncedOn.getTime()) / (1000 * 3600 * 24)
         )
       : policySyncFreqDays + 1;
-    return daysSincePolicySync >= 1 && this.state.isConnected === true;
+    return (
+      daysSincePolicySync >= 1 && this.state.isSprintoAppConnected === true
+    );
   };
 
   shouldReportDevice = (deviceLogLastReportedOn) => {
@@ -228,10 +233,10 @@ class App extends Component {
 
     if (status === true) {
       settings.set("sprintoAPPBaseUrl", data?.baseUrl);
-      settings.set("isConnected", true);
+      settings.set("isSprintoAppConnected", true);
       settings.set("firstName", data.firstName);
       this.setState({
-        isConnected: true,
+        isSprintoAppConnected: true,
         firstName: data.firstName,
       });
     }
@@ -239,11 +244,11 @@ class App extends Component {
 
   onDeviceDisconnected = () => {
     // rmeove token stored from safestorage & state
-    settings.set("isConnected", false);
+    settings.set("isSprintoAppConnected", false);
     settings.set("firstName", null);
     ipcRenderer.sendSync("auth:logout");
     this.setState({
-      isConnected: false,
+      isSprintoAppConnected: false,
       firstName: null,
     });
   };
@@ -384,7 +389,7 @@ class App extends Component {
     if (
       (this.shouldReportDevice(this.state.deviceLogLastReportedOn) ||
         isUpdatedScanResult) &&
-      this.state.isConnected
+      this.state.isSprintoAppConnected
     ) {
       const status = ipcRenderer.sendSync(
         "api:reportDevice",
@@ -558,7 +563,7 @@ class App extends Component {
       actionButtonTitle,
       enableReportNow,
       countDown,
-      isConnected,
+      isSprintoAppConnected,
       firstName,
       offline,
     } = this.state;
@@ -619,7 +624,7 @@ class App extends Component {
       );
     }
 
-    if (isConnected === false) {
+    if (isSprintoAppConnected === false) {
       content = (
         <>
           <ConnectToSprintoApp
@@ -677,7 +682,7 @@ class App extends Component {
               enableReportNow={enableReportNow}
               countDown={countDown}
               firstName={firstName}
-              isConnected={isConnected}
+              isSprintoAppConnected={isSprintoAppConnected}
             />
           </div>
         );
