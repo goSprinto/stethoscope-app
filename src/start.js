@@ -164,7 +164,7 @@ async function createWindow(show = true) {
         type: "info",
         title: "Auto Launch",
         message:
-          "Would you like to automatically launch Stethoscope on start-up?",
+          "Would you like to automatically launch DrSprinto on start-up?",
         buttons: ["Yes", "No"],
       })
       .then(({ response }) => {
