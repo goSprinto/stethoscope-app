@@ -3,7 +3,7 @@ import classNames from "classnames";
 import "./Loader.css";
 import ReportErrorLog from "./components/reportErrorLog";
 
-const TOO_SLOW = 20000; // 20 sec
+const TOO_SLOW = 65000; // 65 sec
 let timeout;
 
 export default class Loader extends React.Component {

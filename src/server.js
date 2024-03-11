@@ -187,8 +187,8 @@ export default async function startServer(
   });
 
   app.use(["/scan", "/graphql"], cors(corsOptions), async (req, res) => {
-    // set upper boundary on scan time (45 seconds)
-    req.setTimeout(45000, () => {
+    // set upper boundary on scan time (65 seconds)
+    req.setTimeout(65000, () => {
       log.error("Request timed out");
     });
 
