@@ -12,18 +12,26 @@ export default {
   },
 
   async screenLockDelay(root, args, context) {
-    const lock = await kmd("screensaver", context);
-    const screenlockDelay = safeParseInt(lock.screenlockDelay);
-    let screenSaveTimeout
-    try{
-      const lockwithPolicy = await kmd("screensaver-policy", context);
-      const screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
-    }catch(e){
-      console.log("screenLockDelay: lockwithPolicy", e.toString() )
-    }
+    try {
+      const lock = await kmd("screensaver", context);
+      const screenlockDelay = safeParseInt(lock.screenlockDelay);
+      let screenSaveTimeout;
+      try {
+        const lockwithPolicy = await kmd("screensaver-policy", context);
+        screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
+      } catch (e) {
+        log.error(
+          "windowsDevice:screenLockDelay:lockwithPolicy::crash",
+          e.toString()
+        );
+      }
 
-    if (screenlockDelay === -1) return screenSaveTimeout;
-    else return screenlockDelay;
+      if (screenlockDelay === -1) return screenSaveTimeout;
+      else return screenlockDelay;
+    } catch (error) {
+      log.error("windowsDevice:screenLockDelay::crash", e.toString());
+      return 0;
+    }
   },
 
   async antivirus(root, args, context) {

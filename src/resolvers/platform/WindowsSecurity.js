@@ -40,61 +40,74 @@ export default {
       return UNKNOWN;
     }
 
-    const lock = await kmd("screensaver", context);
-
-    let screenSaverIsSecure = null
-    let screenSaveActive = null
     try {
-      const lockwithPolicy = await kmd("screensaver-policy", context);
+      const lock = await kmd("screensaver", context);
 
-      const screenSaverIsSecure = safeParseInt(
-          lockwithPolicy.screenSaverIsSecure
+      let screenSaverIsSecure = null;
+      let screenSaveActive = null;
+      try {
+        const lockwithPolicy = await kmd("screensaver-policy", context);
+
+        screenSaverIsSecure = safeParseInt(lockwithPolicy.screenSaverIsSecure);
+        screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
+      } catch (e) {
+        log.error(
+          "windowsSecurity:screenLock:lockwithPolicy::crash",
+          e.toString()
+        );
+      }
+      return (
+        (lock.screensaverEnabled === "True" &&
+          lock.screenlockEnabled === "True") ||
+        (screenSaveActive === 1 && screenSaverIsSecure === 1)
       );
-      const screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
-    }catch (e){
-      console.log("error in screenLock", lockwithPolicy)
+    } catch (error) {
+      log.error("windowsSecurity:screenLock::crash", e.toString());
+      return false;
     }
-    return (
-      (lock.screensaverEnabled === "True" &&
-        lock.screenlockEnabled === "True") ||
-      (screenSaveActive === 1 && screenSaverIsSecure === 1)
-    );
   },
 
   async screenIdle(root, args, context) {
     const { screenIdle } = args;
 
-    const lock = await kmd("screensaver", context);
-    const screenlockDelay = safeParseInt(lock.screenlockDelay);
-    const delayOk = semver.satisfies(
-      semver.coerce(screenlockDelay.toString()),
-      screenIdle
-    );
-
-    let newdelayOk =false
-    let screenSaverIsSecure, screenSaveActive
     try {
-      const lockwithPolicy = await kmd("screensaver-policy", context);
-      const screenSaveTimeout = safeParseInt(lockwithPolicy.screenSaveTimeout);
-       newdelayOk = semver.satisfies(
+      const lock = await kmd("screensaver", context);
+      const screenlockDelay = safeParseInt(lock.screenlockDelay);
+      const delayOk = semver.satisfies(
+        semver.coerce(screenlockDelay.toString()),
+        screenIdle
+      );
+
+      let newdelayOk = false;
+      let screenSaverIsSecure, screenSaveActive;
+      try {
+        const lockwithPolicy = await kmd("screensaver-policy", context);
+        const screenSaveTimeout = safeParseInt(
+          lockwithPolicy.screenSaveTimeout
+        );
+        newdelayOk = semver.satisfies(
           semver.coerce(screenSaveTimeout.toString()),
           screenIdle
+        );
+        screenSaverIsSecure = safeParseInt(lockwithPolicy.screenSaverIsSecure);
+        screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
+      } catch (e) {
+        log.error(
+          "windowsSecurity:screenIdle:lockwithPolicy::crash",
+          e.toString()
+        );
+      }
+
+      return (
+        (delayOk &&
+          lock.screensaverEnabled === "True" &&
+          lock.screenlockEnabled === "True") ||
+        (newdelayOk && screenSaverIsSecure === 1 && screenSaveActive === 1)
       );
-       screenSaverIsSecure = safeParseInt(
-          lockwithPolicy.screenSaverIsSecure
-      );
-       screenSaveActive = safeParseInt(lockwithPolicy.screenSaveActive);
-    }catch (e){
-      console.log("error - screenIdle- lockwithPolicy", e.toString())
+    } catch (error) {
+      log.error("windowsSecurity:screenIdle::crash", e.toString());
+      return false;
     }
-
-
-    return (
-      (delayOk &&
-        lock.screensaverEnabled === "True" &&
-        lock.screenlockEnabled === "True") ||
-      (newdelayOk && screenSaverIsSecure === 1 && screenSaveActive === 1)
-    );
   },
 
   async firewall(root, args, context) {
