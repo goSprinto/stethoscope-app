@@ -15,7 +15,6 @@ jobs:
       matrix:
         os:
           - macos-latest
-          - windows-latest
 
     steps:
       - name: Checkout code
@@ -43,7 +42,7 @@ jobs:
 
       - name: Build and Package
         run: |
-          if ${{ matrix.os  == 'ubuntu-latest' }}; then 
+          if (${{ matrix.os  == 'ubuntu-latest' }}); then 
             docker run --rm \
               -e ELECTRON_CACHE="${{ runner.home }}/.cache/electron" \
               -e ELECTRON_BUILDER_CACHE="${{ runner.home }}/.cache/electron-builder" \
