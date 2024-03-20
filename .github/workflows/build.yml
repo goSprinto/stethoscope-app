@@ -1,0 +1,59 @@
+name: Package application
+
+on:
+  push:
+    branches:
+      - 'dhananjay-build-test'
+
+jobs:
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            node_modules
+            ${{ runner.home }}/.cache/electron
+            ${{ runner.home }}/.cache/electron-builder
+          key: ${{ matrix.os }}-dependencies-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Build and Release
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            docker run --rm \
+              -e ELECTRON_CACHE="${{ runner.home }}/.cache/electron" \
+              -e ELECTRON_BUILDER_CACHE="${{ runner.home }}/.cache/electron-builder" \
+              -v ${{ github.workspace }}:/project \
+              -v ${{ runner.home }}/.cache/electron:/root/.cache/electron \
+              -v ${{ runner.home }}/.cache/electron-builder:/root/.cache/electron-builder \
+              electronuserland/builder:18-wine \
+              /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn build"
+          else
+            yarn build:windows
+          fi
+      - name: Save artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Dist
+          path: dist
+
+      - name: Cleanup old cache
+        if: runner.os == 'ubuntu-latest'
+        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
