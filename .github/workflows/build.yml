@@ -20,21 +20,21 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: goSprinto/stethoscope-app
           ref: 'dhananjay-build-test'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install dependencies
         run: yarn install
 
       - name: Cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             node_modules
@@ -59,7 +59,7 @@ jobs:
             yarn build:mac
           fi
       - name: Save artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Dist
           path: dist
