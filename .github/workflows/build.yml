@@ -43,7 +43,7 @@ jobs:
 
       - name: Build and Package
         run: |
-          if (${{ matrix.os  == 'ubuntu-latest' }}){ then 
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             docker run --rm \
               -e ELECTRON_CACHE="${{ runner.home }}/.cache/electron" \
               -e ELECTRON_BUILDER_CACHE="${{ runner.home }}/.cache/electron-builder" \
@@ -51,8 +51,7 @@ jobs:
               -v ${{ runner.home }}/.cache/electron:/root/.cache/electron \
               -v ${{ runner.home }}/.cache/electron-builder:/root/.cache/electron-builder \
               electronuserland/builder:18-wine \
-              /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn build"}
-          # else if (${{ matrix.os  == 'windows-latest' }}) {then yarn build:windows}
+              /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn build"
           else
             yarn build:windows
           fi
