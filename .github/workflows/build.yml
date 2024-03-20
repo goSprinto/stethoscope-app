@@ -6,23 +6,29 @@ on:
       - 'dhananjay-build-test'
 
 jobs:
-  build-and-release:
+  build-and-package:
     runs-on: ${{ matrix.os }}
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       matrix:
         os:
-          - macos-latest
           - ubuntu-latest
+          - macos-latest
           - windows-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          repository: goSprinto/stethoscope-app
+          ref: 'dhananjay-build-test'
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "20"
+          node-version: '18'
 
       - name: Install dependencies
         run: yarn install
@@ -36,7 +42,7 @@ jobs:
             ${{ runner.home }}/.cache/electron-builder
           key: ${{ matrix.os }}-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Build and Release
+      - name: Build and Package
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             docker run --rm \
@@ -57,7 +63,7 @@ jobs:
         with:
           name: Dist
           path: dist
-
+  
       - name: Cleanup old cache
         if: runner.os == 'ubuntu-latest'
         run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
