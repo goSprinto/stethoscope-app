@@ -11,6 +11,8 @@ jobs:
     strategy:
       matrix:
         os:
+          - macos-latest
+          - ubuntu-latest
           - windows-latest
 
     steps:
@@ -45,8 +47,10 @@ jobs:
               -v ${{ runner.home }}/.cache/electron-builder:/root/.cache/electron-builder \
               electronuserland/builder:18-wine \
               /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn build"
-          else
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             yarn build:windows
+          else
+            yarn build:mac
           fi
       - name: Save artifacts
         uses: actions/upload-artifact@v2
