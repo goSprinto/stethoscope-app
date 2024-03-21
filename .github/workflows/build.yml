@@ -6,43 +6,43 @@ on:
       - 'dhananjay-build-test'
 
 jobs:
-  # build-and-package-macos:
-  #   runs-on: macos-latest
+  build-and-package-macos:
+    runs-on: macos-latest
     
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: goSprinto/stethoscope-app
-  #         ref: 'dhananjay-build-test'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: goSprinto/stethoscope-app
+          ref: 'dhananjay-build-test'
 
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-  #     - name: Install dependencies
-  #       run: yarn install
+      - name: Install dependencies
+        run: yarn install
 
-  #     - name: Cache dependencies
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: |
-  #           node_modules
-  #           ${{ runner.home }}/.cache/electron
-  #           ${{ runner.home }}/.cache/electron-builder
-  #         key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ${{ runner.home }}/.cache/electron
+            ${{ runner.home }}/.cache/electron-builder
+          key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-  #     - name: Build and Package for macOS
-  #       run: |
-  #         yarn run-s prebuild 'build:electron -m --x64 --arm64'
+      - name: Build and Package for macOS
+        run: |
+          yarn run-s prebuild 'build:electron -m --x64 --arm64'
           
         
-  #     - name: Save artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: Dist-macos
-  #         path: dist
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dist-macos
+          path: dist
   
   build-and-package-ubuntu:
     runs-on: ubuntu-latest
@@ -86,54 +86,54 @@ jobs:
           name: Dist-ubuntu
           path: dist
 
-  # build-and-package-windows:
-  #   runs-on: windows-latest
+  build-and-package-windows:
+    runs-on: windows-latest
     
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: goSprinto/stethoscope-app
-  #         ref: 'dhananjay-build-test'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: goSprinto/stethoscope-app
+          ref: 'dhananjay-build-test'
 
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-  #     - name: Install dependencies
-  #       run: yarn install
+      - name: Install dependencies
+        run: yarn install
 
-  #     - name: Cache dependencies
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: |
-  #           node_modules
-  #           ${{ runner.home }}/.cache/electron
-  #           ${{ runner.home }}/.cache/electron-builder
-  #         key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ${{ runner.home }}/.cache/electron
+            ${{ runner.home }}/.cache/electron-builder
+          key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-  #     - name: Cleanup old cache
-  #       if: runner.os == 'ubuntu-latest'
-  #       run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
+      - name: Cleanup old cache
+        if: runner.os == 'ubuntu-latest'
+        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
 
-  #     - name: Build and Package for Windows
-  #       run: |
-  #         yarn build:windows
+      - name: Build and Package for Windows
+        run: |
+          yarn build:windows
           
         
-  #     - name: Save artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: Dist-windows
-  #         path: dist
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dist-windows
+          path: dist
 
   upload-to-s3:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    needs: [build-and-package-ubuntu]
+    needs: [build-and-package-macos, build-and-package-windows, build-and-package-ubuntu]
     
     steps:
     
@@ -157,7 +157,7 @@ jobs:
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
-            cp dist/*.{yml,AppImage} artifacts/ && \
+            cp dist/*.{yml,exe,dmg,AppImage} artifacts/ && \
             aws s3 sync artifacts s3://drsprinto-build
       
   
