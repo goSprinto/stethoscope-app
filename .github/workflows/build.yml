@@ -15,7 +15,8 @@ jobs:
       matrix:
         os:
           # - macos-latest
-          - windows-latest
+          - ubuntu-latest
+          # - windows-latest
 
     steps:
       - name: Checkout code
@@ -43,25 +44,34 @@ jobs:
 
       - name: Build and Package
         run: |
-          yarn build:windows
-          # if (${{ matrix.os }} == "ubuntu-latest") { then
-          #   docker run --rm \
-          #     -e ELECTRON_CACHE="${{ runner.home }}/.cache/electron" \
-          #     -e ELECTRON_BUILDER_CACHE="${{ runner.home }}/.cache/electron-builder" \
-          #     -v ${{ github.workspace }}:/project \
-          #     -v ${{ runner.home }}/.cache/electron:/root/.cache/electron \
-          #     -v ${{ runner.home }}/.cache/electron-builder:/root/.cache/electron-builder \
-          #     electronuserland/builder:18-wine \
-          #     /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn build" }
-          # else
-          #   yarn build:windows
-          # fi
+          if (${{ matrix.os }} == "ubuntu-latest") { then
+            docker run --rm \
+              -e ELECTRON_CACHE="${{ runner.home }}/.cache/electron" \
+              -e ELECTRON_BUILDER_CACHE="${{ runner.home }}/.cache/electron-builder" \
+              -v ${{ github.workspace }}:/project \
+              -v ${{ runner.home }}/.cache/electron:/root/.cache/electron \
+              -v ${{ runner.home }}/.cache/electron-builder:/root/.cache/electron-builder \
+              electronuserland/builder:18-wine \
+              /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn build" }
+          
+        
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Dist
           path: dist
   
+      # - name: Configure AWS
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+      #     aws-region: us-west-1
+
+      # - name: Push artifacts to S3
+      #   run: |
+      #     mkdir artifacts && \
+      #     cp dist/*.{yml,exe,AppImage,dmg} artifacts/ && \
+      #     aws s3 sync artifacts s3://dr-sprinto-packages
       - name: Cleanup old cache
         if: runner.os == 'ubuntu-latest'
         run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
