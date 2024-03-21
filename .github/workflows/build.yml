@@ -55,6 +55,7 @@ jobs:
               /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn build"
           else
             yarn build:mac
+          fi
           
         
       - name: Save artifacts
