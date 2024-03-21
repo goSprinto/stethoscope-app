@@ -46,10 +46,12 @@ jobs:
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             yarn run-s prebuild _electron-builder-linux
-          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            yarn build:windows
           else
-            yarn run-s prebuild 'build:electron -m --x64 --arm64'
+            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              yarn build:windows
+            else
+              yarn run-s prebuild 'build:electron -m --x64 --arm64'
+            fi
           fi
           
         
