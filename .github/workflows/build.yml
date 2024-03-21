@@ -143,17 +143,16 @@ jobs:
           path: dist
           pattern: Dist-*
           merge-multiple: true
+      - name: List downloaded artifacts
+        run: ls -R dist
 
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
           aws-region: us-west-1
+      
           
-      - name: Debug dist directory
-        run: |
-           ls \
-           ls -l dist
   
       - name: Push artifacts to S3
         run: |
