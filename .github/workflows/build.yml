@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-package-macos:
     runs-on: macos-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
 
   build-and-package-ubuntu:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -71,6 +71,10 @@ jobs:
             ${{ runner.home }}/.cache/electron-builder
           key: ubuntu-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
+      - name: Cleanup old cache
+        if: runner.os == 'ubuntu-latest'
+        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
+
       - name: Build and Package for Ubuntu
         run: |
           yarn run-s prebuild _electron-builder-linux
@@ -84,7 +88,7 @@ jobs:
 
   build-and-package-windows:
     runs-on: windows-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -109,6 +113,10 @@ jobs:
             ${{ runner.home }}/.cache/electron-builder
           key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
+      - name: Cleanup old cache
+        if: runner.os == 'ubuntu-latest'
+        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
+
       - name: Build and Package for Windows
         run: |
           yarn build:windows
@@ -119,3 +127,28 @@ jobs:
         with:
           name: Dist-windows
           path: dist
+
+  upload-to-s3:
+    runs-on: ubuntu-latest
+    needs: [build-and-package-macos, build-and-package-ubuntu, build-and-package-windows]
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Dist-*
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+          aws-region: us-west-1
+  
+      - name: Push artifacts to S3
+        run: |
+            mkdir artifacts && \
+            cp dist/*.{yml,exe,AppImage,dmg} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build
+  
+  
+  
