@@ -130,6 +130,9 @@ jobs:
 
   upload-to-s3:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     needs: [build-and-package-ubuntu]
     
     steps:
