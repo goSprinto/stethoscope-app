@@ -157,7 +157,7 @@ jobs:
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
-            cp dist/*.{yml,exe,AppImage,dmg} artifacts/ && \
+            cp dist/*.{yml,AppImage} artifacts/ && \
             aws s3 sync artifacts s3://drsprinto-build
       
   
