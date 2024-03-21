@@ -44,7 +44,7 @@ jobs:
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Dist
+          name: Dist-macos
           path: dist
 
   build-and-package-ubuntu:
@@ -85,7 +85,7 @@ jobs:
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Dist
+          name: Dist-ubuntu
           path: dist
 
   build-and-package-windows:
@@ -126,5 +126,5 @@ jobs:
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Dist
+          name: Dist-windows
           path: dist
