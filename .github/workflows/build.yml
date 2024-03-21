@@ -43,7 +43,7 @@ jobs:
   #       with:
   #         name: Dist-macos
   #         path: dist
-
+  
   build-and-package-ubuntu:
     runs-on: ubuntu-latest
     
@@ -136,6 +136,7 @@ jobs:
     needs: [build-and-package-ubuntu]
     
     steps:
+    
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -148,12 +149,17 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
           aws-region: us-west-1
+          
+      - name: Debug dist directory
+        run: |
+           ls \
+           ls -l dist
   
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
             cp dist/*.{yml,exe,AppImage,dmg} artifacts/ && \
             aws s3 sync artifacts s3://drsprinto-build
-  
+      
   
   
