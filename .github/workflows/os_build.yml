@@ -158,8 +158,8 @@ jobs:
           
       - name: Extract version number
         id: extract_version
-        run: echo "::set-output name=version::$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)"
-  
+        run: echo "version=$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)" >> $GITHUB_OUTPUT
+        
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
@@ -190,8 +190,8 @@ jobs:
           
       - name: Extract version number
         id: extract_version
-        run: echo "::set-output name=version::$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)"
-  
+        run: echo "version=$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)" >> $GITHUB_OUTPUT
+        
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
@@ -222,8 +222,8 @@ jobs:
           
       - name: Extract version number
         id: extract_version
-        run: echo "::set-output name=version::$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)"
-  
+        run: echo "version=$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)" >> $GITHUB_OUTPUT
+        
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
