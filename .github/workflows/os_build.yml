@@ -136,7 +136,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    needs: [build-and-package-ubuntu]
+    needs: [build-and-package-macos, build-and-package-ubuntu, build-and-package-windows]
     
     steps:
       - name: Configure AWS
