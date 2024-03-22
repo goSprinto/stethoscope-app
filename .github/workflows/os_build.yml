@@ -7,9 +7,14 @@ on:
         description: Branch name of Stethoscope Repository
         required: true
         type: string
+      build_type:
+        description: Type of build to generate & upload
+        required: true
+        type: string
 
 jobs:
   build-and-package-macos:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }}
     runs-on: macos-latest
     
     steps:
@@ -48,6 +53,7 @@ jobs:
           path: dist
   
   build-and-package-ubuntu:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'ubuntu' }}
     runs-on: ubuntu-latest
     
     steps:
@@ -90,6 +96,7 @@ jobs:
           path: dist
 
   build-and-package-windows:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }}
     runs-on: windows-latest
     
     steps:
@@ -116,10 +123,6 @@ jobs:
             ${{ runner.home }}/.cache/electron-builder
           key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Cleanup old cache
-        if: runner.os == 'ubuntu-latest'
-        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
-
       - name: Build and Package for Windows
         run: |
           yarn build:windows
@@ -130,13 +133,14 @@ jobs:
         with:
           name: Dist-windows
           path: dist
-
-  upload-to-s3:
+  
+  upload-to-s3-ubuntu:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'ubuntu' }} 
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    needs: [build-and-package-macos, build-and-package-ubuntu, build-and-package-windows]
+    needs: [build-and-package-ubuntu]
     
     steps:
       - name: Configure AWS
@@ -151,14 +155,77 @@ jobs:
           path: dist
           pattern: Dist-*
           merge-multiple: true
-
-      
+          
+      - name: Extract version number
+        id: extract_version
+        run: echo "::set-output name=version::$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)"
   
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
-            cp dist/*.{yml,exe,dmg,AppImage} artifacts/ && \
-            aws s3 sync artifacts s3://drsprinto-build/${{ github.event.inputs.stethoscope_repo_branch_name }}
-      
+            cp dist/*.{yml,AppImage} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build/${{ steps.extract_version.outputs.version }}/ 
+            
+  upload-to-s3-windows:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }} 
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs: [build-and-package-windows]
+    
+    steps:
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+          aws-region: us-west-1
+    
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: Dist-*
+          merge-multiple: true
+          
+      - name: Extract version number
+        id: extract_version
+        run: echo "::set-output name=version::$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)"
   
+      - name: Push artifacts to S3
+        run: |
+            mkdir artifacts && \
+            cp dist/*.{yml,exe} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build/${{ steps.extract_version.outputs.version }}/ 
+            
+  upload-to-s3-macos:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }} 
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs: [build-and-package-macos]
+    
+    steps:
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+          aws-region: us-west-1
+    
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: Dist-*
+          merge-multiple: true      
+          
+      - name: Extract version number
+        id: extract_version
+        run: echo "::set-output name=version::$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)"
   
+      - name: Push artifacts to S3
+        run: |
+            mkdir artifacts && \
+            cp dist/*.{yml,AppImage} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build/${{ steps.extract_version.outputs.version }}/ 
