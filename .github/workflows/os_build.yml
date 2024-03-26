@@ -15,6 +15,8 @@ on:
 jobs:
   build-and-package-macos:
     if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }}
+    outputs: 
+      version_number: ${{ steps.extract_version.outputs.version}}
     runs-on: macos-latest
     
     steps:
@@ -51,9 +53,15 @@ jobs:
         with:
           name: Dist-macos
           path: dist
+          
+      - name: Get version from package.json
+        id: extract_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
   
   build-and-package-ubuntu:
     if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'ubuntu' }}
+    outputs: 
+      version_number: ${{ steps.extract_version.outputs.version}}
     runs-on: ubuntu-latest
     
     steps:
@@ -94,10 +102,17 @@ jobs:
         with:
           name: Dist-ubuntu
           path: dist
+      
+      - name: Get version from package.json
+        id: extract_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
+
 
   build-and-package-windows:
     if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }}
-    runs-on: windows-latest
+    outputs: 
+      version_number: ${{ steps.extract_version.outputs.version}}
+    runs-on: macos-latest
     
     steps:
       - name: Checkout code
@@ -133,6 +148,11 @@ jobs:
         with:
           name: Dist-windows
           path: dist
+          
+      - name: Get version from package.json
+        id: extract_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
+  
   
   upload-to-s3-ubuntu:
     if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'ubuntu' }} 
@@ -156,15 +176,12 @@ jobs:
           pattern: Dist-*
           merge-multiple: true
           
-      - name: Extract version number
-        id: extract_version
-        run: echo "version=$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)" >> $GITHUB_OUTPUT
-        
+              
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
             cp dist/*.{yml,AppImage} artifacts/ && \
-            aws s3 sync artifacts s3://drsprinto-build/${{ steps.extract_version.outputs.version }}/ 
+            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-ubuntu.outputs.version_number }}/  
             
   upload-to-s3-windows:
     if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }} 
@@ -188,15 +205,11 @@ jobs:
           pattern: Dist-*
           merge-multiple: true
           
-      - name: Extract version number
-        id: extract_version
-        run: echo "version=$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)" >> $GITHUB_OUTPUT
-        
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
             cp dist/*.{yml,exe} artifacts/ && \
-            aws s3 sync artifacts s3://drsprinto-build/${{ steps.extract_version.outputs.version }}/ 
+            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-windows.outputs.version_number }}/  
             
   upload-to-s3-macos:
     if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }} 
@@ -220,12 +233,8 @@ jobs:
           pattern: Dist-*
           merge-multiple: true      
           
-      - name: Extract version number
-        id: extract_version
-        run: echo "version=$(echo ${{ github.event.inputs.stethoscope_repo_branch_name }} | cut -d'/' -f3)" >> $GITHUB_OUTPUT
-        
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
             cp dist/*.{yml,dmg} artifacts/ && \
-            aws s3 sync artifacts s3://drsprinto-build/${{ steps.extract_version.outputs.version }}/ 
+            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-macos.outputs.version_number }}/
