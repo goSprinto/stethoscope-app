@@ -42,33 +42,36 @@ jobs:
       - name: Build and Package for Windows
         run: |
           yarn build:windows
+      
+      - name: Install Windows SDK
+        uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
+        with:
+          sdk-version: 22621
           
-        
+      - name: Signing the executables
+        uses: skymatic/code-sign-action@v1
+        with:
+          certificate: '${{ secrets.P12FILE }}'
+          password: '${{ secrets.PASSWORD }}'
+          certificatesha1: '${{ secrets.SHA1KEY }}'
+          folder: 'dist'
+          
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Dist-windows
           path: dist
           
-      - name: Install Windows SDK
-        uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
-        with:
-          sdk-version: 22621
       
-      - name: Signing the executables
-        uses: DanaBear/code-sign-action@v4
-        with:
-          certificate: '${{ secrets.P12FILE }}'
-          password: '${{ secrets.PASSWORD }}'
-          certificatesha1: '${{ secrets.SHA1KEY }}'
-          folder: 'dist'
+      
+      
       
       - name: Get version from package.json
         id: extract_version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
             
   upload-to-s3-windows:
-    # if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }} 
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }} 
     runs-on: ubuntu-latest
     permissions:
       id-token: write
