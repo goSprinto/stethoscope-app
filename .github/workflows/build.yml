@@ -51,7 +51,6 @@ jobs:
           path: dist
           
       - name: Install Windows SDK
-        uses: actions/checkout@v4
         uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
         with:
           sdk-version: 22621
