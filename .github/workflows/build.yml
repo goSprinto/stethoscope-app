@@ -47,23 +47,39 @@ jobs:
         uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
         with:
           sdk-version: 22621
+      - name: Get Base64 Certificate
+        env:
+          BASE64_CERT: ${{ secrets.P12FILE }}
+        run: |
+          echo "$BASE64_CERT" > certificate_base64.txt
           
-      - name: Signing the executables
-        uses: skymatic/code-sign-action@v1
-        with:
-          certificate: '${{ secrets.P12FILE }}'
-          password: '${{ secrets.PASSWORD }}'
-          certificatesha1: '${{ secrets.SHA1KEY }}'
-          folder: 'dist'
+      - name: Decode Base64 Certificate
+        run: |
+          openssl base64 -d -in certificate_base64.txt -out certificate.der
+      
+      - name: Convert to PKCS#12
+        run: |
+          openssl pkcs12 -export -out certificate.pfx -in certificate.der -nodes
+
+      - name: Sign all executable files with signtool
+        run: |
+          for /r "${{ github.workspace }}/dist" %%f in (*.exe) do (
+            signtool sign /f "certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "%%f"
+          )
+        shell: cmd
+
           
-      - name: View Certificate Contents
-        run: Get-Content "C:\Users\RUNNER~1\AppData\Local\Temp\certificate.pfx"
-          
+    
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Dist-windows
           path: dist
+          
+      
+      
+      
+      
       - name: Get version from package.json
         id: extract_version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
