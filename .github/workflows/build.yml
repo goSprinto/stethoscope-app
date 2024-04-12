@@ -45,15 +45,15 @@ jobs:
       #     "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "example.exe"
       
       # Save artifacts
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Dist-windows
-          path: dist
+      # - name: Save artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: Dist-windows
+      #     path: dist
           
       - name: Sign binary
         uses: lando/code-sign-action@v2
         with:
-          file: dist
+          file: example.exe
           certificate-data: ${{ secrets.P12FILE }}
           certificate-password: ${{ secrets.PASSWORD }}
