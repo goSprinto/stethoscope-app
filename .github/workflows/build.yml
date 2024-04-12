@@ -50,11 +50,12 @@ jobs:
       #   with:
       #     name: Dist-windows
       #     path: dist
-          
+      
       - name: Sign binary
-        uses: lando/code-sign-action@v2
+        uses: DanaBear/code-sign-action@v4
         with:
-          file: example.exe
-          certificate-data: ${{ secrets.P12FILE }}
-          certificate-password: ${{ secrets.PASSWORD }}
-          options: --options runtime --sha1 ${{ secrets.SHA1KEY}}
+          certificate: '${{ secrets.P12FILE }}'
+          password: '${{ secrets.PASSWORD }}'
+          certificatesha1: '${{ secrets.SHA1KEY }}'
+          folder: ''
+          recursive: true
