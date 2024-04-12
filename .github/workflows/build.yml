@@ -21,6 +21,10 @@ jobs:
         run: |
             Add-Content -Path example.txt -Value "Hello, world!"
             Rename-Item -Path example.txt -NewName example.exe
+          
+      # Start PowerShell as Administrator
+      - name: Start PowerShell as Administrator
+        run: Start-Process powershell -Verb runAs
 
       # Import Windows certificate
       - name: Import Windows certificate
@@ -28,20 +32,21 @@ jobs:
           WINDOWS_CERTIFICATE: ${{ secrets.P12FILE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
-          elevate powershell -Command "New-Item -ItemType directory -Path certificate"
+          New-Item -ItemType directory -Path certificate
           Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
           certutil -decode certificate/tempCert.txt certificate/certificate.pfx
           Remove-Item -Path certificate -Include tempCert.txt
           Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
-
+          "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "example.exe"
+      
       # Sign example.exe with signtool
       - name: Sign example.exe with signtool
         run: |
-          elevate "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "example.exe"
+          "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "example.exe"
       
       # Save artifacts
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Dist-windows
-          path: example.exe
+          path: dist
