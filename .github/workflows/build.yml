@@ -20,9 +20,11 @@ jobs:
       # Compile a simple "Hello World" program and create the example.exe file
       - name: Compile Hello World program
         run: |
-          @echo off
-          echo Hello, world! > example.txt
-          rename example.txt example.exe
+            Add-Content -Path example.txt -Value "Hello, world!"
+            Rename-Item -Path example.txt -NewName example.exe
+          
+  
+
 
      
       - name: Import Windows certificate
