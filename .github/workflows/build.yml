@@ -23,8 +23,8 @@ jobs:
             Rename-Item -Path example.txt -NewName example.exe
           
       # Start PowerShell as Administrator
-      - name: Start PowerShell as Administrator
-        run: Start-Process powershell -Verb runAs
+      # - name: Start PowerShell as Administrator
+      #   run: Start-Process powershell -Verb runAs
 
       # Import Windows certificate
       - name: Import Windows certificate
@@ -32,6 +32,7 @@ jobs:
           WINDOWS_CERTIFICATE: ${{ secrets.P12FILE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
+          Start-Process powershell -Verb runAs
           New-Item -ItemType directory -Path certificate
           Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
           certutil -decode certificate/tempCert.txt certificate/certificate.pfx
