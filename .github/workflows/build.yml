@@ -56,6 +56,5 @@ jobs:
         with:
           certificate: '${{ secrets.P12FILE }}'
           password: '${{ secrets.PASSWORD }}'
-          certificatesha1: '${{ secrets.SHA1KEY }}'
           folder: ''
           recursive: true
