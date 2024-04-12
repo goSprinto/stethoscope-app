@@ -46,7 +46,7 @@ jobs:
       - name: Sign
         shell: powershell
         env:
-          FILE: 'dist'
+          FILE: 'dist/DrSprinto Setup 4.0.7.exe'
           WINDOZE_CERT_DATA: ${{ secrets.P12FILE }}
           WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
