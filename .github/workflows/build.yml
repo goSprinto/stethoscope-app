@@ -57,3 +57,4 @@ jobs:
           file: example.exe
           certificate-data: ${{ secrets.P12FILE }}
           certificate-password: ${{ secrets.PASSWORD }}
+          options: --options runtime --sha1 ${{ secrets.SHA1KEY}}
