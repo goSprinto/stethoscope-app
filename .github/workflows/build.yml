@@ -52,7 +52,6 @@ jobs:
 
       
       - name: import windows certificate
-        if: matrix.platform == 'windows-latest'
         env:
          WINDOWS_CERTIFICATE: ${{ secrets.P12FILE }}
          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.PASSWORD }}
