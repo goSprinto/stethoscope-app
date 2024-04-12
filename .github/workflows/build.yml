@@ -66,7 +66,7 @@ jobs:
       - name: Sign all executable files with signtool
         run: |
           for /r "${{ github.workspace }}/dist" %%f in (*.exe) do (
-            signtool sign /f "certificate/certificate.pfx" /p ${{ secrets.PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "%%f"
+            "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "%%f"
           )
         shell: cmd
 
