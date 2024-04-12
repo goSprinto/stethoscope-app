@@ -25,6 +25,7 @@ jobs:
           gcc -o example.exe hello.c
           del hello.c  # Cleanup temporary C source file
 
+
       - name: Import Windows certificate
         env:
           WINDOWS_CERTIFICATE: ${{ secrets.P12FILE }}
