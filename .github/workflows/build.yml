@@ -51,9 +51,9 @@ jobs:
           name: Dist-windows
           path: dist
           
-      name: Sign binary
-      uses: lando/code-sign-action@v2
-      with:
-        file: dist
-        certificate-data: ${{ secrets.P12FILE }}
-        certificate-password: ${{ secrets.PASSWORD }}
+      - name: Sign binary
+        uses: lando/code-sign-action@v2
+        with:
+          file: dist
+          certificate-data: ${{ secrets.P12FILE }}
+          certificate-password: ${{ secrets.PASSWORD }}
