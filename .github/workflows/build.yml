@@ -65,10 +65,11 @@ jobs:
 
       - name: Sign all executable files with signtool
         run: |
-         for /r "${{ github.workspace }}/dist" %%f in (*.exe) do (
-          signtool sign /f "certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "%%f"
-         )
+          for /r "${{ github.workspace }}/dist" %%f in (*.exe) do (
+            signtool sign /f "certificate/certificate.pfx" /p ${{ secrets.PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "%%f"
+          )
         shell: cmd
+
         
       - name: Save artifacts
         uses: actions/upload-artifact@v4
