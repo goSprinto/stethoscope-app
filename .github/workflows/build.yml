@@ -5,22 +5,19 @@ on:
     branches:
       - 'dhananjay-build-test'
 
-
 jobs:
-
-
-  build-and-package-windows:
-    # if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }}
+  build-and-package-macos:
+    # if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }}
     outputs: 
       version_number: ${{ steps.extract_version.outputs.version}}
-    runs-on: windows-latest
+    runs-on: macos-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           repository: goSprinto/stethoscope-app
-          ref: 'dhananjay-build-test'
+          ref: ${{ github.event.inputs.stethoscope_repo_branch_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,73 +34,44 @@ jobs:
             node_modules
             ${{ runner.home }}/.cache/electron
             ${{ runner.home }}/.cache/electron-builder
-          key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+          key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Build and Package for Windows
+      - name: Build and Package for macOS
         run: |
-          yarn build:windows
-      
-      - name: Sign
-        shell: powershell
-        env:
-          FILE: "dist/DrSprinto Setup $version_number.exe"
-          WINDOZE_CERT_DATA: ${{ secrets.P12FILE }}
-          WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
+          yarn run-s prebuild 'build:electron -m --x64 --arm64'
+          
+      - name: Codesign executable
+        env: 
+          MACOS_CERTIFICATE: ${{ secrets.MACP12 }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.NOTERYPASSWORD }}
         run: |
-          $ErrorActionPreference = "Stop"
-          # Get some things for cert opts
-          $file = -join($pwd, "/", $env:FILE);
-          $temp_dir = $env:TMP
-          $cert_data = $env:WINDOZE_CERT_DATA
-          $cert_path = "$temp_dir\lando.windoze.p12"
-          $cert_password = $env:WINDOZE_CERT_PASSWORD
-          $cert_secure_password = $null
-          $signtool = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\signtool.exe"
-          $signtool2022 = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe"
-          # Throw error if file does not exist
-          if (!(Test-Path "$file"))
-          {
-            throw "$file does not exist"
-          }
-          # Decode and dump to temp file
-          If (!(Test-Path $cert_path)) {
-            Write-Output "Dumping cert to $cert_path..."
-            $bytes = [Convert]::FromBase64String($cert_data)
-            [IO.File]::WriteAllBytes($cert_path, $bytes)
-          }
-          # Use more recent signtool if we can
-          If (Test-Path $signtool2022) {
-            $signtool = "$signtool2022"
-          }
-          # Verify the cert and password are good
-          Write-Output "Verifying cert is good to go..."
-          $cert_secure_password = ConvertTo-SecureString $cert_password -AsPlainText -Force
-          Import-PfxCertificate -FilePath "$cert_path" -Password $cert_secure_password -CertStoreLocation "Cert:\LocalMachine\My"
-          # If we get this far we should be good!
-          Write-Output "We can sign!"
-          # Sign
-          Write-Output "Trying to sign $file with $signtool..."
-          & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v "$file"
-        
-        
+          echo $MACOS_CERTIFICATE | base64 —decode > certificate.p12
+          security create-keychain -p Test@123 build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p Test@123 build.keychain
+          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test@123 build.keychain
+          /usr/bin/codesign --force -s <identity-id> ./dist -v
+          
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Dist-windows
+          name: Dist-macos
           path: dist
-      
-      
+          
       - name: Get version from package.json
         id: extract_version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
-                
-  upload-to-s3-windows:
-    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }} 
+  
+ 
+            
+  upload-to-s3-macos:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }} 
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    needs: [build-and-package-windows]
+    needs: [build-and-package-macos]
     
     steps:
       - name: Configure AWS
@@ -117,11 +85,10 @@ jobs:
         with:
           path: dist
           pattern: Dist-*
-          merge-multiple: true
+          merge-multiple: true      
           
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
-            cp dist/*.{yml,exe} artifacts/ && \
-            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-windows.outputs.version_number }}/  
-           
+            cp dist/*.{yml,dmg} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-macos.outputs.version_number }}/
