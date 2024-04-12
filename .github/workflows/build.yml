@@ -5,7 +5,6 @@ on:
     branches:
       - 'dhananjay-build-test'
 
-
 jobs:
   sign-windows-executable:
     runs-on: windows-latest
@@ -22,131 +21,27 @@ jobs:
         run: |
             Add-Content -Path example.txt -Value "Hello, world!"
             Rename-Item -Path example.txt -NewName example.exe
-          
-  
 
-
-     
+      # Import Windows certificate
       - name: Import Windows certificate
         env:
           WINDOWS_CERTIFICATE: ${{ secrets.P12FILE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
-          New-Item -ItemType directory -Path certificate
+          elevate powershell -Command "New-Item -ItemType directory -Path certificate"
           Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
           certutil -decode certificate/tempCert.txt certificate/certificate.pfx
           Remove-Item -Path certificate -Include tempCert.txt
           Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
-          "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "example.exe"
-      
+
+      # Sign example.exe with signtool
       - name: Sign example.exe with signtool
         run: |
-          "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "example.exe"
+          elevate "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "example.exe"
       
+      # Save artifacts
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Dist-windows
-          path: dist
-
-  # build-and-package-windows:
-  #   # if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }}
-  #   outputs: 
-  #     version_number: ${{ steps.extract_version.outputs.version}}
-  #   runs-on: windows-latest
-    
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: goSprinto/stethoscope-app
-  #         ref: 'dhananjay-build-test'
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-
-  #     - name: Install dependencies
-  #       run: yarn install
-
-  #     - name: Cache dependencies
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: |
-  #           node_modules
-  #           ${{ runner.home }}/.cache/electron
-  #           ${{ runner.home }}/.cache/electron-builder
-  #         key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
-
-  #     - name: Build and Package for Windows
-  #       run: |
-  #         yarn build:windows
-      
-  #     - name: Install Windows SDK
-  #       uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
-  #       with:
-  #         sdk-version: 22621
-
-      
-
-      
-  #     - name: import windows certificate
-  #       env:
-  #        WINDOWS_CERTIFICATE: ${{ secrets.P12FILE }}
-  #        WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.PASSWORD }}
-  #       run: |
-  #        New-Item -ItemType directory -Path certificate
-  #        Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
-  #        certutil -decode certificate/tempCert.txt certificate/certificate.pfx
-  #        Remove-Item -path certificate -include tempCert.txt
-  #        Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
-
-  #     - name: Sign all executable files with signtool
-  #       run: |
-  #         for /r "${{ github.workspace }}/dist" %%f in (*.exe) do (
-  #           "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "certificate/certificate.pfx" /p ${{ secrets.P12_PASSWORD }} /tr http://timestamp.sectigo.com /td sha256 /fd sha256 /sha1 ${{ secrets.SHA1KEY }} "%%f"
-  #         )
-  #       shell: cmd
-
-        
-  #     - name: Save artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: Dist-windows
-  #         path: dist
-      
-      
-  #     - name: Get version from package.json
-  #       id: extract_version
-  #       run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
-                
-  # upload-to-s3-windows:
-  #   if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }} 
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     id-token: write
-  #     contents: read
-  #   needs: [build-and-package-windows]
-    
-  #   steps:
-  #     - name: Configure AWS
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
-  #         aws-region: us-west-1
-    
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         path: dist
-  #         pattern: Dist-*
-  #         merge-multiple: true
-          
-  #     - name: Push artifacts to S3
-  #       run: |
-  #           mkdir artifacts && \
-  #           cp dist/*.{yml,exe} artifacts/ && \
-  #           aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-windows.outputs.version_number }}/  
-            
-  # 
+          path: example.exe
