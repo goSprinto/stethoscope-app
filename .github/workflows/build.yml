@@ -36,22 +36,24 @@ jobs:
             ${{ runner.home }}/.cache/electron-builder
           key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Build and Package for macOS
-        run: |
-          yarn run-s prebuild 'build:electron -m --x64 --arm64'
+      # - name: Build and Package for macOS
+      #   run: |
+      #     yarn run-s prebuild 'build:electron -m --x64 --arm64'
      
-      - name: Codesign
-        uses: lando/code-sign-action@v2
-        with:
-          file: 'dist/DrSprinto-4.0.7.dmg'
-          certificate-data: ${{ secrets.MACP12 }}
-          certificate-password: ${{ secrets.MACP12PASS }}
-          apple-team-id: ${{ secrets.MACTEAMID }}
+      # - name: Codesign
+      #   uses: lando/code-sign-action@v2
+      #   with:
+      #     file: 'dist/DrSprinto-4.0.7.dmg'
+      #     certificate-data: ${{ secrets.MACP12 }}
+      #     certificate-password: ${{ secrets.MACP12PASS }}
+      #     apple-team-id: ${{ secrets.MACTEAMID }}
+          
           
       - name: Codesign executable
         env: 
           MACOS_CERTIFICATE: ${{ secrets.MACP12 }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.MACP12PASS }}
+          MACOS_TEAMID: ${{ secrets.MACTEAMID }}
         run: |
           base64 -d <<< "$MACOS_CERTIFICATE" > certificate.p12
           security create-keychain -p Test@123 build.keychain
@@ -64,7 +66,7 @@ jobs:
           # identity_id=$(security find-identity -p codesigning -v | grep -o '"[^"]\{40\}"' | head -n 1)
           
           # Codesign with the correct identity ID
-          /usr/bin/codesign --force ./dist -v
+          /usr/bin/codesign --force -s "$MACOS_TEAMID" ./dist -v
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
