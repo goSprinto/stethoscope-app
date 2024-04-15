@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-package-macos:
-    # if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }}
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }}
     outputs: 
       version_number: ${{ steps.extract_version.outputs.version}}
     runs-on: macos-latest
@@ -39,34 +39,8 @@ jobs:
       - name: Build and Package for macOS
         run: |
           yarn run-s prebuild 'build:electron -m --x64 --arm64'
-     
-      # - name: Codesign
-      #   uses: lando/code-sign-action@v2
-      #   with:
-      #     file: 'dist/DrSprinto-4.0.7.dmg'
-      #     certificate-data: ${{ secrets.MACP12 }}
-      #     certificate-password: ${{ secrets.MACP12PASS }}
-      #     apple-team-id: ${{ secrets.MACTEAMID }}
           
-          
-      - name: Codesign executable
-        env: 
-          MACOS_CERTIFICATE: ${{ secrets.MACP12 }}
-          MACOS_CERTIFICATE_PWD: ${{ secrets.MACP12PASS }}
-          MACOS_TEAMID: ${{ secrets.MACTEAMID }}
-        run: |
-          base64 -d <<< "$MACOS_CERTIFICATE" > certificate.p12
-          security create-keychain -p Test@123 build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p Test@123 build.keychain
-          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test@123 build.keychain
-          
-          # # Find the identity ID
-          # identity_id=$(security find-identity -p codesigning -v | grep -o '"[^"]\{40\}"' | head -n 1)
-          
-          # Codesign with the correct identity ID
-          /usr/bin/codesign --force -s "$MACOS_TEAMID" ./dist -v
+        
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -77,7 +51,196 @@ jobs:
         id: extract_version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
   
- 
+  build-and-package-ubuntu:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'ubuntu' }}
+    outputs: 
+      version_number: ${{ steps.extract_version.outputs.version}}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: goSprinto/stethoscope-app
+          ref: 'dhananjay-build-test'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ${{ runner.home }}/.cache/electron
+            ${{ runner.home }}/.cache/electron-builder
+          key: ubuntu-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Cleanup old cache
+        if: runner.os == 'ubuntu-latest'
+        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
+
+      - name: Build and Package for Ubuntu
+        run: |
+          yarn run-s prebuild _electron-builder-linux
+          
+        
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dist-ubuntu
+          path: dist
+      
+      - name: Get version from package.json
+        id: extract_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
+
+
+  build-and-package-windows:
+    # if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }}
+    outputs: 
+      version_number: ${{ steps.extract_version.outputs.version}}
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: goSprinto/stethoscope-app
+          ref: 'dhananjay-build-test'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ${{ runner.home }}/.cache/electron
+            ${{ runner.home }}/.cache/electron-builder
+          key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Build and Package for Windows
+        run: |
+          yarn build:windows
+          
+      - name: Sign
+        shell: powershell
+        env:
+          WINDOZE_CERT_DATA: ${{ secrets.P12FILE }}
+          WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
+          VERSION_NUMBER: ${{ steps.extract_version.outputs.version }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $file = -join($pwd, "/", "dist/DrSprinto Setup ",$version,".exe");
+          $temp_dir = $env:TMP
+          $cert_data = $env:WINDOZE_CERT_DATA
+          $cert_path = "$temp_dir\lando.windoze.p12"
+          $cert_password = $env:WINDOZE_CERT_PASSWORD
+          $cert_secure_password = $null
+          $signtool = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\signtool.exe"
+          $signtool2022 = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe"
+          if (!(Test-Path "$file"))
+          {
+            throw "$file does not exist"
+          }
+          If (!(Test-Path $cert_path)) {
+            Write-Output "Dumping cert to $cert_path..."
+            $bytes = [Convert]::FromBase64String($cert_data)
+            [IO.File]::WriteAllBytes($cert_path, $bytes)
+          }
+          If (Test-Path $signtool2022) {
+            $signtool = "$signtool2022"
+          }
+          Write-Output "Verifying cert is good to go..."
+          $cert_secure_password = ConvertTo-SecureString $cert_password -AsPlainText -Force
+          Import-PfxCertificate -FilePath "$cert_path" -Password $cert_secure_password -CertStoreLocation "Cert:\LocalMachine\My"
+          # If we get this far we should be good!
+          Write-Output "We can sign!"
+          # Sign
+          Write-Output "Trying to sign $file with $signtool..."
+          & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v "$file"
+     
+        
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dist-windows
+          path: dist
+          
+      - name: Get version from package.json
+        id: extract_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
+  
+  
+  upload-to-s3-ubuntu:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'ubuntu' }} 
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs: [build-and-package-ubuntu]
+    
+    steps:
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+          aws-region: us-west-1
+    
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: Dist-*
+          merge-multiple: true
+          
+              
+      - name: Push artifacts to S3
+        run: |
+            mkdir artifacts && \
+            cp dist/*.{yml,AppImage} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-ubuntu.outputs.version_number }}/  
+            
+  upload-to-s3-windows:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }} 
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs: [build-and-package-windows]
+    
+    steps:
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+          aws-region: us-west-1
+    
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: Dist-*
+          merge-multiple: true
+          
+      - name: Push artifacts to S3
+        run: |
+            mkdir artifacts && \
+            cp dist/*.{yml,exe} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-windows.outputs.version_number }}/  
             
   upload-to-s3-macos:
     if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }} 
