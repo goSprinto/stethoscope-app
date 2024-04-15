@@ -48,9 +48,11 @@ jobs:
         env:
           WINDOZE_CERT_DATA: ${{ secrets.P12FILE }}
           WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
+          VERSION_NUMBER: ${{ steps.extract_version.outputs.version }}
         run: |
           $ErrorActionPreference = "Stop"
-          $file = -join($pwd, "/", "dist/DrSprinto Setup ",${{ steps.extract_version.outputs.version }},".exe");
+          $version = env:VERSION_NUMBER
+          $file = -join($pwd, "/", "dist/DrSprinto Setup ",$version,".exe");
           $temp_dir = $env:TMP
           $cert_data = $env:WINDOZE_CERT_DATA
           $cert_path = "$temp_dir\lando.windoze.p12"
