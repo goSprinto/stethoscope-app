@@ -39,22 +39,12 @@ jobs:
       - name: Build and Package for macOS
         run: |
           yarn run-s prebuild 'build:electron -m --x64 --arm64'
-     
-      # - name: Codesign
-      #   uses: lando/code-sign-action@v2
-      #   with:
-      #     file: 'dist/DrSprinto-4.0.7.dmg'
-      #     certificate-data: ${{ secrets.MACP12 }}
-      #     certificate-password: ${{ secrets.MACP12PASS }}
-      #     apple-team-id: ${{ secrets.MACTEAMID }}
-          
           
       - name: Codesign executable
         env: 
           MACOS_CERTIFICATE: ${{ secrets.MACP12 }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.MACP12PASS }}
           MACOS_TEAMID: ${{ secrets.MACTEAMID }}
-          VERSION_NUMBER: ${{ steps.extract_version.outputs.version }}
         run: |
           base64 -d <<< "$MACOS_CERTIFICATE" > certificate.p12
           security create-keychain -p Test@123 build.keychain
@@ -63,8 +53,10 @@ jobs:
           security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test@123 build.keychain
           
-          /usr/bin/codesign --force -s "$MACOS_TEAMID" ./dist/DrSprinto-$VERSION_NUMBER.dmg -v
-          /usr/bin/codesign --force -s "$MACOS_TEAMID" ./dist/DrSprinto-$VERSION_NUMBER-arm64.dmg -v
+          for dmg_file in dist/*.dmg; do
+            /usr/bin/codesign --force -s "$MACOS_TEAMID" "$dmg_file" -v
+          done
+        
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -75,7 +67,158 @@ jobs:
         id: extract_version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
   
- 
+  build-and-package-ubuntu:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'ubuntu' }}
+    outputs: 
+      version_number: ${{ steps.extract_version.outputs.version}}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: goSprinto/stethoscope-app
+          ref: 'dhananjay-build-test'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ${{ runner.home }}/.cache/electron
+            ${{ runner.home }}/.cache/electron-builder
+          key: ubuntu-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Cleanup old cache
+        if: runner.os == 'ubuntu-latest'
+        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
+
+      - name: Build and Package for Ubuntu
+        run: |
+          yarn run-s prebuild _electron-builder-linux
+          
+        
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dist-ubuntu
+          path: dist
+      
+      - name: Get version from package.json
+        id: extract_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
+
+
+  build-and-package-windows:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }}
+    outputs: 
+      version_number: ${{ steps.extract_version.outputs.version}}
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: goSprinto/stethoscope-app
+          ref: 'dhananjay-build-test'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ${{ runner.home }}/.cache/electron
+            ${{ runner.home }}/.cache/electron-builder
+          key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Build and Package for Windows
+        run: |
+          yarn build:windows
+          
+        
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dist-windows
+          path: dist
+          
+      - name: Get version from package.json
+        id: extract_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT  
+  
+  
+  upload-to-s3-ubuntu:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'ubuntu' }} 
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs: [build-and-package-ubuntu]
+    
+    steps:
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+          aws-region: us-west-1
+    
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: Dist-*
+          merge-multiple: true
+          
+              
+      - name: Push artifacts to S3
+        run: |
+            mkdir artifacts && \
+            cp dist/*.{yml,AppImage} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-ubuntu.outputs.version_number }}/  
+            
+  upload-to-s3-windows:
+    if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'windows' }} 
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs: [build-and-package-windows]
+    
+    steps:
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+          aws-region: us-west-1
+    
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: Dist-*
+          merge-multiple: true
+          
+      - name: Push artifacts to S3
+        run: |
+            mkdir artifacts && \
+            cp dist/*.{yml,exe} artifacts/ && \
+            aws s3 sync artifacts s3://drsprinto-build/${{ needs.build-and-package-windows.outputs.version_number }}/  
             
   upload-to-s3-macos:
     if: ${{ github.event.inputs.build_type == 'all' || github.event.inputs.build_type == 'macos' }} 
