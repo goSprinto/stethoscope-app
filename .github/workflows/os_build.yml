@@ -47,7 +47,23 @@ jobs:
         run: |
           yarn run-s prebuild 'build:electron -m --x64 --arm64'
           
-        
+      - name: Codesign executable
+        env: 
+          MACOS_CERTIFICATE: ${{ secrets.MACP12 }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACP12PASS }}
+          MACOS_TEAMID: ${{ secrets.MACTEAMID }}
+        run: |
+          base64 -d <<< "$MACOS_CERTIFICATE" > certificate.p12
+          security create-keychain -p Test@123 build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p Test@123 build.keychain
+          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test@123 build.keychain
+          
+          for dmg_file in dist/*.dmg; do
+            /usr/bin/codesign --force -s "$MACOS_TEAMID" "$dmg_file" -v
+          done
+          
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
