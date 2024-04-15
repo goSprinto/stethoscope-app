@@ -52,7 +52,12 @@ jobs:
           security unlock-keychain -p Test@123 build.keychain
           security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test@123 build.keychain
-          /usr/bin/codesign --force -s <identity-id> ./dist -v
+          
+          # Find the identity ID
+          identity_id=$(security find-identity -p codesigning -v | grep -o '"[^"]\{40\}"' | head -n 1)
+          
+          # Codesign with the correct identity ID
+          /usr/bin/codesign --force -s "$identity_id" ./dist -v
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
