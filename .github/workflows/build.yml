@@ -51,7 +51,7 @@ jobs:
           VERSION_NUMBER: ${{ steps.extract_version.outputs.version }}
         run: |
           $ErrorActionPreference = "Stop"
-          $version = env:VERSION_NUMBER
+          $version = $env:VERSION_NUMBER
           $file = -join($pwd, "/", "dist/DrSprinto Setup ",$version,".exe");
           $temp_dir = $env:TMP
           $cert_data = $env:WINDOZE_CERT_DATA
