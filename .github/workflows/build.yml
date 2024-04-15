@@ -54,6 +54,7 @@ jobs:
           MACOS_CERTIFICATE: ${{ secrets.MACP12 }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.MACP12PASS }}
           MACOS_TEAMID: ${{ secrets.MACTEAMID }}
+          VERSION_NUMBER: ${{ steps.extract_version.outputs.version }}
         run: |
           base64 -d <<< "$MACOS_CERTIFICATE" > certificate.p12
           security create-keychain -p Test@123 build.keychain
@@ -62,11 +63,8 @@ jobs:
           security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test@123 build.keychain
           
-          for dmg_file in dist/*.dmg; do
-            /usr/bin/codesign --force -s "$MACOS_TEAMID" "$dmg_file" -v
-          done
-          # Codesign with the correct identity ID
-          # /usr/bin/codesign --force -s "$MACOS_TEAMID" ./dist/DrSprinto-4.0.7.dmg -v
+          /usr/bin/codesign --force -s "$MACOS_TEAMID" ./dist/DrSprinto-$VERSION_NUMBER.dmg -v
+          /usr/bin/codesign --force -s "$MACOS_TEAMID" ./dist/DrSprinto-$VERSION_NUMBER-arm64.dmg -v
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
