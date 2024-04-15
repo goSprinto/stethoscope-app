@@ -52,7 +52,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $version = $env:VERSION_NUMBER
-          $file = -join($pwd, "/", "dist/DrSprinto Setup ",$version,".exe");
+          $file = -join($pwd, "/", "dist/DrSprinto Setup ",Write-Output $version,".exe");
           $temp_dir = $env:TMP
           $cert_data = $env:WINDOZE_CERT_DATA
           $cert_path = "$temp_dir\lando.windoze.p12"
