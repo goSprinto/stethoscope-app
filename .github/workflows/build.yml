@@ -50,8 +50,7 @@ jobs:
           WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           $ErrorActionPreference = "Stop"
-          $version = "${{ steps.extract_version.outputs.version }}"
-          $file = -join($pwd, "/", "dist/DrSprinto Setup $version.exe");
+          $file = -join($pwd, "/", "dist/DrSprinto Setup ",${{ steps.extract_version.outputs.version }},".exe");
           $temp_dir = $env:TMP
           $cert_data = $env:WINDOZE_CERT_DATA
           $cert_path = "$temp_dir\lando.windoze.p12"
