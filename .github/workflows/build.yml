@@ -47,11 +47,11 @@ jobs:
           MACOS_CERTIFICATE_PWD: ${{ secrets.NOTERYPASSWORD }}
         run: |
           base64 -d <<< "$MACOS_CERTIFICATE" > certificate.p12
-          security create-keychain -p Test@123 build.keychain
+          security create-keychain -p Test123 build.keychain
           security default-keychain -s build.keychain
-          security unlock-keychain -p Test@123 build.keychain
+          security unlock-keychain -p Test123 build.keychain
           security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test@123 build.keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test123 build.keychain
           /usr/bin/codesign --force -s <identity-id> ./dist -v
       - name: Save artifacts
         uses: actions/upload-artifact@v4
