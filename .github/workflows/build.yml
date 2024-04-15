@@ -36,9 +36,9 @@ jobs:
             ${{ runner.home }}/.cache/electron-builder
           key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      # - name: Build and Package for macOS
-      #   run: |
-      #     yarn run-s prebuild 'build:electron -m --x64 --arm64'
+      - name: Build and Package for macOS
+        run: |
+          yarn run-s prebuild 'build:electron -m --x64 --arm64'
      
       # - name: Codesign
       #   uses: lando/code-sign-action@v2
