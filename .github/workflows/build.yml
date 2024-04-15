@@ -27,8 +27,8 @@ jobs:
         with:
           node-version: '20'
 
-      # - name: Install dependencies
-      #   run: yarn install
+      - name: Install dependencies
+        run: yarn install
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -39,18 +39,18 @@ jobs:
             ${{ runner.home }}/.cache/electron-builder
           key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      # - name: Build and Package for Windows
-      #   run: |
-      #     yarn build:windows
+      - name: Build and Package for Windows
+        run: |
+          yarn build:windows
       
       - name: Sign
         shell: powershell
         env:
           WINDOZE_CERT_DATA: ${{ secrets.P12FILE }}
           WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
-          VERSION_NUMBER: ${{ steps.extract_version.outputs.version }}
         run: |
           $ErrorActionPreference = "Stop"
+          # Get some things for cert opts
           $version = (Get-Content package.json | ConvertFrom-Json).version
           $file = -join($pwd, "/", "dist/DrSprinto Setup ",$version,".exe");
           $temp_dir = $env:TMP
@@ -60,18 +60,22 @@ jobs:
           $cert_secure_password = $null
           $signtool = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\signtool.exe"
           $signtool2022 = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe"
+          # Throw error if file does not exist
           if (!(Test-Path "$file"))
           {
             throw "$file does not exist"
           }
+          # Decode and dump to temp file
           If (!(Test-Path $cert_path)) {
             Write-Output "Dumping cert to $cert_path..."
             $bytes = [Convert]::FromBase64String($cert_data)
             [IO.File]::WriteAllBytes($cert_path, $bytes)
           }
+          # Use more recent signtool if we can
           If (Test-Path $signtool2022) {
             $signtool = "$signtool2022"
           }
+          # Verify the cert and password are good
           Write-Output "Verifying cert is good to go..."
           $cert_secure_password = ConvertTo-SecureString $cert_password -AsPlainText -Force
           Import-PfxCertificate -FilePath "$cert_path" -Password $cert_secure_password -CertStoreLocation "Cert:\LocalMachine\My"
@@ -80,7 +84,7 @@ jobs:
           # Sign
           Write-Output "Trying to sign $file with $signtool..."
           & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v "$file"
-          
+        
         
       - name: Save artifacts
         uses: actions/upload-artifact@v4
