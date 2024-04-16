@@ -243,6 +243,7 @@ export default async function startServer(
       rootValue: null,
       contextValue: context,
       variableValues: policy,
+      introspection: false, // disabling introspection queries
     })
       .then((result) => {
         const total = performance.now() - start;
