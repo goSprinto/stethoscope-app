@@ -62,6 +62,7 @@ jobs:
           
           for dmg_file in dist/*.dmg; do
             /usr/bin/codesign --force -s "$MACOS_TEAMID" "$dmg_file" -v
+            codesign -v "$dmg_file" --verbose
           done
           
       - name: Save artifacts
