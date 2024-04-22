@@ -394,7 +394,7 @@ if (!gotTheLock) {
         callback({
           responseHeaders: {
             ...details.responseHeaders,
-            'Content-Security-Policy': ['*']
+            'Content-Security-Policy': ["script-src 'self' 'unsafe-eval'"]
           }
         })
       })
