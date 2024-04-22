@@ -187,10 +187,13 @@ export default async function startServer(
   });
 
   app.use(["/scan", "/graphql"], cors(corsOptions), async (req, res) => {
+
     // set upper boundary on scan time (65 seconds)
     req.setTimeout(65000, () => {
       log.error("Request timed out");
     });
+
+    
 
     // allow GET/POST requests and determine what property to use
     const key = req.method === "POST" ? "body" : "query";
@@ -207,6 +210,11 @@ export default async function startServer(
       }
     }
     const { query, sessionId = false } = req[key];
+    if (query.includes("__schema") || query.includes("__type")) {
+      const error = new Error("Introspection queries are not allowed.");
+      log.error(`Introspection query incoming`);
+      return res.status(500).json({ error: error.message });
+    }
     let { variables: policy } = req[key];
     // native notifications are only shown for external requests and
     // are throttled by the users's session id
@@ -243,7 +251,7 @@ export default async function startServer(
       rootValue: null,
       contextValue: context,
       variableValues: policy,
-      introspection: false, // disabling introspection queries
+      
     })
       .then((result) => {
         const total = performance.now() - start;
