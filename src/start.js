@@ -390,6 +390,15 @@ if (!gotTheLock) {
         }
       );
 
+      session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+          responseHeaders: {
+            ...details.responseHeaders,
+            'Content-Security-Policy': ["script-src 'self' 'unsafe-eval'"]
+          }
+        })
+      })
+
       if (launchIntoUpdater) {
         // triggered via stethoscope://update app link
         log.info(`Launching into updater: ${launchIntoUpdater}`);

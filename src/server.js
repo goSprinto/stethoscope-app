@@ -76,6 +76,7 @@ export default async function startServer(
   const schema = makeExecutableSchema({
     resolvers: Resolvers,
     typeDefs: Schema,
+    introspection: false,
   });
 
   const { allowHosts = [], hostLabels = [] } = defaultConfig;
@@ -207,6 +208,11 @@ export default async function startServer(
       }
     }
     const { query, sessionId = false } = req[key];
+    if (query.includes("__schema") || query.includes("__type")) {
+      const error = new Error("Introspection queries are not allowed.");
+      log.error(`Introspection query incoming`);
+      return res.status(500).json({ error: error.message });
+    }
     let { variables: policy } = req[key];
     // native notifications are only shown for external requests and
     // are throttled by the users's session id
