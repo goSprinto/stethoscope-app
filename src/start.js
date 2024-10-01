@@ -292,13 +292,22 @@ async function createWindow(show = true) {
           server.close(() => {
             console.log("Server closed");
           });
-          createWindow(false);
-        }
-        if (event && event.sender && !event.sender.isDestroyed()) {
-          console.log("doing auto reporting");
+          await createWindow(false);
+        }else if (event && event.sender && !event.sender.isDestroyed()) {
+          console.log("Started auto reporting - object not destroyed");
           try {
             // close the server and create a new window
-            server.close();
+            if (server && server.listening) {
+              console.log("Closing the server before starting a new one...");
+              await new Promise((resolve, reject) => {
+                server.close(err => {
+                  if (err) return reject(err);
+                  console.log("Server closed successfully.");
+                  resolve();
+                });
+              });
+            }
+
             server = await startGraphQLServer(
               env,
               log,
