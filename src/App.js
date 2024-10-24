@@ -18,6 +18,7 @@ import "./App.css";
 import ConnectToSprintoApp from "./components/ConnectToSprintoApp";
 import OfflineSprintoApp from "./components/OfflineSprintoApp";
 const socket = openSocket(HOST);
+import isTrustedUrl from "./lib/utils";
 
 // CRA doesn't like importing native node modules
 // have to use window.require AFAICT
@@ -466,8 +467,10 @@ class App extends Component {
       baseUrl = "http://localhost:5000";
     }
 
+    const isUrlTrusted = isDev ? true : isTrustedUrl(baseUrl);
+
     event.preventDefault();
-    if (event.target.getAttribute("href")) {
+    if (event.target.getAttribute("href") && isUrlTrusted) {
       shell.openExternal(`${baseUrl}${event.target.getAttribute("href")}`);
     }
   };
@@ -477,9 +480,10 @@ class App extends Component {
    */
   handleOpenExternal = async (event) => {
     const url = await settings.get("sprintoAPPBaseUrl");
-
+    const isDev = ipcRenderer.sendSync("get:env:isDev");
+    const isUrlTrusted = isDev ? true : isTrustedUrl(baseUrl);
     event.preventDefault();
-    if (event.target.getAttribute("href")) {
+    if (event.target.getAttribute("href") && isUrlTrusted) {
       shell.openExternal(`${url}${event.target.getAttribute("href")}`);
     }
   };
