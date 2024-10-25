@@ -481,7 +481,7 @@ class App extends Component {
   handleOpenExternal = async (event) => {
     const url = await settings.get("sprintoAPPBaseUrl");
     const isDev = ipcRenderer.sendSync("get:env:isDev");
-    const isUrlTrusted = isDev ? true : isTrustedUrl(baseUrl);
+    const isUrlTrusted = isDev ? true : isTrustedUrl(url);
     event.preventDefault();
     if (event.target.getAttribute("href") && isUrlTrusted) {
       shell.openExternal(`${url}${event.target.getAttribute("href")}`);
