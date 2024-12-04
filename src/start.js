@@ -293,18 +293,30 @@ async function createWindow(show = true) {
             console.log("Server closed");
           });
           await createWindow(false);
-        }else if (event && event.sender && !event.sender.isDestroyed()) {
+        } else if (event && event.sender && !event.sender.isDestroyed()) {
           console.log("Started auto reporting - object not destroyed");
           try {
-            // close the server and create a new window
+            // checking active connections and create a new window
             if (server && server.listening) {
               console.log("Closing the server before starting a new one...");
-              await new Promise((resolve, reject) => {
-                server.close(err => {
-                  if (err) return reject(err);
-                  console.log("Server closed successfully.");
-                  resolve();
-                });
+              server.getConnections((err, count) => {
+                if (err) {
+                  console.error("Error checking active connections:", err);
+                } else {
+                  if (count > 0) {
+                    console.warn("There are still active connections. Proceeding to close...");
+                  }
+                  // Close the server after checking connections
+                  new Promise((resolve, reject) => {
+                    server.close((err) => {
+                      if (err) return reject(err);
+                      console.log("Server closed successfully.");
+                      resolve();
+                    });
+                  }).catch((err) => {
+                    console.error("Failed to close server:", err);
+                  });
+                }
               });
             }
 
@@ -314,6 +326,9 @@ async function createWindow(show = true) {
               language,
               appHooksForServer
             );
+            if (process.platform === "win32") {
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
 
             event.sender.send("autoscan:start", {
               notificationOnViolation: true,
