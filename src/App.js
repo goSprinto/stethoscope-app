@@ -427,32 +427,43 @@ class App extends Component {
    */
   loadPractices = () => {
     return new Promise((resolve, reject) =>
-      this.setState({ loading: true }, () => {
-        const basePath = ipcRenderer.sendSync("get:env:basePath");
-        // convert path in unix format (This for windows)
-        const currentBasePath = unixify(basePath);
-
-        glob(`${currentBasePath}/*.yaml`)
-          .then((files) => {
-            if (!files.length) {
-              reject("No files found");
+      this.setState({ loading: true }, async () => {
+        try {
+          // Fetch the policy from the API directly
+          const baseUrl = settings.get("sprintoAPPBaseUrl");
+          const policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+          
+          if (!policy) {
+            reject("Failed to fetch policy from the API");
+            return;
+          }
+  
+          console.log("Fetched Policy from API:", JSON.stringify(policy, null, 2));
+  
+          const basePath = ipcRenderer.sendSync("get:env:basePath");
+          const currentBasePath = unixify(basePath);
+          const files = await glob(`${currentBasePath}/*.yaml`);
+          
+          if (!files.length) {
+            reject("No files found");
+            return;
+          }
+  
+          const configs = {};
+          files.forEach((filePath) => {
+            const parts = path.parse(filePath);
+            const handle = readFileSync(filePath, "utf8");
+            configs[parts.name.split(".").shift()] = yaml.load(handle);
+          });
+          this.setState({ ...configs, policy, loading: false }, () => {
+            if (!this.state.scanIsRunning) {
+              this.handleScan(); 
             }
-            const configs = {};
-            files.forEach((filePath) => {
-              const parts = path.parse(filePath);
-              const handle = readFileSync(filePath, "utf8");
-              configs[parts.name.split(".").shift()] = yaml.load(handle);
-            });
-
-            this.setState({ ...configs, loading: false }, () => {
-              if (!this.state.scanIsRunning) {
-                this.handleScan();
-              }
-            });
-
-            resolve();
-          })
-          .catch(reject);
+          });
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
       })
     );
   };
