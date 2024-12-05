@@ -437,9 +437,7 @@ class App extends Component {
             reject("Failed to fetch policy from the API");
             return;
           }
-  
-          console.log("Fetched Policy from API:", JSON.stringify(policy, null, 2));
-  
+
           const basePath = ipcRenderer.sendSync("get:env:basePath");
           const currentBasePath = unixify(basePath);
           const files = await glob(`${currentBasePath}/*.yaml`);
