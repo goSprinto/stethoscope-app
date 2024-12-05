@@ -434,6 +434,7 @@ class App extends Component {
           const policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
           
           if (!policy) {
+            this.setState({ error: "Failed to load policy. Please try again.", loading: false });
             reject("Failed to fetch policy from the API");
             return;
           }
@@ -460,6 +461,7 @@ class App extends Component {
           });
           resolve();
         } catch (error) {
+          this.setState({ error: error.message || "Unexpected error occurred", loading: false });
           reject(error);
         }
       })
