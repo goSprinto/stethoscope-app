@@ -1,6 +1,8 @@
 import { NUDGE, DEFAULT_DARWIN_APP_PATH } from '../../constants'
 import kmd from '../../lib/kmd'
 import os from 'os'
+import semver from 'semver'
+import MacDevice from './MacDevice'
 
 const MacSecurity = {
   async automaticAppUpdates (root, args, context) {
@@ -78,19 +80,24 @@ const MacSecurity = {
 
   async diskEncryption (root, args, context) {
     const result = await kmd('file-vault', context)
-    return result.fileVaultEnabled === 'true'
+    return result.fileVaultEnabled === 'On'
   },
 
   // TODO when branching logic works in kmd
   async screenLock (root, args, context) {
-    // const result = await kmd('screen-lock', context)
-    return true
+    const result = await kmd('screen-lock', context)
+
+    const {idleDelay, lockEnabled} = result.screen
+    return parseInt(idleDelay, 10) > 0 && lockEnabled === "1";
   },
 
-  // TODO implement
   async screenIdle (root, args, context) {
-    // const result = await kmd('screen-idle', context)
-    return true
+
+    const { screenIdle } = args
+    const totalDelay = await MacDevice.screenLockDelay(root, args, context);
+    const delayOk = totalDelay > 0 && semver.satisfies(semver.coerce(totalDelay.toString()), screenIdle);
+    const idleOk = await this.screenLock(root, args, context);
+    return delayOk && idleOk
   },
 
   async firewall (root, args, context) {
@@ -101,6 +108,10 @@ const MacSecurity = {
   async openWifiConnections (root, args, context) {
     const result = await kmd('openWifiConnections', context)
     return result.wifiConnections === 'Closed'
+  },
+
+  async antivirus (root, args, context) {
+    return await MacDevice.antivirus(root, args, context)
   }
 
 }

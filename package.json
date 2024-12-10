@@ -1,13 +1,13 @@
 {
-  "name": "Stethoscope",
-  "version": "5.0.3",
+  "name": "DrSprinto",
+  "version": "4.0.8",
   "private": true,
-  "homepage": "./",
-  "author": "Netflix",
-  "description": "Local Stethoscope app",
+  "homepage": ".",
+  "author": "Sprinto",
+  "description": "DrSprinto helps you keep your machine compatible with your organisation's security policies.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Netflix-Skunkworks/stethoscope-app.git"
+    "url": "https://github.com/abhaga/stethoscope-app.git"
   },
   "main": "compiled/start.js",
   "standard": {
@@ -26,18 +26,17 @@
   },
   "scripts": {
     "start": "yarn babel && cross-env FORCE_COLOR=true nf start -p 12000",
-    "dev:electron": "cross-env STETHOSCOPE_ENV=development electron -r @babel/register .",
+    "dev:electron": "cross-env STETHOSCOPE_ENV=development electron -r @babel/register . --enable-logging",
     "dev:electron-start": "node src/start-react",
-    "dev:react-start": "react-scripts start",
-    "prebuild": "run-s lint build:clean build:update-config build:react babel",
+    "dev:react-start": "react-scripts --max_old_space_size=4096 --trace-warnings start",
+    "prebuild": "run-s build:clean  build:update-config build:react babel",
     "build": "run-s prebuild build:all",
     "postbuild": "run-s test:spectron",
-    "postinstall": "electron-builder install-app-deps",
     "build:test": "CSC_IDENTITY_AUTO_DISCOVERY=false yarn build:mac",
     "build:react": "react-scripts build && node -r @babel/register update-download-page.js",
     "build:clean": "rimraf dist",
-    "build:all": "electron-builder -mwl",
-    "build:mac": "run-s prebuild 'build:electron -m' postbuild",
+    "build:all": "electron-builder -wl",
+    "build:mac": "run-s prebuild 'build:electron -m --x64 --arm64' postbuild",
     "_electron-builder-windows": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -w",
     "build:windows": "run-s prebuild _electron-builder-windows",
     "_electron-builder-linux": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -l",
@@ -49,78 +48,69 @@
     "lint": "standard --fix src/*.js src/**/*.js resolvers/*.js sources/*.js scripts/*.js server.js",
     "babel": "run-s babel:clean babel:compile",
     "babel:clean": "rimraf compiled",
-    "babel:compile": "cross-env BABEL_ENV=production babel src/ --out-dir compiled/ --copy-files"
+    "babel:compile": "cross-env BABEL_ENV=production babel src/ --out-dir compiled/ --copy-files",
+    "apply-patch": "patch -i webpackDevServerError.patch node_modules/react-scripts/config/webpackDevServer.config.js",
+    "postinstall": "yarn apply-patch && electron-builder install-app-deps"
   },
   "dependencies": {
-    "@babel/register": "^7.4.4",
+    "@electron/remote": "2.1.0",
+    "@graphql-tools/schema": "^10.0.0",
     "applescript": "^1.0.0",
-    "auto-launch": "^5.0.5",
-    "body-parser": "^1.18.2",
-    "chalk": "^2.4.2",
-    "classnames": "^2.2.5",
+    "auto-launch": "^5.0.6",
+    "axios": "^1.7.7",
+    "classnames": "2.3.2",
     "cors": "^2.8.4",
-    "cross-env": "^5.2.0",
-    "electron-notarize": "^0.2.1",
-    "electron-settings": "^3.2.x",
-    "electron-updater": "4.0.6",
-    "express": "^4.16.2",
+    "cross-env": "^7.0.3",
+    "electron-store": "^8.0.1",
+    "electron-updater": "^6.1.7",
+    "express": "^4.19.2",
     "extend": "^3.0.2",
-    "fast-glob": "^2.2.6",
-    "generic-pool": "^3.4.2",
-    "glob": "^7.1.6",
-    "graphql": "^14.3.1",
-    "graphql-server-express": "^1.2.0",
-    "graphql-tools": "^2.12.0",
-    "handlebars": "^4.0.11",
-    "helmet": "^3.9.0",
-    "js-yaml": "^3.10.0",
+    "fast-glob": "^3.2.12",
+    "graphql": "^16.8.1",
+    "handlebars": "^4.7.8",
+    "helmet": "^7.1.0",
+    "js-yaml": "4.1.0",
     "kmd-script": "^0.0.11",
-    "moment": "^2.19.3",
-    "nocache": "^2.1.0",
-    "node-fetch": "^2.6.1",
-    "node-powershell": "^3.3.1",
-    "react": "^16.2.0",
-    "react-dom": "^16.2.0",
-    "semver": "^5.4.1",
-    "serialize-error": "^2.1.0",
-    "showdown": "^1.8.6",
-    "socket.io": "^2.4.0",
-    "winston": "3.1.0",
-    "winston-daily-rotate-file": "^3.3.0"
+    "moment": "^2.30.1",
+    "nocache": "^4.0.0",
+    "node-powershell": "5.0.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-modern-drawer": "^1.2.2",
+    "react-select": "^5.8.0",
+    "react-spinners": "^0.14.1",
+    "semver": "^7.6.3",
+    "showdown": "2.1.0",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
+    "tailwindcss": "^3.4.10",
+    "unixify": "^1.0.0",
+    "util": "^0.12.5",
+    "winston": "3.14.2",
+    "winston-daily-rotate-file": "5.0.0",
+    "ws": "8.18.0"
   },
   "devDependencies": {
-    "@babel/cli": "7.4.4",
-    "@babel/core": "7.4.4",
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@babel/preset-env": "7.4.4",
-    "@babel/preset-react": "^7.0.0",
-    "@heroku/foreman": "^2.0.2",
-    "babel-preset-es2015": "^6.24.1",
+    "@babel/cli": "7.23.0",
+    "@babel/core": "7.23.2",
+    "@babel/plugin-proposal-class-properties": "7.18.6",
+    "@babel/plugin-proposal-private-property-in-object": "^7.14.5",
+    "@babel/preset-env": "7.23.5",
+    "@babel/preset-react": "7.23.3",
+    "@babel/register": "7.22.15",
+    "@electron/notarize": "2.2.0",
     "babel-preset-minify": "^0.5.0",
-    "babel-register": "^6.26.0",
-    "benchmark": "^2.1.4",
-    "chai": "^4.1.2",
-    "chai-http": "^4.0.0",
-    "electron": "^7.1.0",
-    "electron-builder": "21.2.0",
+    "chai": "^5.1.1",
+    "chai-http": "^4.4.0",
+    "electron": "^27.1.3",
+    "electron-builder": "24.12.0",
     "enzyme": "^3.3.0",
-    "enzyme-adapter-react-16": "^1.1.1",
-    "eslint-plugin-standard": "^4.0.0",
-    "faucet": "^0.0.1",
-    "json5": "^2.1.0",
-    "microtime": "^3.0.0",
-    "mocha": "^5.2.0",
+    "foreman": "^3.0.1",
     "npm-run-all": "^4.1.5",
-    "react-dev-utils": "5.0.2",
-    "react-scripts": "^3.2.0",
-    "rimraf": "^2.6.3",
-    "shx": "^0.3.2",
-    "spectron": "^9.0.0",
-    "standard": "^14.3.1",
-    "tap": "^12.1.1",
-    "terser": "^3.14.1",
-    "tiny-human-time": "^1.2.0",
-    "webpack-dev-server": "^3.9.0"
+    "react-scripts": "^5.0.1",
+    "rimraf": "5.0.5",
+    "spectron": "^19.0.0",
+    "tiny-human-time": "^1.2.0"
   },
   "browserslist": [
     ">0.2%",
@@ -129,9 +119,9 @@
     "not op_mini all"
   ],
   "build": {
-    "appId": "com.netflix.stethoscope-local",
+    "appId": "com.sprinto.drsprinto",
     "extends": null,
-    "productName": "Stethoscope",
+    "productName": "DrSprinto",
     "directories": {
       "buildResources": "public"
     },
@@ -142,22 +132,27 @@
       "compiled/resolvers/**",
       "compiled/sources/**",
       "compiled/lib/**",
+      "compiled/services/**",
+      "compiled/components/**",
       "compiled/*.json",
       "compiled/*.js",
       "schema.graphql"
     ],
     "mac": {
+      "icon": "build/drsprinto-icons/icon.icns",
       "category": "public.app-category.utilities",
       "gatekeeperAssess": false,
       "hardenedRuntime": true,
       "entitlements": "entitlements.mac.plist",
       "entitlementsInherit": "entitlements.mac.plist",
       "extraResources": [
-        "src/practices"
+        "src/practices",
+        "mac-screenlock-check/screenlock-check"
       ]
     },
     "win": {
       "target": "nsis",
+      "icon": "build/drsprinto-icons/icon.png",
       "extraResources": [
         "src/practices",
         "bitlocker-status/bitlocker-status.exe",
@@ -171,13 +166,17 @@
       ]
     },
     "nsis": {
-      "perMachine": true
+      "perMachine": false
     },
     "dmg": {
       "format": "UDBZ"
     },
     "linux": {
-      "target": "AppImage",
+      "target": [
+        "AppImage"
+      ],
+      "maintainer": "Sprinto",
+      "icon": "build/drsprinto-icons",
       "category": "System",
       "extraResources": [
         "src/practices"
@@ -185,13 +184,19 @@
     },
     "protocols": [
       {
-        "name": "stethoscope",
+        "name": "DrSprinto",
         "role": "Viewer",
         "schemes": [
-          "stethoscope"
+          "drsprinto"
         ]
       }
     ],
-    "afterSign": "scripts/maybeNotarize.js"
+    "afterSign": "scripts/maybeNotarize.js",
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://static.sprinto.com/drsprinto/"
+      }
+    ]
   }
 }

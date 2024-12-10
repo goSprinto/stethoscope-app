@@ -5,7 +5,13 @@ import semver from './patchedSemver'
 // elements appropriate for the running OS platform/version
 export default async function applicationPlatformFilter (applications = [], context, platform, version) {
   const osPlatform = platform || process.platform
-  const osVersion = version || (await kmd('os', context)).system.version
+  let osVersion 
+  if(version){
+    osVersion = version
+  } else {
+    const result = await kmd('os', context)
+    osVersion = result.system.version || result.system.lsb_version
+  }
 
   return applications.filter((app) => {
     if (!app.platform || app.platform.all) {

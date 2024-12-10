@@ -29,6 +29,7 @@
   "exclude": [
     "./.git/",
     "./bitlocker-status/",
+    "./mac-screenlock-check/",
     "./build/",
     "./dist/",
     "./docs/",

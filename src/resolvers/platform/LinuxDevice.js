@@ -1,5 +1,6 @@
 import kmd from '../../lib/kmd'
 import linuxFriendlyName from './LinuxDeviceName'
+import applicationRunningFilter from '../../lib/applicationRunningFilter'
 
 export default {
   async friendlyName (root, args, context) {
@@ -16,5 +17,21 @@ export default {
     volumes.forEach(vol => { vol.encrypted = vol.type === 'crypto_LUKS' });
 
     return volumes
+  },
+
+  async screenLockDelay (root, args, context) {
+    const settings = await kmd('screen', context)
+
+    // idle-delay is the time for the session to become
+    // idle.
+    // lock-delay is time since the session becomes idle
+    // and the screensaver comes on.
+    const { lockDelay, idleDelay } = settings.screen
+    return parseInt(idleDelay, 10) + parseInt(lockDelay, 10)
+
+  },
+
+  async antivirus (root, args, context) {
+    return await applicationRunningFilter(args.providers, context)
   }
 }

@@ -11,7 +11,7 @@
       text-align: center;
     }
     body {
-      font-family: Helvetica, Arial;
+      font-family: UntitledSans;
       background-color: #eee;
       display: flex;
       justify-content: center;
@@ -35,7 +35,7 @@
   </div>
   <script>
     var pkg = require('../package.json')
-    document.querySelector('#version').innerHTML = `Version: ${pkg.version} (${pkg.version})`
+    document.querySelector('#version').innerHTML = `Version: ${pkg.version}`
     document.querySelector('#copyright').innerHTML = `Copyright &copy; ${new Date().getFullYear()} ${pkg.author}`
   </script>
 </body>

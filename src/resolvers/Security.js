@@ -3,6 +3,7 @@ import pkg from '../../package.json'
 import {
   NUDGE,
   UNSUPPORTED,
+  UNKNOWN,
   ALWAYS,
   NEVER,
   SUGGESTED,
@@ -121,14 +122,30 @@ export default {
       platform = process.platform
     }
 
-    const { ok, nudge } = Object(args.osVersion[platform])
+    // For linux, use the distro id to get the correct version
+    // to compare against
+    if (platform === 'linux') {
+      platform = result.system.distroId
+      if (platform === "manjaro") {
+        version = result.system.lsb_version;
+      }
+    }
 
-    if (semver.satisfies(semver.coerce(version), ok)) {
-      return true
-    } else if (semver.satisfies(semver.coerce(version), nudge)) {
-      return NUDGE
+    if(platform in args.osVersion){
+      const { ok, nudge } = Object(args.osVersion[platform])
+      // Ubuntu versions look like 18.04.5. Convert it to
+      // 18.4.5 so that semver likes it.
+      const semverVersion = String(version).split('.').map(i => parseInt(i)).join('.')
+
+      if (semver.satisfies(semver.coerce(semverVersion), ok)) {
+        return true
+      } else if (semver.satisfies(semver.coerce(semverVersion), nudge)) {
+        return NUDGE
+      } else {
+        return false
+      }
     } else {
-      return false
+      return UNKNOWN
     }
   },
 
@@ -231,6 +248,17 @@ export default {
   async openWifiConnections (root, args, context) {
     if ('openWifiConnections' in PlatformSecurity) {
       return PlatformSecurity.openWifiConnections(root, args, context)
+    }
+    return UNSUPPORTED
+  },
+
+  async antivirus (root, policy, context) {
+    if ('antivirus' in PlatformSecurity) {
+      const activeProviders = await PlatformSecurity.antivirus(root, policy.antivirus, context)
+      return {
+        status: activeProviders.length > 0,
+        activeProviders
+      }
     }
     return UNSUPPORTED
   }

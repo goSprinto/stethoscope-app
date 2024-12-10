@@ -8,13 +8,15 @@ type Query {
 }
 
 type Policy {
-  validate(policy:DevicePolicy): PolicyResult!
+  validate(policy: DevicePolicy): PolicyResult!
 }
 
 # Available information about user device
 type Device {
   # machine information
   deviceId: String
+  # serialNumber of machine
+  serialNumber: String
   # name of device
   deviceName: String # system_info
   # standard, less-friendly name of platform
@@ -27,6 +29,8 @@ type Device {
   osBuild: String
   # os name
   osName: String
+  # Distribution Name (For Linux)
+  distroName: String
   # device firmware version
   firmwareVersion: String
   # device model
@@ -49,7 +53,7 @@ type Device {
   osqueryVersion: String
   # available hard disks
   disks: [Disk]
-  security(policy:DevicePolicy): SecurityInfo
+  security(policy: DevicePolicy): SecurityInfo
   policyResult: FeatureState
 }
 
@@ -142,6 +146,8 @@ input DevicePolicy {
   # [WINDOWS ONLY] optional maximum screenlock timeout (in seconds)
   windowsMaxScreenLockTimeout: Int
   openWifiConnections: RequirementOption
+  # Antivirus
+  antivirus: ApplicationGroupRequirement
 }
 
 # Defines a requirement for an installed application
@@ -184,6 +190,14 @@ type PolicyResult {
   stethoscopeVersion: FeatureState
   # Open Wi-Fi
   openWifiConnections: FeatureState
+
+  # TraceError
+  osVersionError: String
+  firewallError: String
+  diskEncryptionError: String
+  screenLockError: String
+  screenIdleError: String
+  remoteLoginError: String
 }
 
 type Security {
@@ -207,6 +221,13 @@ type Security {
   privateFirewall(requirement: RequirementOption!): Boolean!
   domainFirewall(requirement: RequirementOption!): Boolean!
   openWifiConnections(requirement: RequirementOption!): Boolean!
+  # TraceError
+  osVersionError(requirement: PlatformBracketRequirement!): String
+  firewallError(requirement: RequirementOption!): String
+  diskEncryptionError(requirement: RequirementOption!): String
+  screenLockError(requirement: RequirementOption!): String
+  screenIdleError(requirement: NumericRange!): String
+  remoteLoginError(requirement: RequirementOption!): String
 }
 
 type IpAddress {
@@ -256,9 +277,19 @@ input PlatformBracketRequirement {
   darwin: VersionBracket
   win32: VersionBracket
   ubuntu: VersionBracket
+  fedora: VersionBracket
+  debian: VersionBracket
+  linuxmint: VersionBracket
+  kali: VersionBracket
+  pop: VersionBracket
+  manjaro: VersionBracket
   linux: VersionBracket
   awsWorkspace: VersionBracket
   all: VersionBracket
+  elementary: VersionBracket
+  neon: VersionBracket
+  ol: VersionBracket
+  Deepin: VersionBracket
 }
 
 # a platform boolean requirement defines a target boolean value for specific platforms
@@ -290,6 +321,7 @@ enum FeatureState {
   NUDGE
   ON
   OFF
+  ERROR
   UNKNOWN
 }
 
@@ -299,4 +331,30 @@ enum RequirementOption {
   SUGGESTED
   IF_SUPPORTED
   NEVER
+}
+
+extend type Device {
+  screenLockDelay: Int
+}
+
+extend type Security {
+  antivirus: Boolean
+}
+
+extend type SecurityInfo {
+  antivirus: ApplicationGroupFeatureState
+}
+
+extend type PolicyResult {
+  antivirus: FeatureState
+}
+
+input ApplicationGroupRequirement {
+  # Potential providers
+  providers: [ApplicationRequirement!]!
+}
+
+type ApplicationGroupFeatureState {
+  status: FeatureState!
+  activeProviders: [ApplicationFeatureState]!
 }

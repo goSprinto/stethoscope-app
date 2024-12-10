@@ -5,7 +5,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: "Roboto", "Helvetica Neue", Helvetica, "Segoe UI", arial, sans-serif; }
+  font-family:"UntitledSans", "Roboto", "Helvetica Neue", Helvetica, "Segoe UI", arial, sans-serif; }
 
 body.blue {
   background: #207AF4;
@@ -104,9 +104,8 @@ body.blue h2:hover a {
   background:#000;
   color:#fff;
   text-decoration:none;
-  font-family:arial,sans-serif;
+  font-family:UntitledSans;
   text-align:center;
-  font-weight:bold;
   padding:5px 40px;
   font-size:1rem;
   line-height:2rem;

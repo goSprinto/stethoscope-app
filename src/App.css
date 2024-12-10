@@ -87,9 +87,11 @@ footer button {
 
 .buttonRow {
   display: flex;
-  padding-right: 5px;
   align-content: center;
   justify-content: space-between;
+  background-color: #eee;
+  margin: 0px -20px 1em -20px;
+  padding: 10px;
 }
 
 #downloadProgress {

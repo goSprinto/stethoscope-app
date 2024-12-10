@@ -28,7 +28,21 @@ const securityToPassFailStatus = status => {
 const Device = {
   async deviceId (root, args, context) {
     const result = await kmd('hardware', context)
-    return result.system.uuid
+    const { platform = process.platform } = context
+    // Both machineGuid and uuid can be duplicate in windows machines
+    // so we use both.
+    if (platform === 'win32') {
+      return [result.system.machineGuid, result.system.uuid, result.system.serialNumber].join('|')
+    } else {
+      return result.system.uuid
+    }
+  },
+
+  async serialNumber (root, args, context) {
+    const result = await kmd('hardware', context)
+    const { platform = process.platform } = context
+
+    return result.system.serialNumber
   },
 
   async deviceName (root, args, context) {
@@ -48,7 +62,7 @@ const Device = {
 
   async osVersion (root, args, context) {
     const result = await kmd('os', context)
-    const version = result.system.version
+    const version = result.system.version || result.system.lsb_version
     const [major, minor, patch = 0] = String(version).split('.')
     return `${major}.${minor}.${patch}`
   },
@@ -67,13 +81,22 @@ const Device = {
     return result.system.platform
   },
 
+  async distroName (root, args, context) {
+    const result = await kmd('os', context)
+    if ('distroId' in result.system) {
+      return result.system.distroId
+    } else {
+      return Device.platform(root, args.context)
+    }
+  },
+
   async firmwareVersion (root, args, context) {
     const result = await kmd('hardware', context)
     return result.system.firmwareVersion
   },
 
   friendlyName (root, args, context) {
-    if ('friendlyName' in Device) {
+    if ('friendlyName' in PlatformDevice) {
       return PlatformDevice.friendlyName(root, args, context)
     }
 
@@ -101,7 +124,7 @@ const Device = {
   },
 
   applications (root, args, context) {
-    if ('applications' in Device) {
+    if ('applications' in PlatformDevice) {
       return PlatformDevice.applications(root, args, context)
     }
 
@@ -137,8 +160,24 @@ const Device = {
     return pkg.version
   },
 
+  screenLockDelay (root, args, context) {
+    if ('screenLockDelay' in PlatformDevice) {
+      return PlatformDevice.screenLockDelay(root, args, context)
+    }
+
+    return -1
+  },
+
   security (root, args, context) {
     return {
+      async antivirus () {
+        const { status, activeProviders } = await Security.antivirus(root, args.policy, context)
+        return {
+          status: securityToDeviceStatus(status),
+          activeProviders
+        }
+      },
+
       async firewall () {
         const status = await Security.firewall(root, args, context)
         return securityToDeviceStatus(status)
@@ -217,7 +256,7 @@ const Device = {
   },
 
   disks (root, args, context) {
-    if ('disks' in Device) {
+    if ('disks' in PlatformDevice) {
       return PlatformDevice.disks(root, args, context)
     }
 

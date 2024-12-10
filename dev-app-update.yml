@@ -1,2 +1,2 @@
 provider: generic
-url: https://s3-us-west-2.amazonaws.com/nflx-stethoscope-public-securityprod-us-west-2/
+url: https://drsprinto.s3.amazonaws.com/
