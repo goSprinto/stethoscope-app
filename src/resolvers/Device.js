@@ -45,9 +45,13 @@ const Device = {
     return result.system.serialNumber
   },
 
-  async deviceName (root, args, context) {
+  async deviceName(root, args, context) {
     const result = await kmd('hostname', context)
-    return result.system.hostname
+    const name = result.system.hostname;
+    if (typeof name === 'string' && /^[a-zA-Z0-9()._\-@!]+$/.test(name)) {
+      return name;
+    }
+    throw new Error('Invalid device name format');
   },
 
   platform (root, args, context = {}) {
