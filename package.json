@@ -113,7 +113,8 @@
     "tiny-human-time": "^1.2.0"
   },
   "resolutions": {
-    "string-width": "^4.2.0"
+    "string-width": "^4.2.0",
+    "wrap-ansi": "^7.0.0"
   },
   "browserslist": [
     ">0.2%",
