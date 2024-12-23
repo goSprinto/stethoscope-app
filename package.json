@@ -112,6 +112,9 @@
     "spectron": "^19.0.0",
     "tiny-human-time": "^1.2.0"
   },
+  "resolutions": {
+    "string-width": "^4.2.0",
+  },
   "browserslist": [
     ">0.2%",
     "not dead",
