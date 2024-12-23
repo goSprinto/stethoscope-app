@@ -9,43 +9,43 @@ on:
         type: string
 
 jobs:
-  build-and-package-macos:
-    runs-on: macos-latest
+  # build-and-package-macos:
+  #   runs-on: macos-latest
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: goSprinto/stethoscope-app
-          ref: ${{ github.event.inputs.stethoscope_repo_branch_name }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: goSprinto/stethoscope-app
+  #         ref: ${{ github.event.inputs.stethoscope_repo_branch_name }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
 
-      - name: Install dependencies
-        run: yarn install
+  #     - name: Install dependencies
+  #       run: yarn install
 
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ${{ runner.home }}/.cache/electron
-            ${{ runner.home }}/.cache/electron-builder
-          key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+  #     - name: Cache dependencies
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           node_modules
+  #           ${{ runner.home }}/.cache/electron
+  #           ${{ runner.home }}/.cache/electron-builder
+  #         key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Build and Package for macOS
-        run: |
-          yarn run-s prebuild 'build:electron -m --x64 --arm64'
+  #     - name: Build and Package for macOS
+  #       run: |
+  #         yarn run-s prebuild 'build:electron -m --x64 --arm64'
           
         
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Dist-macos
-          path: dist
+  #     - name: Save artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Dist-macos
+  #         path: dist
   
   build-and-package-ubuntu:
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: goSprinto/stethoscope-app
-          ref: 'dhananjay-build-test'
+          ref: ${{ github.event.inputs.stethoscope_repo_branch_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -86,18 +86,21 @@ jobs:
           ls dist/
      
 
-      # - name: Convert X64 AppImage to static runtime
-      #   if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.runtime, 'linux-x64')
-      #   run: |
-      #     sudo apt install desktop-file-utils
-      #     cd dist
-      #     appimage="FreeTube-${{ steps.versionNumber.outputs.result }}.AppImage"
-      #     wget "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" -O ./appimagetool.AppImage
-      #     chmod +x ./"$appimage" ./appimagetool.AppImage
-      #     ./"$appimage" --appimage-extract && rm -f ./"$appimage"
-      #     ./appimagetool.AppImage --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
-      #       -n ./squashfs-root ./"$appimage"
-      #     rm -rf ./squashfs-root ./appimagetool.AppImage
+      - name: Convert X64 AppImage to static runtime
+        run: |
+          sudo apt install desktop-file-utils
+          cd dist
+          appimage="DrSprinto-4.0.8.AppImage"
+          wget "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" -O ./appimagetool.AppImage
+          chmod +x ./"$appimage" ./appimagetool.AppImage
+          ./"$appimage" --appimage-extract && rm -f ./"$appimage"
+          ./appimagetool.AppImage --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
+            -n ./squashfs-root ./"$appimage"
+          rm -rf ./squashfs-root ./appimagetool.AppImage
+      
+      - name: Post Print the name of appimages
+        run: |
+          ls dist/
             
       - name: Save artifacts
         uses: actions/upload-artifact@v4
@@ -105,76 +108,74 @@ jobs:
           name: Dist-ubuntu
           path: dist
 
-  build-and-package-windows:
-    runs-on: windows-latest
+  # build-and-package-windows:
+  #   runs-on: windows-latest
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: goSprinto/stethoscope-app
-          ref: 'dhananjay-build-test'
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: goSprinto/stethoscope-app
+  #         ref: 'dhananjay-build-test'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
 
-      - name: Install dependencies
-        run: yarn install
+  #     - name: Install dependencies
+  #       run: yarn install
 
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ${{ runner.home }}/.cache/electron
-            ${{ runner.home }}/.cache/electron-builder
-          key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+  #     - name: Cache dependencies
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           node_modules
+  #           ${{ runner.home }}/.cache/electron
+  #           ${{ runner.home }}/.cache/electron-builder
+  #         key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Cleanup old cache
-        if: runner.os == 'ubuntu-latest'
-        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
+  #     - name: Cleanup old cache
+  #       if: runner.os == 'ubuntu-latest'
+  #       run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
 
-      - name: Build and Package for Windows
-        run: |
-          yarn build:windows
+  #     - name: Build and Package for Windows
+  #       run: |
+  #         yarn build:windows
           
         
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Dist-windows
-          path: dist
+  #     - name: Save artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Dist-windows
+  #         path: dist
 
-  upload-to-s3:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    needs: [build-and-package-macos, build-and-package-ubuntu, build-and-package-windows]
+  # upload-to-s3:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   needs: [build-and-package-ubuntu]
     
-    steps:
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
-          aws-region: us-west-1
+  #   steps:
+  #     - name: Configure AWS
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::426216900398:role/github-actions-sprinto-repo-role
+  #         aws-region: us-west-1
     
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-          pattern: Dist-*
-          merge-multiple: true
-
-      
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: dist
+  #         pattern: Dist-*
+  #         merge-multiple: true
   
-      - name: Push artifacts to S3
-        run: |
-            mkdir artifacts && \
-            cp dist/*.{yml,exe,dmg,AppImage} artifacts/ && \
-            aws s3 sync artifacts s3://drsprinto-build/${{ github.event.inputs.stethoscope_repo_branch_name }}
+  #     - name: Push artifacts to S3
+  #       run: |
+  #           mkdir artifacts && \
+  #           cp dist/*.{yml,exe,dmg,AppImage} artifacts/ && \
+  #           aws s3 sync artifacts s3://drsprinto-build/${{ github.event.inputs.stethoscope_repo_branch_name }}
       
   
   
