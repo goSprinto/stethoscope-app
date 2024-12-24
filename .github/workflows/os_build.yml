@@ -9,46 +9,8 @@ on:
         type: string
 
 jobs:
-  # build-and-package-macos:
-  #   runs-on: macos-latest
-    
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: goSprinto/stethoscope-app
-  #         ref: ${{ github.event.inputs.stethoscope_repo_branch_name }}
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-
-  #     - name: Install dependencies
-  #       run: yarn install
-
-  #     - name: Cache dependencies
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: |
-  #           node_modules
-  #           ${{ runner.home }}/.cache/electron
-  #           ${{ runner.home }}/.cache/electron-builder
-  #         key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
-
-  #     - name: Build and Package for macOS
-  #       run: |
-  #         yarn run-s prebuild 'build:electron -m --x64 --arm64'
-          
-        
-  #     - name: Save artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: Dist-macos
-  #         path: dist
-  
-  build-and-package-ubuntu:
-    runs-on: ubuntu-latest
+  build-and-package-macos:
+    runs-on: macos-latest
     
     steps:
       - name: Checkout code
@@ -56,67 +18,6 @@ jobs:
         with:
           repository: goSprinto/stethoscope-app
           ref: ${{ github.event.inputs.stethoscope_repo_branch_name }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18.18.0'
-
-      - name: Install dependencies
-        run: yarn install -y
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ${{ runner.home }}/.cache/electron
-            ${{ runner.home }}/.cache/electron-builder
-          key: ubuntu-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
-
-      - name: Cleanup old cache
-        if: runner.os == 'ubuntu-latest'
-        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
-
-      - name: Build and Package for Ubuntu
-        run: |
-          yarn run-s prebuild _electron-builder-linux
-      - name: Print the name of appimages
-        run: |
-          ls dist/
-     
-
-      - name: Convert X64 AppImage to static runtime
-        run: |
-          sudo apt install desktop-file-utils
-          cd dist
-          appimage="DrSprinto-4.0.8.AppImage"
-          wget "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" -O ./appimagetool.AppImage
-          chmod +x ./"$appimage" ./appimagetool.AppImage
-          ./"$appimage" --appimage-extract && rm -f ./"$appimage"
-          ./appimagetool.AppImage --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
-            -n ./squashfs-root ./"$appimage"
-          rm -rf ./squashfs-root ./appimagetool.AppImage
-      
-      - name: Post Print the name of appimages
-        run: |
-          ls dist/
-            
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Dist-ubuntu
-          path: dist
-
-  build-and-package-windows:
-    runs-on: windows-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: goSprinto/stethoscope-app
-          ref: 'dhananjay-build-test'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -133,29 +34,128 @@ jobs:
             node_modules
             ${{ runner.home }}/.cache/electron
             ${{ runner.home }}/.cache/electron-builder
-          key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+          key: macos-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Cleanup old cache
-        if: runner.os == 'ubuntu-latest'
-        run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
-
-      - name: Build and Package for Windows
+      - name: Build and Package for macOS
         run: |
-          yarn build:windows
+          yarn run-s prebuild 'build:electron -m --x64 --arm64'
           
         
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Dist-windows
+          name: Dist-macos
           path: dist
+  
+  # build-and-package-ubuntu:
+  #   runs-on: ubuntu-latest
+    
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: goSprinto/stethoscope-app
+  #         ref: ${{ github.event.inputs.stethoscope_repo_branch_name }}
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '18.18.0'
+
+  #     - name: Install dependencies
+  #       run: yarn install -y
+
+  #     - name: Cache dependencies
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           node_modules
+  #           ${{ runner.home }}/.cache/electron
+  #           ${{ runner.home }}/.cache/electron-builder
+  #         key: ubuntu-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+
+  #     - name: Cleanup old cache
+  #       if: runner.os == 'ubuntu-latest'
+  #       run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
+
+  #     - name: Build and Package for Ubuntu
+  #       run: |
+  #         yarn run-s prebuild _electron-builder-linux
+  #     - name: Print the name of appimages
+  #       run: |
+  #         ls dist/
+     
+
+  #     - name: Convert X64 AppImage to static runtime
+  #       run: |
+  #         sudo apt install desktop-file-utils
+  #         cd dist
+  #         appimage="DrSprinto-4.0.8.AppImage"
+  #         wget "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" -O ./appimagetool.AppImage
+  #         chmod +x ./"$appimage" ./appimagetool.AppImage
+  #         ./"$appimage" --appimage-extract && rm -f ./"$appimage"
+  #         ./appimagetool.AppImage --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
+  #           -n ./squashfs-root ./"$appimage"
+  #         rm -rf ./squashfs-root ./appimagetool.AppImage
+      
+  #     - name: Post Print the name of appimages
+  #       run: |
+  #         ls dist/
+            
+  #     - name: Save artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Dist-ubuntu
+  #         path: dist
+
+  # build-and-package-windows:
+  #   runs-on: windows-latest
+    
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: goSprinto/stethoscope-app
+  #         ref: 'dhananjay-build-test'
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+
+  #     - name: Install dependencies
+  #       run: yarn install
+
+  #     - name: Cache dependencies
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           node_modules
+  #           ${{ runner.home }}/.cache/electron
+  #           ${{ runner.home }}/.cache/electron-builder
+  #         key: windows-latest-dependencies-${{ hashFiles('**/yarn.lock') }}
+
+  #     - name: Cleanup old cache
+  #       if: runner.os == 'ubuntu-latest'
+  #       run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
+
+  #     - name: Build and Package for Windows
+  #       run: |
+  #         yarn build:windows
+          
+        
+  #     - name: Save artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Dist-windows
+  #         path: dist
 
   upload-to-s3:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    needs: [build-and-package-ubuntu, build-and-package-windows]
+    needs: [build-and-package-macos]
     
     steps:
       - name: Configure AWS
@@ -174,7 +174,7 @@ jobs:
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
-            cp dist/*.{yml,exe,AppImage} artifacts/ && \
+            cp dist/*.{yml, dmg} artifacts/ && \
             aws s3 sync artifacts s3://drsprinto-build/${{ github.event.inputs.stethoscope_repo_branch_name }}
       
   
