@@ -132,7 +132,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: goSprinto/stethoscope-app
-          ref: 'dhananjay-build-test'
+          ref: ${{ github.event.inputs.stethoscope_repo_branch_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
