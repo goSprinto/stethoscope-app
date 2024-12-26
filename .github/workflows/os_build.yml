@@ -39,8 +39,25 @@ jobs:
       - name: Build and Package for macOS
         run: |
           yarn run-s prebuild 'build:electron -m --x64 --arm64'
+
+      - name: Codesign executable
+        env: 
+          MACOS_CERTIFICATE: ${{ secrets.MACP12 }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACP12PASS }}
+          MACOS_TEAMID: ${{ secrets.MACTEAMID }}
+        run: |
+          base64 -d <<< "$MACOS_CERTIFICATE" > certificate.p12
+          security create-keychain -p Test@123 build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p Test@123 build.keychain
+          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k Test@123 build.keychain
           
-        
+          for dmg_file in dist/*.dmg; do
+            /usr/bin/codesign --force -s "$MACOS_TEAMID" "$dmg_file" -v
+            codesign -v "$dmg_file" --verbose
+          done
+
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -85,7 +102,6 @@ jobs:
         run: |
           ls dist/
      
-
       - name: Convert X64 AppImage to static runtime
         run: |
           sudo apt install desktop-file-utils
@@ -142,7 +158,48 @@ jobs:
       - name: Build and Package for Windows
         run: |
           yarn build:windows
-          
+
+      - name: Sign the build
+        shell: powershell
+        env:
+          WINDOZE_CERT_DATA: ${{ secrets.P12FILE }}
+          WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          # Get some things for cert opts
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $file = -join($pwd, "/", "dist/DrSprinto Setup ",$version,".exe");
+          $temp_dir = $env:TMP
+          $cert_data = $env:WINDOZE_CERT_DATA
+          $cert_path = "$temp_dir\lando.windoze.p12"
+          $cert_password = $env:WINDOZE_CERT_PASSWORD
+          $cert_secure_password = $null
+          $signtool = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\signtool.exe"
+          $signtool2022 = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe"
+          # Throw error if file does not exist
+          if (!(Test-Path "$file"))
+          {
+            throw "$file does not exist"
+          }
+          # Decode and dump to temp file
+          If (!(Test-Path $cert_path)) {
+            Write-Output "Dumping cert to $cert_path..."
+            $bytes = [Convert]::FromBase64String($cert_data)
+            [IO.File]::WriteAllBytes($cert_path, $bytes)
+          }
+          # Use more recent signtool if we can
+          If (Test-Path $signtool2022) {
+            $signtool = "$signtool2022"
+          }
+          # Verify the cert and password are good
+          Write-Output "Verifying cert is good to go..."
+          $cert_secure_password = ConvertTo-SecureString $cert_password -AsPlainText -Force
+          Import-PfxCertificate -FilePath "$cert_path" -Password $cert_secure_password -CertStoreLocation "Cert:\LocalMachine\My"
+          # If we get this far we should be good!
+          Write-Output "We can sign!"
+          # Sign
+          Write-Output "Trying to sign $file with $signtool..."
+          & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v "$file"
         
       - name: Save artifacts
         uses: actions/upload-artifact@v4
@@ -176,6 +233,3 @@ jobs:
             mkdir artifacts && \
             cp dist/*.{yml,exe,dmg,AppImage} artifacts/ && \
             aws s3 sync artifacts s3://drsprinto-build/${{ github.event.inputs.stethoscope_repo_branch_name }}
-      
-  
-  
