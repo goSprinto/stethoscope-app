@@ -123,6 +123,15 @@ export default async function startServer(
     },
   };
 
+  app.use((req, res, next) => {
+    if (req.method === "OPTIONS") {
+      // Ensure the response object (`res`) is used here
+      res.status(200).send();
+    } else {
+      next();
+    }
+  });
+
   app.get("/debugger", cors(corsOptions), async (req, res) => {
     log.info("Collecting debug info");
     let promise = Promise.resolve();
