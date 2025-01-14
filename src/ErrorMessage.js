@@ -13,12 +13,22 @@ try {
 
 export default class ErrorMessage extends Component {
   render() {
-    const { reportingErrorLogAppURI, onClickOpen, onCancelReloadApp } =
-      this.props;
+    const {
+      reportingErrorLogAppURI,
+      onClickOpen,
+      onCancelReloadApp,
+      error,
+      message,
+      stack,
+    } = this.props;
     return (
       <div className="p-5">
         <div className="text-base">
-          Looks like we have run into an unknown issue.
+          Looks like we have run into an unknown issue. <br />
+          Error detail - {message}
+          <br />
+          Error Stack - {stack} <br />
+          Error - {error}
         </div>
         <div className="mt-5">
           <ReportErrorLog

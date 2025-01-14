@@ -616,6 +616,7 @@ class App extends Component {
           showStack={isDev}
           message={error.message}
           stack={error.stack}
+          error={error}
           reportingErrorLogAppURI={reportingErrorLogAppURI}
           onClickOpen={this.handleOpenExternal}
           onCancelReloadApp={this.onCancelReloadApp}
