@@ -13,9 +13,8 @@ extract \nID_LIKE="*(.*)"*\n
 save system.distroIdLike
 
 load output
-extract \nVERSION="*([\d\.]+)[^\n]*\n
+extract \nVERSION="*([\d\.]+)[^\n]"*\n
 save system.version
-
 remove output
 
 exec uname -r
@@ -27,4 +26,9 @@ exec lsb_release -a
 save output
 extract \nRelease:\s*([\d\.]+)[^\n]*\n
 save system.lsb_version
+remove output
+
+exec cat /etc/debian_version
+save output
+save system.debian_version
 remove output

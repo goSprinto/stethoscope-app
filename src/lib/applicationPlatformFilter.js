@@ -10,7 +10,11 @@ export default async function applicationPlatformFilter (applications = [], cont
     osVersion = version
   } else {
     const result = await kmd('os', context)
-    osVersion = result.system.version || result.system.lsb_version
+    if (distroId == "debian") {
+      osVersion = result.system.debian_version;
+    }else{
+      osVersion = result.system.version || result.system.lsb_version;
+    }
   }
 
   return applications.filter((app) => {
