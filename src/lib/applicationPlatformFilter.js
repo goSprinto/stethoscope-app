@@ -10,6 +10,7 @@ export default async function applicationPlatformFilter (applications = [], cont
     osVersion = version
   } else {
     const result = await kmd('os', context)
+    const distroId = result.system.distroId;
     if (distroId == "debian") {
       osVersion = result.system.debian_version;
     }else{
