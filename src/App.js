@@ -116,6 +116,11 @@ class App extends Component {
         isDev ? "http://localhost:5000" : appConfig.apiBaseUrl
       );
     }
+    // Handler for device connected / registered from sprinto account
+    socket.on("sprinto:deviceConnected", this.onDeviceConnected);
+    // handler for device disconnected or deregister from sprinto account
+    socket.on("sprinto:deviceDisconnected", this.onDeviceDisconnected);
+
     // check if policy sync required (once per day)
     if (this.shouldPolicySync(policyLastSyncedOn)) {
       await this.syncUpdatedPolicy();
@@ -156,11 +161,6 @@ class App extends Component {
     socket.on("scan:complete", this.onScanComplete);
     socket.on("scan:error", this.onScanError);
     socket.on("sprinto:devicelogrecorded", this.onDeviceLogRecorded);
-
-    // Handler for device connected / registered from sprinto account
-    socket.on("sprinto:deviceConnected", this.onDeviceConnected);
-    // handler for device disconnected or deregister from sprinto account
-    socket.on("sprinto:deviceDisconnected", this.onDeviceDisconnected);
 
     // the focus/blur handlers are used to update the last scanned time
     window.addEventListener("focus", () => this.setState({ focused: true }));
