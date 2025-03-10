@@ -82,6 +82,14 @@ class App extends Component {
     // append app version to title
     document.querySelector("title").textContent += ` (v${pkg.version})`;
 
+    // check latest appversion here
+    const latestAppVersion = await settings.get("drSprintoAppVersion");
+
+    if (latestAppVersion !== pkg.version) {
+      await settings.set("drSprintoAppVersion", pkg.version);
+      await settings.set("isSprintoAppConnected", false);
+    }
+
     const deviceLogLastReportedOnTS = await settings.get(
       "deviceLogLastReportedOn"
     );
