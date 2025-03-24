@@ -140,7 +140,8 @@
       "compiled/components/**",
       "compiled/*.json",
       "compiled/*.js",
-      "schema.graphql"
+      "schema.graphql",
+      "app.manifest"
     ],
     "mac": {
       "icon": "build/drsprinto-icons/icon.icns",
@@ -157,6 +158,11 @@
     "win": {
       "target": "nsis",
       "icon": "build/drsprinto-icons/icon.png",
+      "signAndEditExecutable": true,
+      "signDlls": true,
+      "requestedExecutionLevel": "asInvoker",
+      "manifestPath": "app.manifest",
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
       "extraResources": [
         "src/practices",
         "bitlocker-status/bitlocker-status.exe",

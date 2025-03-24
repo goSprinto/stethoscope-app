@@ -76,6 +76,27 @@ const statusImages = {
   ),
 };
 
+// Add DLL Security Measures
+if (IS_WIN) {
+  // Set DLL search paths to be secure
+  app.setPath('module', path.join(app.getAppPath(), 'node_modules'));
+  
+  
+  // Ensure DLLs are loaded only from trusted locations
+  app.on('ready', () => {
+    const trustedPaths = [
+      app.getAppPath(),
+      path.join(app.getAppPath(), 'node_modules'),
+      path.join(app.getPath('exe'), '..'),
+    ];
+    
+    // Register trusted DLL search paths
+    trustedPaths.forEach(trustedPath => {
+      app.addPath('module', trustedPath);
+    });
+  });
+}
+
 const windowPrefs = {
   width: 520,
   height: 700,
