@@ -23,6 +23,7 @@ import {
   nativeImage,
   session,
   Tray,
+  shell,
 } from "electron";
 import url from "url";
 import log from "./lib/logger";
@@ -40,6 +41,7 @@ import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
+import { isTrustedUrl } from "./lib/isTrustedUrl";
 
 app.disableHardwareAcceleration();
 
@@ -159,6 +161,24 @@ async function createWindow(show = true) {
 
   mainWindow = new BrowserWindow(windowPrefs);
   remoteMain.enable(mainWindow.webContents);
+
+  // Add navigation security controls
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    if (!isTrustedUrl(navigationUrl)) {
+      event.preventDefault();
+      log.warn(`Blocked navigation to: ${navigationUrl}`);
+    }
+  });
+
+  mainWindow.webContents.on('new-window', (event, navigationUrl) => {
+    event.preventDefault();
+    // Handle external links safely through shell.openExternal if trusted
+    if (isTrustedUrl(navigationUrl)) {
+      shell.openExternal(navigationUrl);
+    } else {
+      log.warn(`Blocked new window to: ${navigationUrl}`);
+    }
+  });
 
   // if (IS_DEV) loadReactDevTools(BrowserWindow);
   // open developer console if env vars or args request
@@ -459,6 +479,43 @@ if (!gotTheLock) {
             log.error(`start:launch:check for updates exception${err}`)
           );
       }
+
+      // Set up permission handling
+      session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+        const url = details.requestingUrl;
+        const trustedOrigins = ['drsprinto://', 'file://', 'http://localhost:', 'https://sprinto.com'];
+        
+        const isTrusted = trustedOrigins.some(origin => url.startsWith(origin));
+        
+        const promptPermissions = ['media', 'geolocation', 'notifications', 'midi', 'clipboard-read'];
+        
+        if (!isTrusted) {
+          log.warn(`Blocked permission request from untrusted origin: ${url}`);
+          callback(false);
+          return;
+        }
+
+        
+        if (promptPermissions.includes(permission)) {
+          dialog.showMessageBox({
+            type: 'question',
+            buttons: ['Allow', 'Deny'],
+            message: `${url} is requesting ${permission} permission. Do you want to allow it?`,
+            detail: 'This permission can be revoked later in settings.'
+          }).then(({ response }) => {
+            callback(response === 0);
+          });
+        } else {
+          // For other permissions from trusted origins, allow automatically
+          callback(true);
+        }
+      });
+
+ 
+      session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+        const trustedOrigins = ['drsprinto://', 'file://', 'http://localhost:', 'https://sprinto.com'];
+        return trustedOrigins.some(origin => requestingOrigin.startsWith(origin));
+      });
     }, 0)
   );
 }

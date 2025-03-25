@@ -493,11 +493,16 @@ class App extends Component {
       baseUrl = "http://localhost:5000";
     }
 
-    const isUrlTrusted = isDev ? true : isTrustedUrl(baseUrl);
-
+    const targetHref = event.target.getAttribute("href");
     event.preventDefault();
-    if (event.target.getAttribute("href") && isUrlTrusted) {
-      shell.openExternal(`${baseUrl}${event.target.getAttribute("href")}`);
+
+    if (targetHref) {
+      const fullUrl = `${baseUrl}${targetHref}`;
+      if (isDev || isTrustedUrl(fullUrl)) {
+        shell.openExternal(fullUrl);
+      } else {
+        console.warn(`Blocked navigation to untrusted URL: ${fullUrl}`);
+      }
     }
   };
 
@@ -507,10 +512,16 @@ class App extends Component {
   handleOpenExternal = async (event) => {
     const url = await settings.get("sprintoAPPBaseUrl");
     const isDev = ipcRenderer.sendSync("get:env:isDev");
-    const isUrlTrusted = isDev ? true : isTrustedUrl(url);
+    const targetHref = event.target.getAttribute("href");
+
     event.preventDefault();
-    if (event.target.getAttribute("href") && isUrlTrusted) {
-      shell.openExternal(`${url}${event.target.getAttribute("href")}`);
+    if (targetHref) {
+      const fullUrl = `${url}${targetHref}`;
+      if (isDev || isTrustedUrl(fullUrl)) {
+        shell.openExternal(fullUrl);
+      } else {
+        console.warn(`Blocked navigation to untrusted URL: ${fullUrl}`);
+      }
     }
   };
 
