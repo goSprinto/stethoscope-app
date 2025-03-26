@@ -483,9 +483,11 @@ if (!gotTheLock) {
       // Set up permission handling
       session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
         const url = details.requestingUrl;
-        const trustedOrigins = ['drsprinto://', 'file://', 'http://localhost:', 'https://sprinto.com'];
+        const trustedOrigins = ['drsprinto://', 'file://', 'http://localhost:'];
+
+        const {hostname} = new URL(url)
         
-        const isTrusted = trustedOrigins.some(origin => url.startsWith(origin));
+        const isTrusted = trustedOrigins.some(origin => url.startsWith(origin)) || hostname.endsWith('.sprinto.com');
         
         const promptPermissions = ['media', 'geolocation', 'notifications', 'midi', 'clipboard-read'];
         
@@ -513,8 +515,9 @@ if (!gotTheLock) {
 
  
       session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
-        const trustedOrigins = ['drsprinto://', 'file://', 'http://localhost:', 'https://sprinto.com'];
-        return trustedOrigins.some(origin => requestingOrigin.startsWith(origin));
+        const trustedOrigins = ['drsprinto://', 'file://', 'http://localhost:'];
+        const {hostname} = new URL(requestingOrigin)
+        return trustedOrigins.some(origin => requestingOrigin.startsWith(origin)) || hostname.endsWith('.sprinto.com');
       });
     }, 0)
   );
