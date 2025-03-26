@@ -191,7 +191,9 @@
       "extraResources": [
         "src/practices"
       ],
-      "rpath": "$ORIGIN/node_modules"
+      "buildFlags": [
+        "-Wl,-z,relro,-z,now,-z,noexecstack"
+      ]
     },
     "protocols": [
       {

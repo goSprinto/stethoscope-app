@@ -48,9 +48,11 @@ remoteMain.initialize();
 
 // Protect against RPATH-based shared object hijacking on Linux
 if (process.platform === 'linux') {
-  // Set secure library loading paths to prevent malicious shared object injection
-  const secureLibPath = path.join(app.getAppPath(), 'node_modules');
-  process.env.LD_LIBRARY_PATH = secureLibPath;
+  // Use absolute paths for libraries
+  const absoluteLibPath = path.resolve(app.getAppPath(), 'lib'); 
+  // Set DT_RUNPATH instead of DT_RPATH
+  process.env.LD_RUN_PATH = absoluteLibPath;
+  
 }
 
 const settings = new Store({ name: "settings" });
