@@ -190,7 +190,8 @@
       "category": "System",
       "extraResources": [
         "src/practices"
-      ]
+      ],
+      "rpath": "$ORIGIN/node_modules"
     },
     "protocols": [
       {
