@@ -72,6 +72,7 @@
     "js-yaml": "4.1.0",
     "kmd-script": "^0.0.11",
     "moment": "^2.30.1",
+    "nanoid": "^5.1.5",
     "nocache": "^4.0.0",
     "node-powershell": "5.0.1",
     "react": "18.2.0",
@@ -114,7 +115,8 @@
   },
   "resolutions": {
     "string-width": "^4.2.0",
-    "wrap-ansi": "^7.0.0"
+    "wrap-ansi": "^7.0.0",
+    "nanoid": "^3.3.8"
   },
   "browserslist": [
     ">0.2%",
