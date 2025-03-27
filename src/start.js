@@ -90,20 +90,19 @@ const statusImages = {
 // Add DLL Security Measures
 if (IS_WIN) {
   // Set DLL search paths to be secure
-  app.setPath('module', path.join(app.getAppPath(), 'node_modules'));
-  
-  
+  app.setPath("module", path.join(app.getAppPath(), "node_modules"));
+
   // Ensure DLLs are loaded only from trusted locations
-  app.on('ready', () => {
+  app.on("ready", () => {
     const trustedPaths = [
       app.getAppPath(),
-      path.join(app.getAppPath(), 'node_modules'),
-      path.join(app.getPath('exe'), '..'),
+      path.join(app.getAppPath(), "node_modules"),
+      path.join(app.getPath("exe"), ".."),
     ];
-    
+
     // Register trusted DLL search paths
-    trustedPaths.forEach(trustedPath => {
-      app.addPath('module', trustedPath);
+    trustedPaths.forEach((trustedPath) => {
+      app.addPath("module", trustedPath);
     });
   });
 }
@@ -431,6 +430,28 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
+  // Add permission handler for Linux
+  app.on("ready", () => {
+    session.defaultSession.setPermissionRequestHandler(
+      (webContents, permission, callback) => {
+        const url = webContents.getURL();
+        const trustedOrigins = ["drsprinto://", "file://", "http://localhost:"]; // Add your trusted origins
+        const { hostname } = new URL(url);
+        const isTrusted = trustedOrigins.some((origin) =>
+          url.startsWith(origin)
+        ) || hostname.endsWith('.sprinto.com');
+
+        // Only allow permissions from trusted origins
+        if (isTrusted) {
+          callback(true);
+        } else {
+          console.log(`Permission '${permission}' denied for URL: ${url}`);
+          callback(false);
+        }
+      }
+    );
+  });
+
   app.on("second-instance", (event, commandLine, workingDirectory) => {
     if (IS_WIN) deeplinkingUrl = commandLine.slice(1);
 
