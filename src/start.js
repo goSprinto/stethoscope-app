@@ -48,6 +48,15 @@ app.disableHardwareAcceleration();
 const remoteMain = require("@electron/remote/main");
 remoteMain.initialize();
 
+// Protect against RPATH-based shared object hijacking on Linux
+if (process.platform === 'linux') {
+  // Use absolute paths for libraries
+  const absoluteLibPath = path.resolve(app.getAppPath(), 'lib'); 
+  // Set DT_RUNPATH instead of DT_RPATH
+  process.env.LD_RUN_PATH = absoluteLibPath;
+  
+}
+
 const settings = new Store({ name: "settings" });
 
 const env = process.env.STETHOSCOPE_ENV || "production";

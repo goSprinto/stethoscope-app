@@ -193,6 +193,9 @@
       "category": "System",
       "extraResources": [
         "src/practices"
+      ],
+      "buildFlags": [
+        "-Wl,-z,relro,-z,now,-z,noexecstack"
       ]
     },
     "protocols": [
