@@ -164,7 +164,6 @@
       "signAndEditExecutable": true,
       "signDlls": true,
       "requestedExecutionLevel": "asInvoker",
-      "manifestPath": "app.manifest",
       "rfc3161TimeStampServer": "http://timestamp.digicert.com",
       "extraResources": [
         "src/practices",
@@ -193,9 +192,6 @@
       "category": "System",
       "extraResources": [
         "src/practices"
-      ],
-      "buildFlags": [
-        "-Wl,-z,relro,-z,now,-z,noexecstack"
       ]
     },
     "protocols": [
