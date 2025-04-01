@@ -119,7 +119,6 @@
     "path-to-regexp": "^0.1.12",
     "cross-spawn": "^7.0.1",
     "tar-fs": "^2.1.2",
-    "app-builder-lib": "^24.13.2",
     "http-proxy-middleware": "^2.0.7",
     "nth-check": "^2.0.1",
     "ws": "^8.18.0",
