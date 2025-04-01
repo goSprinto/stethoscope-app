@@ -57,13 +57,13 @@
     "@graphql-tools/schema": "^10.0.0",
     "applescript": "^1.0.0",
     "auto-launch": "^5.0.6",
-    "axios": "^1.7.7",
+    "axios": "^1.8.2",
     "classnames": "2.3.2",
     "cors": "^2.8.4",
     "cross-env": "^7.0.3",
     "electron-store": "^8.0.1",
     "electron-updater": "^6.1.7",
-    "express": "^4.19.2",
+    "express": "^4.21.2",
     "extend": "^3.0.2",
     "fast-glob": "^3.2.12",
     "graphql": "^16.8.1",
@@ -72,7 +72,6 @@
     "js-yaml": "4.1.0",
     "kmd-script": "^0.0.11",
     "moment": "^2.30.1",
-    "nanoid": "^5.1.5",
     "nocache": "^4.0.0",
     "node-powershell": "5.0.1",
     "react": "18.2.0",
@@ -89,7 +88,7 @@
     "util": "^0.12.5",
     "winston": "3.14.2",
     "winston-daily-rotate-file": "5.0.0",
-    "ws": "8.18.0"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@babel/cli": "7.23.0",
@@ -117,7 +116,14 @@
     "string-width": "^4.2.0",
     "wrap-ansi": "^7.0.0",
     "nanoid": "^3.3.8",
-    "path-to-regexp": "^6.2.1"
+    "path-to-regexp": "^0.1.12",
+    "cross-spawn": "^7.0.1",
+    "tar-fs": "^2.1.2",
+    "app-builder-lib": "^24.13.2",
+    "http-proxy-middleware": "^2.0.7",
+    "nth-check": "^2.0.1",
+    "ws": "^8.18.0",
+    "cookie": "^0.7.0"
   },
   "browserslist": [
     ">0.2%",
