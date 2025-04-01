@@ -411,28 +411,6 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  // Add permission handler for Linux
-  app.on("ready", () => {
-    session.defaultSession.setPermissionRequestHandler(
-      (webContents, permission, callback) => {
-        const url = webContents.getURL();
-        const trustedOrigins = ["drsprinto://", "file://", "http://localhost:"]; // Add your trusted origins
-        const { hostname } = new URL(url);
-        const isTrusted = trustedOrigins.some((origin) =>
-          url.startsWith(origin)
-        ) || hostname.endsWith('.sprinto.com');
-
-        // Only allow permissions from trusted origins
-        if (isTrusted) {
-          callback(true);
-        } else {
-          console.log(`Permission '${permission}' denied for URL: ${url}`);
-          callback(false);
-        }
-      }
-    );
-  });
-
   app.on("second-instance", (event, commandLine, workingDirectory) => {
     if (IS_WIN) deeplinkingUrl = commandLine.slice(1);
 
@@ -490,46 +468,6 @@ if (!gotTheLock) {
             log.error(`start:launch:check for updates exception${err}`)
           );
       }
-
-      // Set up permission handling
-      session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
-        const url = details.requestingUrl;
-        const trustedOrigins = ['drsprinto://', 'file://', 'http://localhost:'];
-
-        const {hostname} = new URL(url)
-        
-        const isTrusted = trustedOrigins.some(origin => url.startsWith(origin)) || hostname.endsWith('.sprinto.com');
-        
-        const promptPermissions = ['media', 'geolocation', 'notifications', 'midi', 'clipboard-read'];
-        
-        if (!isTrusted) {
-          log.warn(`Blocked permission request from untrusted origin: ${url}`);
-          callback(false);
-          return;
-        }
-
-        
-        if (promptPermissions.includes(permission)) {
-          dialog.showMessageBox({
-            type: 'question',
-            buttons: ['Allow', 'Deny'],
-            message: `${url} is requesting ${permission} permission. Do you want to allow it?`,
-            detail: 'This permission can be revoked later in settings.'
-          }).then(({ response }) => {
-            callback(response === 0);
-          });
-        } else {
-          // For other permissions from trusted origins, allow automatically
-          callback(true);
-        }
-      });
-
- 
-      session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
-        const trustedOrigins = ['drsprinto://', 'file://', 'http://localhost:'];
-        const {hostname} = new URL(requestingOrigin)
-        return trustedOrigins.some(origin => requestingOrigin.startsWith(origin)) || hostname.endsWith('.sprinto.com');
-      });
     }, 0)
   );
 }
