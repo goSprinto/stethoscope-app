@@ -40,7 +40,7 @@
     "_electron-builder-windows": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -w",
     "build:windows": "run-s prebuild _electron-builder-windows",
     "_electron-builder-linux": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -l",
-    "build:linux": "run-s prebuild _electron-builder-linux postbuild",
+    "build:linux": "export CXXFLAGS='-fPIC -Wl,-z,relro,-z,now' && run-s prebuild _electron-builder-linux postbuild",
     "build:electron": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder",
     "build:update-config": "node scripts/maybeUpdateConfigsFromEnvironment.js",
     "test": "react-scripts test --env=jsdom --testPathIgnorePatterns=__tests__",
@@ -191,10 +191,6 @@
     "linux": {
       "target": [
         "AppImage"
-      ],
-      "cflags": [
-        "-fPIC",
-        "-Wl,-z,relro,-z,now"
       ],
       "maintainer": "Sprinto",
       "icon": "build/drsprinto-icons",
