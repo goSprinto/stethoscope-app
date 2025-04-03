@@ -49,12 +49,11 @@ const remoteMain = require("@electron/remote/main");
 remoteMain.initialize();
 
 // Protect against RPATH-based shared object hijacking on Linux
-if (process.platform === 'linux') {
+if (process.platform === "linux") {
   // Use absolute paths for libraries
-  const absoluteLibPath = path.resolve(app.getAppPath(), 'lib'); 
+  const absoluteLibPath = path.resolve(app.getAppPath(), "lib");
   // Set DT_RUNPATH instead of DT_RPATH
   process.env.LD_RUN_PATH = absoluteLibPath;
-  
 }
 
 const settings = new Store({ name: "settings" });
@@ -87,7 +86,6 @@ const statusImages = {
   ),
 };
 
-
 const windowPrefs = {
   width: 520,
   height: 700,
@@ -101,6 +99,8 @@ const windowPrefs = {
     webSecurity: false,
     contextIsolation: false,
     sandbox: false,
+    media: false,
+    enableRemoteModule: false,
   },
 };
 
@@ -152,14 +152,14 @@ async function createWindow(show = true) {
   remoteMain.enable(mainWindow.webContents);
 
   // Add navigation security controls
-  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+  mainWindow.webContents.on("will-navigate", (event, navigationUrl) => {
     if (!isTrustedUrl(navigationUrl)) {
       event.preventDefault();
       log.warn(`Blocked navigation to: ${navigationUrl}`);
     }
   });
 
-  mainWindow.webContents.on('new-window', (event, navigationUrl) => {
+  mainWindow.webContents.on("new-window", (event, navigationUrl) => {
     event.preventDefault();
     // Handle external links safely through shell.openExternal if trusted
     if (isTrustedUrl(navigationUrl)) {

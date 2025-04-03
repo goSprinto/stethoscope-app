@@ -192,6 +192,10 @@
       "target": [
         "AppImage"
       ],
+      "cflags": [
+        "-fPIC",
+        "-Wl,-z,relro,-z,now"
+      ],
       "maintainer": "Sprinto",
       "icon": "build/drsprinto-icons",
       "category": "System",
