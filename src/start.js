@@ -42,6 +42,7 @@ import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
 import { isTrustedUrl } from "./lib/isTrustedUrl";
+import unixify from "unixify";
 
 app.disableHardwareAcceleration();
 
@@ -459,6 +460,15 @@ if (!gotTheLock) {
         }
       );
 
+      session.defaultSession.setPermissionRequestHandler(
+        (webContents, permission, callback) => {
+          console.log("permission", permission);
+          if (permission === "geolocation" || permission === "media") {
+            return callback(false); // Deny geolocation
+          }
+        }
+      );
+
       if (launchIntoUpdater) {
         // triggered via stethoscope://update app link
         log.info(`Launching into updater: ${launchIntoUpdater}`);
@@ -533,7 +543,9 @@ app.on("window-all-closed", () => {
 
 ipcMain.on("get:env:basePath", (event, arg) => {
   const dev = process.env.STETHOSCOPE_ENV === "development";
-  event.returnValue = `${dev ? "." : process.resourcesPath}/src/practices`;
+  event.returnValue = unixify(
+    `${dev ? "." : process.resourcesPath}/src/practices`
+  );
 });
 
 ipcMain.on("get:env:isDev", (event, arg) => {

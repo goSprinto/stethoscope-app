@@ -1,6 +1,5 @@
 /* global Notification */
 import React, { Component } from "react";
-import unixify from "unixify";
 import Stethoscope from "./lib/Stethoscope";
 import Device from "./Device";
 import Loader from "./Loader";
@@ -139,7 +138,7 @@ class App extends Component {
     try {
       await this.loadPractices();
     } catch (e) {
-      console.error("Unable to load practices");
+      console.error("Unable to load policies", e);
     }
     // flag ensures the download:start event isn't sent multiple times
     this.downloadStartSent = false;
@@ -439,19 +438,14 @@ class App extends Component {
         try {
           // Fetch the policy from the API directly
           const baseUrl = settings.get("sprintoAPPBaseUrl");
-          const policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+          let policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
 
           if (!policy) {
-            this.setState({
-              error: "Failed to load policy. Please try again.",
-              loading: false,
-            });
-            reject("Failed to fetch policy from the API");
-            return;
+            policy = {};
+            log.warn("Failed to fetch policy from the API");
           }
 
-          const basePath = ipcRenderer.sendSync("get:env:basePath");
-          const currentBasePath = unixify(basePath);
+          const currentBasePath = ipcRenderer.sendSync("get:env:basePath");
           const files = await glob(`${currentBasePath}/*.yaml`);
 
           if (!files.length) {
@@ -543,31 +537,47 @@ class App extends Component {
   handleScan = () => {
     const { policy } = this.state;
     this.setState({ loading: true, scanIsRunning: true }, () => {
-      Stethoscope.validate(policy)
-        .then(({ device, result, timing }) => {
-          const lastScanTime = Date.now();
-          this.setState(
-            {
+      if (Object.keys(policy).length) {
+        Stethoscope.validate(policy)
+          .then(({ device, result, timing }) => {
+            const lastScanTime = Date.now();
+            this.setState(
+              {
+                device,
+                result,
+                lastScanTime,
+                lastScanDuration: timing.total / 1000,
+                scanIsRunning: false,
+                scannedBy: appName,
+                loading: false,
+              },
+              () => {
+                ipcRenderer.send("app:loaded");
+              }
+            );
+          })
+          .catch((err) => {
+            console.log(err);
+            log.error(JSON.stringify(err));
+            let message = new Error(err.message);
+            if (err.errors) message = new Error(JSON.stringify(err.errors));
+            this.handleErrorGraphQL({ message });
+          });
+      } else {
+        // now run without policy, get device info
+        Stethoscope.getDeviceInfo()
+          .then(({ device }) => {
+            this.setState({
               device,
-              result,
-              lastScanTime,
-              lastScanDuration: timing.total / 1000,
-              scanIsRunning: false,
-              scannedBy: appName,
               loading: false,
-            },
-            () => {
-              ipcRenderer.send("app:loaded");
-            }
-          );
-        })
-        .catch((err) => {
-          console.log(err);
-          log.error(JSON.stringify(err));
-          let message = new Error(err.message);
-          if (err.errors) message = new Error(JSON.stringify(err.errors));
-          this.handleErrorGraphQL({ message });
-        });
+            });
+          })
+          .catch((err) => {
+            console.log("Error getting device info", err);
+            log.error(JSON.stringify(err));
+            this.handleErrorGraphQL({ message: new Error(err.message) });
+          });
+      }
     });
   };
 
