@@ -4,8 +4,6 @@ import LaptopIcon from "../icons/LaptopIcon";
 import SignalLoading from "../icons/SignalLoading";
 import SprintoIcon from "../icons/SprintoIcon";
 
-
-
 const WelcomeMessage = ({ onClickShowDescription, showDescription }) => {
   return (
     <div>
@@ -44,8 +42,13 @@ const WelcomeMessage = ({ onClickShowDescription, showDescription }) => {
   );
 };
 
-const ConnectToSprintoApp = ({onClickOpen, redirectURI, showDescription, onClickShowDescription, device,  baseUrl}) => {
-const [appBaseURL, setTempAppBaseURL] = React.useState(baseUrl || "");
+const ConnectToSprintoApp = ({
+  onClickOpen,
+  redirectURI,
+  showDescription,
+  onClickShowDescription,
+  device,
+}) => {
   return (
     <div className="panel device pass">
       <div>
@@ -91,20 +94,6 @@ const [appBaseURL, setTempAppBaseURL] = React.useState(baseUrl || "");
             </div>
           </div>
         </div>
-      {/*</div>*/}
-      {/*<div className="flex flex-row items-center mt-6">*/}
-      {/*  <h5 className="text-xs text-gray mt-0 mr-2">*/}
-      {/*    * Select region*/}
-      {/*  </h5>*/}
-      {/*  <div >*/}
-      {/*    <select onChange={(e)=> setTempAppBaseURL(e.target.value)} value={appBaseURL} className={" py-1.5 px-1 space-x-1 rounded-md border "}>*/}
-      {/*      <option value="">Select</option>*/}
-      {/*      <option value="https://app.sprinto.com">US</option>*/}
-      {/*      <option value="https://eu.sprinto.com">EU</option>*/}
-      {/*      <option value="https://in.sprinto.com">IN</option>*/}
-      {/*    </select>*/}
-
-      {/*  </div>*/}
       </div>
 
       <div className=" fixed bottom-5 right-0 ">
@@ -115,11 +104,9 @@ const [appBaseURL, setTempAppBaseURL] = React.useState(baseUrl || "");
           <Button
             title={"Share device info"}
             isPrimary={true}
-            appBaseURL={appBaseURL}
             onClickOpen={onClickOpen}
             redirectURI={redirectURI}
             className="bg-orangeOne text-white"
-            // disabled={appBaseURL === null || appBaseURL === ""}
           />
         </div>
       </div>
