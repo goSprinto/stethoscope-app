@@ -509,10 +509,10 @@ class App extends Component {
     event.preventDefault();
     if (targetHref) {
       const fullUrl = `${url}${targetHref}`;
-      if (isDev || isTrustedUrl(fullUrl)) {
+      if (isDev || isTrustedUrl(url)) {
         shell.openExternal(fullUrl);
       } else {
-        console.warn(`Blocked navigation to untrusted URL: ${fullUrl}`);
+        log.error(`Blocked navigation to untrusted URL: ${fullUrl}`);
       }
     }
   };
@@ -571,8 +571,7 @@ class App extends Component {
             });
           })
           .catch((err) => {
-            console.log("Error getting device info", err);
-            log.error(JSON.stringify(err));
+            log.error("Error getting device info", JSON.stringify(err));
             this.handleErrorGraphQL({ message: new Error(err.message) });
           });
       }
