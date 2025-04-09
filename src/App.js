@@ -482,7 +482,6 @@ class App extends Component {
    */
   handleOpenExternalForRegister = async (event) => {
     let baseUrl = settings.get("sprintoAPPBaseUrl");
-    log.info("baseUrl", baseUrl);
     const isDev = ipcRenderer.sendSync("get:env:isDev");
     if (isDev) {
       baseUrl = "http://localhost:5000";
@@ -490,14 +489,11 @@ class App extends Component {
     const targetHref = event.target.getAttribute("href");
     event.preventDefault();
     if (targetHref) {
-      log.info("targetHref", targetHref);
       const fullUrl = `${baseUrl}${targetHref}`;
-      if (isDev || isTrustedUrl(fullUrl)) {
-        log.info("opening external", fullUrl);
+      if (isDev || isTrustedUrl(baseUrl)) {
         shell.openExternal(fullUrl);
       } else {
-        log.info("blocked navigation to untrusted URL", fullUrl);
-        console.warn(`Blocked navigation to untrusted URL: ${fullUrl}`);
+        log.error("blocked navigation to untrusted URL", fullUrl);
       }
     }
   };
