@@ -3,7 +3,7 @@ export function isTrustedUrl(urlString) {
     const url = new URL(urlString);
     
     // List of allowed protocols
-    const allowedProtocols = ['https:', 'http:', 'file:', 'drsprinto:'];
+    const allowedProtocols = ['https:', 'http:', 'drsprinto:'];
     if (!allowedProtocols.includes(url.protocol)) {
       return false;
     }
