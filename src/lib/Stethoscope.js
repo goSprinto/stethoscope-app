@@ -151,6 +151,56 @@ export default class Stethoscope {
       });
   }
 
+  static getDeviceInfo() {
+    const query = `query GetDevice {
+      device {
+        deviceId
+        deviceName
+        serialNumber
+        platform
+        platformName
+        distroName
+        osVersion
+        osName
+        firmwareVersion
+        hardwareModel
+        friendlyName
+        hardwareSerial
+        stethoscopeVersion
+        screenLockDelay
+      }
+    }`;
+
+    const options = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    };
+
+    return new Promise((resolve, reject) => {
+      fetch(`${HOST}/scan`, options)
+        .then((res) => {
+          switch (res.status) {
+            case 200:
+              return res.json();
+            default:
+              return res;
+          }
+        })
+        .then(({ errors, data = {} }) => {
+          const { device } = data;
+          if (errors) {
+            reject({ errors });
+          } else {
+            resolve({ device });
+          }
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  }
+
   // public API
   static validate(policy) {
     return new Promise((resolve, reject) => {

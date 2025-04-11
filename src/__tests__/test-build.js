@@ -11,7 +11,7 @@ const pkg = require('../../package.json')
 const configHandle = fs.readFileSync(path.resolve(__dirname, '../practices/config.yaml'), 'utf8')
 const config = yaml.load(configHandle)
 
-const policyHandle = fs.readFileSync(path.resolve(__dirname, '../practices/policy.yaml'), 'utf8')
+const policyHandle = fs.readFileSync(path.resolve(__dirname, '../__tests__/policy-test.yaml'), 'utf8')
 const policy = yaml.load(policyHandle)
 
 policy.stethoscopeVersion = `>=${pkg.version}`

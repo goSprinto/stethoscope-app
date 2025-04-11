@@ -40,7 +40,7 @@
     "_electron-builder-windows": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -w",
     "build:windows": "run-s prebuild _electron-builder-windows",
     "_electron-builder-linux": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -l",
-    "build:linux": "run-s prebuild _electron-builder-linux postbuild",
+    "build:linux": "export CXXFLAGS='-fPIC -Wl,-z,relro,-z,now' && run-s prebuild _electron-builder-linux postbuild",
     "build:electron": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder",
     "build:update-config": "node scripts/maybeUpdateConfigsFromEnvironment.js",
     "test": "react-scripts test --env=jsdom --testPathIgnorePatterns=__tests__",
@@ -57,13 +57,13 @@
     "@graphql-tools/schema": "^10.0.0",
     "applescript": "^1.0.0",
     "auto-launch": "^5.0.6",
-    "axios": "^1.7.7",
+    "axios": "^1.8.2",
     "classnames": "2.3.2",
     "cors": "^2.8.4",
     "cross-env": "^7.0.3",
     "electron-store": "^8.0.1",
     "electron-updater": "^6.1.7",
-    "express": "^4.19.2",
+    "express": "^4.21.2",
     "extend": "^3.0.2",
     "fast-glob": "^3.2.12",
     "graphql": "^16.8.1",
@@ -88,7 +88,7 @@
     "util": "^0.12.5",
     "winston": "3.14.2",
     "winston-daily-rotate-file": "5.0.0",
-    "ws": "8.18.0"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@babel/cli": "7.23.0",
@@ -103,7 +103,7 @@
     "chai": "^5.1.1",
     "chai-http": "^4.4.0",
     "electron": "^27.1.3",
-    "electron-builder": "24.12.0",
+    "electron-builder": "^24.13.3",
     "enzyme": "^3.3.0",
     "foreman": "^3.0.1",
     "npm-run-all": "^4.1.5",
@@ -114,7 +114,15 @@
   },
   "resolutions": {
     "string-width": "^4.2.0",
-    "wrap-ansi": "^7.0.0"
+    "wrap-ansi": "^7.0.0",
+    "nanoid": "^3.3.8",
+    "path-to-regexp": "^0.1.12",
+    "cross-spawn": "^7.0.1",
+    "tar-fs": "^2.1.2",
+    "http-proxy-middleware": "^2.0.7",
+    "nth-check": "^2.0.1",
+    "ws": "^8.18.0",
+    "cookie": "^0.7.0"
   },
   "browserslist": [
     ">0.2%",
@@ -140,7 +148,8 @@
       "compiled/components/**",
       "compiled/*.json",
       "compiled/*.js",
-      "schema.graphql"
+      "schema.graphql",
+      "app.manifest"
     ],
     "mac": {
       "icon": "build/drsprinto-icons/icon.icns",
@@ -152,11 +161,16 @@
       "extraResources": [
         "src/practices",
         "mac-screenlock-check/screenlock-check"
-      ]
+      ],
+      "notarize": false
     },
     "win": {
       "target": "nsis",
       "icon": "build/drsprinto-icons/icon.png",
+      "signAndEditExecutable": true,
+      "signDlls": true,
+      "requestedExecutionLevel": "asInvoker",
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
       "extraResources": [
         "src/practices",
         "bitlocker-status/bitlocker-status.exe",

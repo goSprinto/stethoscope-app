@@ -112,10 +112,10 @@ export default function (mainWindow, app, focusOrCreateWindow, updater, log) {
                   }
                 )
                 .then((res) => {
-                  console.log("respnse from disconnect", res.data);
+                  console.log("Response from disconnect", res.data);
                 })
                 .catch((err) => {
-                  console.log("error respnse from disconnect", err);
+                  console.log("error Response from disconnect", err);
                 });
             },
           }

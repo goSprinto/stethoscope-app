@@ -23,6 +23,7 @@ import {
   nativeImage,
   session,
   Tray,
+  shell,
 } from "electron";
 import url from "url";
 import log from "./lib/logger";
@@ -40,11 +41,21 @@ import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
+import { isTrustedUrl } from "./lib/isTrustedUrl";
+import unixify from "unixify";
 
 app.disableHardwareAcceleration();
 
 const remoteMain = require("@electron/remote/main");
 remoteMain.initialize();
+
+// Protect against RPATH-based shared object hijacking on Linux
+if (process.platform === "linux") {
+  // Use absolute paths for libraries
+  const absoluteLibPath = path.resolve(app.getAppPath(), "lib");
+  // Set DT_RUNPATH instead of DT_RPATH
+  process.env.LD_RUN_PATH = absoluteLibPath;
+}
 
 const settings = new Store({ name: "settings" });
 
@@ -89,6 +100,8 @@ const windowPrefs = {
     webSecurity: false,
     contextIsolation: false,
     sandbox: false,
+    media: false,
+    enableRemoteModule: false,
   },
 };
 
@@ -138,6 +151,24 @@ async function createWindow(show = true) {
 
   mainWindow = new BrowserWindow(windowPrefs);
   remoteMain.enable(mainWindow.webContents);
+
+  // Add navigation security controls
+  mainWindow.webContents.on("will-navigate", (event, navigationUrl) => {
+    if (!isTrustedUrl(navigationUrl)) {
+      event.preventDefault();
+      log.warn(`Blocked navigation to: ${navigationUrl}`);
+    }
+  });
+
+  mainWindow.webContents.on("new-window", (event, navigationUrl) => {
+    event.preventDefault();
+    // Handle external links safely through shell.openExternal if trusted
+    if (isTrustedUrl(navigationUrl)) {
+      shell.openExternal(navigationUrl);
+    } else {
+      log.warn(`Blocked new window to: ${navigationUrl}`);
+    }
+  });
 
   // if (IS_DEV) loadReactDevTools(BrowserWindow);
   // open developer console if env vars or args request
@@ -429,6 +460,15 @@ if (!gotTheLock) {
         }
       );
 
+      session.defaultSession.setPermissionRequestHandler(
+        (webContents, permission, callback) => {
+          console.log("permission", permission);
+          if (permission === "geolocation" || permission === "media") {
+            return callback(false); // Deny geolocation
+          }
+        }
+      );
+
       if (launchIntoUpdater) {
         // triggered via stethoscope://update app link
         log.info(`Launching into updater: ${launchIntoUpdater}`);
@@ -503,7 +543,9 @@ app.on("window-all-closed", () => {
 
 ipcMain.on("get:env:basePath", (event, arg) => {
   const dev = process.env.STETHOSCOPE_ENV === "development";
-  event.returnValue = `${dev ? "." : process.resourcesPath}/src/practices`;
+  event.returnValue = unixify(
+    `${dev ? "." : process.resourcesPath}/src/practices`
+  );
 });
 
 ipcMain.on("get:env:isDev", (event, arg) => {

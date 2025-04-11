@@ -13,7 +13,7 @@ extract \nID_LIKE="*(.*)"*\n
 save system.distroIdLike
 
 load output
-extract \nVERSION="*([\d\.]+)[^\n]"*\n
+extract \nVERSION="([^\s]+)
 save system.version
 remove output
 
