@@ -234,7 +234,6 @@ class App extends Component {
   };
 
   onDeviceConnected = ({ data }) => {
-    // TODO: get user profile api (will do if required)
     // store token in safe storage
     const status = ipcRenderer.sendSync("auth:storeToken", data.accessToken);
     // load url from connecting Webapp
@@ -247,6 +246,8 @@ class App extends Component {
         isSprintoAppConnected: true,
         firstName: data.firstName,
       });
+      // reload the app
+      ipcRenderer.send("app:reload");
     }
   };
 
