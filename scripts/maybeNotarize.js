@@ -1,5 +1,5 @@
-const { notarize } = require('electron-notarize')
-const pkg = require('../package.json')
+const { notarize } = require("@electron/notarize");
+const pkg = require("../package.json");
 const {
   APPLE_API_KEY,
   APPLE_API_ISSUER,
@@ -7,48 +7,54 @@ const {
   APPLE_ID_PASS,
   APP_BUNDLE_ID,
   ASC_PROVIDER,
-  CSC_IDENTITY_AUTO_DISCOVERY
-} = process.env
+  CSC_IDENTITY_AUTO_DISCOVERY,
+    APPLE_TEAM_ID,
+} = process.env;
 
-exports.default = async function maybeNotarizing (context) {
+exports.default = async function maybeNotarizing(context) {
   const {
     electronPlatformName,
     appOutDir,
-    packager: { appInfo: { productFilename } }
-  } = context
+    packager: {
+      appInfo: { productFilename },
+    },
+  } = context;
 
-  const missingCreds = !(APPLE_ID || APPLE_API_KEY)
-  const isMac = electronPlatformName === 'darwin'
-  const skipDiscover = CSC_IDENTITY_AUTO_DISCOVERY === 'false'
+  const missingCreds = !(APPLE_ID || APPLE_API_KEY);
+  const isMac = electronPlatformName === "darwin";
+  const skipDiscover = CSC_IDENTITY_AUTO_DISCOVERY === "false";
   // don't attempt to notarize if credentials are missing
   if (!isMac || missingCreds || skipDiscover) {
-    console.log('skipping notarization', { isMac, missingCreds, skipDiscover })
-    return
+    console.log("skipping notarization", { isMac, missingCreds, skipDiscover });
+    return;
   }
 
-  const appName = productFilename
+  const appName = productFilename;
   const params = {
     appBundleId: APP_BUNDLE_ID || pkg.build.appId,
-    appPath: `${appOutDir}/${appName}.app`
-  }
+    appPath: `${appOutDir}/${appName}.app`,
+    tool: 'notarytool',
+    teamId: APPLE_TEAM_ID
+  };
 
   if (APPLE_API_KEY) {
     if (!APPLE_API_KEY || !APPLE_API_ISSUER) {
       throw new Error(
-        'APPLE_API_KEY and APPLE_API_ISSUER env vars are required'
-      )
+        "APPLE_API_KEY and APPLE_API_ISSUER env vars are required"
+      );
     }
-    params.appleApiKey = APPLE_API_KEY
-    params.appleApiIssuer = APPLE_API_ISSUER
+    params.appleApiKey = APPLE_API_KEY;
+    params.appleApiIssuer = APPLE_API_ISSUER;
   } else {
-    params.appleId = APPLE_ID
-    params.appleIdPassword = APPLE_ID_PASS
+    params.appleId = APPLE_ID;
+    params.appleIdPassword = APPLE_ID_PASS;
   }
 
   if (ASC_PROVIDER) {
-    params.ascProvider = ASC_PROVIDER
+    params.ascProvider = ASC_PROVIDER;
   }
 
-  console.log('Notarizing app, coffee time?')
-  return notarize(params)
-}
+
+  console.log("Notarizing app, coffee time?");
+  return notarize(params);
+};

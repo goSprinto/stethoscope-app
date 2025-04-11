@@ -129,6 +129,10 @@ export default {
       if (platform === "manjaro") {
         version = result.system.lsb_version;
       }
+      if (platform === "debian") {
+        version = result.system.debian_version;
+      }
+      
     }
 
     if(platform in args.osVersion){

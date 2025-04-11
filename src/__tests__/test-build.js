@@ -5,14 +5,13 @@ const fs = require('fs')
 const path = require('path')
 const assert = require('assert')
 const util = require('util')
-const chalk = require('chalk')
 const exec = util.promisify(require('child_process').exec)
 const pkg = require('../../package.json')
 
 const configHandle = fs.readFileSync(path.resolve(__dirname, '../practices/config.yaml'), 'utf8')
 const config = yaml.load(configHandle)
 
-const policyHandle = fs.readFileSync(path.resolve(__dirname, '../practices/policy.yaml'), 'utf8')
+const policyHandle = fs.readFileSync(path.resolve(__dirname, '../__tests__/policy-test.yaml'), 'utf8')
 const policy = yaml.load(policyHandle)
 
 policy.stethoscopeVersion = `>=${pkg.version}`
@@ -59,44 +58,44 @@ function average (data) {
   return sum / data.length
 }
 
-console.log(chalk.magenta('\n========================== STETHOSCOPE SMOKE TEST =========================='))
+console.log('\n========================== STETHOSCOPE SMOKE TEST ==========================')
 
 async function main () {
   try {
     await app.start()
 
-    console.log(chalk.yellow('\n============================ STANDALONE TESTS ============================\n'))
+    console.log('\n============================ STANDALONE TESTS ============================\n')
 
     const isVisible = await app.browserWindow.isVisible()
     assert.strict.equal(isVisible, true)
-    console.log(chalk.green('✓'), 'app is visible')
+    console.log('✓', 'app is visible')
 
     const audit = await app.client.auditAccessibility()
     console.log(audit.message)
     assert.strict.equal(audit.failed, false)
-    console.log(chalk.green('✓'), 'app passes accessibility audit')
+    console.log('✓', 'app passes accessibility audit')
 
     const title = await app.client.getTitle()
     assert.strict.equal(title, `Stethoscope (v${pkg.version})`)
-    console.log(chalk.green('✓'), 'correct version in title')
+    console.log('✓', 'correct version in title')
 
     const devToolsOpen = await app.browserWindow.isDevToolsOpened()
     assert.strict.equal(devToolsOpen, false)
-    console.log(chalk.green('✓'), 'dev tools are closed')
+    console.log('✓', 'dev tools are closed')
 
     await app.client.waitUntilTextExists('.last-updated', 'Last scanned by Stethoscope', 10000)
-    console.log(chalk.green('✓'), 'app scan successful')
+    console.log('✓', 'app scan successful')
 
-    console.log(chalk.yellow('\n============================ REMOTE SCANNING ============================\n'))
+    console.log('\n============================ REMOTE SCANNING ============================\n')
 
     const response = await scan('stethoscope://main')
     if (response !== false) {
       const timing = Math.round(response.extensions.timing.total / 1000 * 100) / 100
-      console.log(chalk.green('✓'), `[Remote:Application]\tscan from trusted 'stethoscope://main' successful\t${chalk.yellow(`${timing} seconds`)}`)
+      console.log('✓', `[Remote:Application]\tscan from trusted 'stethoscope://main' successful\t${`${timing} seconds`}`)
     }
 
     if (await scan('https://malicious.ru') === false) {
-      console.log(chalk.green('✓'), '[Remote:Untrusted]\tscan from untrusted \'https://malicious.ru\' failed')
+      console.log('✓', '[Remote:Untrusted]\tscan from untrusted \'https://malicious.ru\' failed')
     }
 
     if (config.testHosts && Array.isArray(config.testHosts)) {
@@ -104,9 +103,9 @@ async function main () {
         const response = await scan(url)
         if (response !== false) {
           const timing = Math.round(response.extensions.timing.total / 1000 * 100) / 100
-          console.log(chalk.green('✓'), `[Remote:${label}]\tscan from test URL '${url}' successful\t${chalk.yellow(`${timing} seconds`)}`)
+          console.log('✓', `[Remote:${label}]\tscan from test URL '${url}' successful\t${`${timing} seconds`}`)
         } else {
-          console.log(chalk.red('x'), `${url} - ${label} failed`)
+          console.log('x', `${url} - ${label} failed`)
         }
       }
     }
@@ -114,13 +113,13 @@ async function main () {
     const LOAD = 30
     const timings = []
 
-    console.log(chalk.yellow('\n============================ LOAD TESTS ============================\n'))
+    console.log('\n============================ LOAD TESTS ============================\n')
 
     for (let i = 0; i < LOAD; i++) {
       const response = await scan('stethoscope://main')
       const timing = Math.round(response.extensions.timing.total / 1000 * 100) / 100
       timings.push(timing)
-      console.log(chalk.green('✓'), `[LOADTEST ${i + 1}]\tscan took ${timing} seconds`)
+      console.log('✓', `[LOADTEST ${i + 1}]\tscan took ${timing} seconds`)
       // await sleep(.5)
     }
 
@@ -128,21 +127,21 @@ async function main () {
 
     const totalProcessingTime = timings.reduce((p, c) => p + parseFloat(c), 0)
 
-    console.log('\n', chalk.green('✓'), 'load test passed\n')
-    console.log(chalk.cyan(`Load timing (seconds) for ${LOAD} requests:\n`))
+    console.log('\n', '✓', 'load test passed\n')
+    console.log(`Load timing (seconds) for ${LOAD} requests:\n`)
 
-    console.log('\t', chalk.cyan('Average:\t'), round(average(timings)))
-    console.log('\t', chalk.cyan('SD:\t\t'), round(standardDeviation(timings)))
-    console.log('\t', chalk.cyan('Longest:\t'), timings[timings.length - 1])
-    console.log('\t', chalk.cyan('Shortest:\t'), timings[0])
-    console.log('\t', chalk.cyan('Total:\t\t'), round(totalProcessingTime))
+    console.log('\t', 'Average:\t', round(average(timings)))
+    console.log('\t', 'SD:\t\t', round(standardDeviation(timings)))
+    console.log('\t', 'Longest:\t', timings[timings.length - 1])
+    console.log('\t', 'Shortest:\t', timings[0])
+    console.log('\t', 'Total:\t\t', round(totalProcessingTime))
 
-    console.log('\n', chalk.green('✓'), 'ALL TESTS PASSED!')
+    console.log('\n', '✓', 'ALL TESTS PASSED!')
 
     await app.stop()
     process.exit(0)
   } catch (e) {
-    console.error(chalk.red('X'), 'Test failed', e.message)
+    console.error('X', 'Test failed', e.message)
     await app.stop()
     process.exit(1)
   }

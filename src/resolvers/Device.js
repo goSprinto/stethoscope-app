@@ -38,6 +38,11 @@ const Device = {
     }
   },
 
+  async serialNumber (root, args, context) {
+    const result = await kmd('hardware', context)
+    return result.system.serialNumber
+  },
+
   async deviceName (root, args, context) {
     const result = await kmd('hostname', context)
     return result.system.hostname
@@ -55,7 +60,12 @@ const Device = {
 
   async osVersion (root, args, context) {
     const result = await kmd('os', context)
-    const version = result.system.version || result.system.lsb_version
+    const distroId = result.system.distroId;
+    let version = result.system.version || result.system.lsb_version;
+    if(distroId == 'debian'){
+      version = result.system.debian_version;
+    }
+
     const [major, minor, patch = 0] = String(version).split('.')
     return `${major}.${minor}.${patch}`
   },

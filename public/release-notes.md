@@ -1,3 +1,5 @@
-Features:
+Fixes:
 
-- Added support for detecting Manjaro OS version
+- updated the dependencies to the latest versions
+- Added CSP headers to the server
+- inspectionQuery is disabled by default

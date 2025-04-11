@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    svg {
+        display: inline;
+        vertical-align: baseline;
+    }
+}
+
+@layer utilities {
+    .visible {
+        visibility: visible;
+    }
+
+    .invisible {
+        visibility: hidden;
+    }
+}
