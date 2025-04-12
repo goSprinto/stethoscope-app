@@ -377,7 +377,7 @@ class Device extends Component {
   };
 
   showWelcomeDescription = (event) => {
-    event.preventDefault()
+    event.preventDefault();
     this.setState({
       showDescription: !this.state.showDescription,
     });
