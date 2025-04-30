@@ -202,7 +202,8 @@ jobs:
           & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v "$file"
 
           # sign dll files from the dist folder
-          $dll_files = Get-ChildItem -Path dist -Filter *.dll
+          Write-Output "Signing dll files..."
+          $dll_files = Get-ChildItem -Path dist/windows-unpacked -Filter *.dll
           Write-Output "Signing $dll_files..."
           # print the dll files
           Write-Output $dll_files
