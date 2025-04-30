@@ -203,7 +203,7 @@ jobs:
 
           # sign dll files from the dist folder
           Write-Output "Signing dll files..."
-          $dll_files = Get-ChildItem -Path dist/windows-unpacked -Filter *.dll
+          $dll_files = Get-ChildItem -Path dist/win-unpacked -Filter *.dll
           Write-Output "Signing $dll_files..."
           # print the dll files
           Write-Output $dll_files
