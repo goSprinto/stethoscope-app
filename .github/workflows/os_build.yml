@@ -208,8 +208,9 @@ jobs:
           # print the dll files
           Write-Output $dll_files
           foreach ($dll_file in $dll_files) {
-            Write-Output "Signing $dll_file..."
-            & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v "$dll_file"
+            $dll_file_path = -join($pwd, "/", "dist/win-unpacked/", $dll_file);
+            Write-Output "Signing $dll_file_path..."
+            & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v "$dll_file_path"
           }
         
       - name: Save artifacts
