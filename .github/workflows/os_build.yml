@@ -185,7 +185,7 @@ jobs:
           # Sign DLLs before packaging
           $dll_files = Get-ChildItem -Path dist/win-unpacked -Filter *.dll
           foreach ($dll_file in $dll_files) {
-            dll_file_path = -join($pwd, "/", "dist/win-unpacked/", $dll_file);
+            $dll_file_path = -join($pwd, "/", "dist/win-unpacked/", $dll_file);
             & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v $dll_file_path
           }
           # Continue with packaging
