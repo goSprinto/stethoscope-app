@@ -81,6 +81,9 @@ jobs:
 
       - name: Install dependencies
         run: yarn install -y
+        
+      - name: Install app dependencies
+        run: sudo apt-get install -y chrpath patchelf
 
       - name: Cache dependencies
         uses: actions/cache@v4
