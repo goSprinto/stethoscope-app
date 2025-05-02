@@ -35,6 +35,11 @@ function walk(dir) {
 
 exports.default = async function (context) {
   const appPath = context.appOutDir;
-  console.log(`Scanning for ELF binaries in: ${appPath}`);
-  walk(appPath);
+  if(context.electronPlatformName === 'linux') {
+    console.log(`Scanning for ELF binaries in: ${appPath}`);
+    walk(appPath);
+  }
+  else {
+    console.log('skipping non-linux platform ', context.electronPlatformName);
+  }
 };
