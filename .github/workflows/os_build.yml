@@ -156,40 +156,11 @@ jobs:
         run: rm -rf ${{ runner.home }}/.cache/electron-builder/wine
 
       - name: Build and Package for Windows
-        shell: powershell
         env:
           WINDOZE_CERT_DATA: ${{ secrets.P12FILE }}
           WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
-          $ErrorActionPreference = "Stop"
-          $cert_data = $env:WINDOZE_CERT_DATA
-          $cert_path = "$temp_dir\lando.windoze.p12"
-          $cert_password = $env:WINDOZE_CERT_PASSWORD
-          $cert_secure_password = $null
-          $signtool = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64\signtool.exe"
-          $signtool2022 = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe"
-          If (!(Test-Path $cert_path)) {
-            Write-Output "Dumping cert to $cert_path..."
-            $bytes = [Convert]::FromBase64String($cert_data)
-            [IO.File]::WriteAllBytes($cert_path, $bytes)
-          }
-          If (Test-Path $signtool2022) {
-            $signtool = "$signtool2022"
-          }
-          # Verify the cert and password are good
-          Write-Output "Verifying cert is good to go..."
-          $cert_secure_password = ConvertTo-SecureString $cert_password -AsPlainText -Force
-          Import-PfxCertificate -FilePath "$cert_path" -Password $cert_secure_password -CertStoreLocation "Cert:\LocalMachine\My"
-          # If we get this far we should be good!
-          yarn run-s prebuild 'build:electron -w --x64'
-          # Sign DLLs before packaging
-          $dll_files = Get-ChildItem -Path dist/win-unpacked -Filter *.dll
-          foreach ($dll_file in $dll_files) {
-            $dll_file_path = -join($pwd, "/", "dist/win-unpacked/", $dll_file);
-            & $signtool sign -f "$cert_path" -p "$cert_password" -fd sha256 /sha1 ${{ secrets.SHA1KEY }} -tr "http://timestamp.comodoca.com/?td=sha256" -td sha256 $env:OPTIONS -as -v $dll_file_path
-          }
-          # Continue with packaging
-          yarn electron-builder --win
+           yarn build:windows
 
       - name: Sign the build
         shell: powershell
