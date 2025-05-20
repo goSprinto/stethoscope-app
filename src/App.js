@@ -187,7 +187,7 @@ class App extends Component {
 
     if (
       policyLastSyncedOn === null &&
-      this.state.isSprintoAppConnected === true
+      this.state.isSprintoAppConnected === true && Object.keys(this.state.policy).length === 0
     ) {
       return true;
     }
@@ -437,30 +437,81 @@ class App extends Component {
     return new Promise((resolve, reject) =>
       this.setState({ loading: true }, async () => {
         try {
+          let policy = null;
           // Fetch the policy from the API directly
-          const baseUrl = settings.get("sprintoAPPBaseUrl");
-          let policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+          if (this.state.isSprintoAppConnected) {
+            const baseUrl = settings.get("sprintoAPPBaseUrl");
+            policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+          }
 
           if (!policy) {
             policy = {};
-            log.warn("Failed to fetch policy from the API");
           }
 
+          // Get the base path and normalize it for the current platform
           const currentBasePath = ipcRenderer.sendSync("get:env:basePath");
-          const files = await glob(`${currentBasePath}/*.yaml`);
+          const normalizedBasePath = path.normalize(currentBasePath);
+
+          // Configure glob options for better cross-platform support
+          const globOptions = {
+            absolute: true,
+            caseSensitive: false, // Handle case-insensitive file systems (Windows)
+            dot: false, // Don't include dot files
+            follow: false, // Don't follow symlinks
+            ignore: ['**/node_modules/**'], // Ignore node_modules
+            onlyFiles: true, // Only return files, not directories
+          };
+
+          // Use try-catch for glob operation
+          let files;
+          try {
+            files = await glob(`${normalizedBasePath}/*.yaml`, globOptions);
+          } catch (globError) {
+            log.error('Error reading YAML files:', globError);
+            throw new Error('Failed to read configuration files');
+          }
 
           if (!files.length) {
-            reject("No files found");
+            log.warn('No YAML files found in:', normalizedBasePath);
+            reject("No configuration files found");
             return;
           }
 
           const configs = {};
-          files.forEach((filePath) => {
-            const parts = path.parse(filePath);
-            const handle = readFileSync(filePath, "utf8");
-            configs[parts.name.split(".").shift()] = yaml.load(handle);
-          });
-          this.setState({ ...configs, policy, loading: false }, () => {
+          // Process files with error handling
+          for (const filePath of files) {
+            try {
+              const parts = path.parse(filePath);
+              const fileContent = readFileSync(filePath, "utf8");
+              
+              // Validate YAML content
+              try {
+                const config = yaml.load(fileContent);
+                if (!config) {
+                  log.warn(`Empty or invalid YAML in file: ${filePath}`);
+                  continue;
+                }
+                configs[parts.name.split(".").shift()] = config;
+              } catch (yamlError) {
+                log.error(`Error parsing YAML file ${filePath}:`, yamlError);
+                continue; // Skip invalid YAML files
+              }
+            } catch (fileError) {
+              log.error(`Error reading file ${filePath}:`, fileError);
+              continue; // Skip files that can't be read
+            }
+          }
+
+          // Check if we have any valid configs
+          if (Object.keys(configs).length === 0) {
+            throw new Error('No valid configuration files found');
+          }
+
+          this.setState({ 
+            ...configs, 
+            policy, 
+            loading: false 
+          }, () => {
             if (!this.state.scanIsRunning) {
               this.handleScan();
             }
@@ -468,8 +519,13 @@ class App extends Component {
 
           resolve();
         } catch (error) {
+          const errorMessage = error.message || "Unexpected error occurred";
+          log.error('Error in loadPractices:', error);
           this.setState({
-            error: error.message || "Unexpected error occurred",
+            error: { 
+              message: errorMessage,
+              details: error.stack
+            },
             loading: false,
           });
           reject(error);
@@ -535,7 +591,11 @@ class App extends Component {
    */
   handleScan = () => {
     const { policy } = this.state;
-    this.setState({ loading: true, scanIsRunning: true }, () => {
+    this.setState({ 
+      loading: true, 
+      scanIsRunning: true,
+      scanStartTime: Date.now()
+    }, () => {
       if (Object.keys(policy).length) {
         Stethoscope.validate(policy)
           .then(({ device, result, timing }) => {
@@ -556,11 +616,15 @@ class App extends Component {
             );
           })
           .catch((err) => {
-            console.log(err);
-            log.error(JSON.stringify(err));
-            let message = new Error(err.message);
-            if (err.errors) message = new Error(JSON.stringify(err.errors));
-            this.handleErrorGraphQL({ message });
+            log.error('Scan error:', err);
+            this.setState({
+              scanIsRunning: false,
+              loading: false,
+              error: { 
+                message: 'Scan failed. Please try again.',
+                details: err.message
+              }
+            });
           });
       } else {
         // now run without policy, get device info
@@ -706,7 +770,6 @@ class App extends Component {
           lastScanTime,
         });
         const lastScanFriendly = moment(lastScanTime).fromNow();
-
         content = (
           <div>
             <Device
