@@ -162,6 +162,7 @@ jobs:
         env:
           WINDOZE_CERT_DATA: ${{ secrets.P12FILE }}
           WINDOZE_CERT_PASSWORD: ${{ secrets.PASSWORD }}
+          SHA1KEY: ${{ secrets.SHA1KEY }}
         run: |
            yarn build:windows
 
