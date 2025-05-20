@@ -448,70 +448,21 @@ class App extends Component {
             policy = {};
           }
 
-          // Get the base path and normalize it for the current platform
           const currentBasePath = ipcRenderer.sendSync("get:env:basePath");
-          const normalizedBasePath = path.normalize(currentBasePath);
-
-          // Configure glob options for better cross-platform support
-          const globOptions = {
-            absolute: true,
-            caseSensitive: false, // Handle case-insensitive file systems (Windows)
-            dot: false, // Don't include dot files
-            follow: false, // Don't follow symlinks
-            ignore: ['**/node_modules/**'], // Ignore node_modules
-            onlyFiles: true, // Only return files, not directories
-          };
-
-          // Use try-catch for glob operation
-          let files;
-          try {
-            files = await glob(`${normalizedBasePath}/*.yaml`, globOptions);
-          } catch (globError) {
-            log.error('Error reading YAML files:', globError);
-            throw new Error('Failed to read configuration files');
-          }
+          const files = await glob(`${currentBasePath}/*.yaml`);
 
           if (!files.length) {
-            log.warn('No YAML files found in:', normalizedBasePath);
-            reject("No configuration files found");
+            reject("No files found");
             return;
           }
 
           const configs = {};
-          // Process files with error handling
-          for (const filePath of files) {
-            try {
-              const parts = path.parse(filePath);
-              const fileContent = readFileSync(filePath, "utf8");
-              
-              // Validate YAML content
-              try {
-                const config = yaml.load(fileContent);
-                if (!config) {
-                  log.warn(`Empty or invalid YAML in file: ${filePath}`);
-                  continue;
-                }
-                configs[parts.name.split(".").shift()] = config;
-              } catch (yamlError) {
-                log.error(`Error parsing YAML file ${filePath}:`, yamlError);
-                continue; // Skip invalid YAML files
-              }
-            } catch (fileError) {
-              log.error(`Error reading file ${filePath}:`, fileError);
-              continue; // Skip files that can't be read
-            }
-          }
-
-          // Check if we have any valid configs
-          if (Object.keys(configs).length === 0) {
-            throw new Error('No valid configuration files found');
-          }
-
-          this.setState({ 
-            ...configs, 
-            policy, 
-            loading: false 
-          }, () => {
+          files.forEach((filePath) => {
+            const parts = path.parse(filePath);
+            const handle = readFileSync(filePath, "utf8");
+            configs[parts.name.split(".").shift()] = yaml.load(handle);
+          });
+          this.setState({ ...configs, policy, loading: false }, () => {
             if (!this.state.scanIsRunning) {
               this.handleScan();
             }
