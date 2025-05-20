@@ -16,12 +16,6 @@ function getCertificateInfo() {
     const certData = process.env.WINDOZE_CERT_DATA;
     const sha1Key = process.env.SHA1KEY;
 
-    console.log("certPath", certPath);
-    console.log("certPassword", certPassword);
-    console.log("sha1Key", sha1Key);
-    console.log("certData", certData);
-    console.log("tempDir", tempDir);
-
     if (!certData || !certPassword || !sha1Key) {
         throw new Error('Missing required environment variables for signing');
     }
