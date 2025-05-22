@@ -119,9 +119,10 @@ module.exports = async function (context) {
             signAllDlls(appOutDir);
             console.log('Windows signing completed successfully');
         } else if (platform === 'linux') {
-            console.log('Removing RPATH from Linux binaries...');
-            walk(appOutDir);
-            console.log('Linux RPATH removal completed successfully');
+            console.log(`Skipping afterPack for platform: ${platform}`);
+            // console.log('Removing RPATH from Linux binaries...');
+            // walk(appOutDir);
+            // console.log('Linux RPATH removal completed successfully');
         } else {
             console.log(`Skipping afterPack for platform: ${platform}`);
         }
