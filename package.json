@@ -137,7 +137,7 @@
     "directories": {
       "buildResources": "public"
     },
-    "afterPack": "scripts/remove-rpath.js",
+    "afterPack": "scripts/afterPack.js",
     "files": [
       "bitlocker-status/*",
       "build/**",
