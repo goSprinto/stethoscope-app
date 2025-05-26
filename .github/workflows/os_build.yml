@@ -65,7 +65,7 @@ jobs:
           MACOS_TEAMID: ${{ secrets.MACTEAMID }}
         run: |
           for dmg_file in dist/*.dmg; do
-            xcrun notarytool submit dist/YourApp.dmg \
+            xcrun notarytool submit $dmg_file \
               --apple-id $MACOS_APPLE_ID \
               --password $MACOS_PASSWORD \
               --team-id $MACOS_TEAMID \
