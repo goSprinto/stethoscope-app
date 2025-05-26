@@ -57,6 +57,20 @@ jobs:
             /usr/bin/codesign --force -s "$MACOS_TEAMID" "$dmg_file" -v
             codesign --verify --deep --strict --verbose=2 "$dmg_file"
           done
+          
+      - name: Notarize app
+        env: 
+          MACOS_APPLE_ID: ${{ secrets.NOTERYUSER }}
+          MACOS_PASSWORD: ${{ secrets.NOTERYPASSWORD }}
+          MACOS_TEAMID: ${{ secrets.MACTEAMID }}
+        run: |
+          for dmg_file in dist/*.dmg; do
+            xcrun notarytool submit dist/YourApp.dmg \
+              --apple-id $MACOS_APPLE_ID \
+              --password $MACOS_PASSWORD \
+              --team-id $MACOS_TEAMID \
+              --wait
+          done
 
       - name: Save artifacts
         uses: actions/upload-artifact@v4
