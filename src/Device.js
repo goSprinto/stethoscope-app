@@ -460,10 +460,15 @@ class Device extends Component {
               {actions}
             </div>
           ) : (
-            <div className="grid gap-2 grid-cols-2 grid-rows-3 mt-8">
-              <div className="text-center text-sm text-gray-500">
-                Policy is not loaded. Please try again later. Refresh the application.
-              </div>
+            <div className="flex items-center justify-center mt-8 text-sm text-gray-500">
+                <strong>
+                  <ActionIcon
+                    className="action-icon"
+                    size="15px"
+                    variant={VARIANTS.BLOCK}
+                  />{" "}
+                  <span>Policy is not loaded. Please try again later. Refresh the application.</span>
+                </strong>
             </div>
           )}
         </div>
