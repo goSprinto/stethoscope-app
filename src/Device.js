@@ -455,9 +455,15 @@ class Device extends Component {
             lastScanDuration={this.props.lastScanDuration}
             platformName={device.platformName}
           />
-          {actions.length > 0 && (
+          {actions.length > 0 ? (
             <div className="grid gap-2 grid-cols-2 grid-rows-3 mt-8">
               {actions}
+            </div>
+          ) : (
+            <div className="grid gap-2 grid-cols-2 grid-rows-3 mt-8">
+              <div className="text-center text-sm text-gray-500">
+                Policy is not loaded. Please try again later. Refresh the application.
+              </div>
             </div>
           )}
         </div>

@@ -594,7 +594,6 @@ ipcMain.on("api:getPolicy", async (event, baseUrl) => {
 
     event.returnValue = await ApiService.getPolicy(baseUrl, token, isDev);
   } catch (err) {
-    log.error("api:getPolicy crash", err);
     event.returnValue = null;
   }
 });
@@ -614,7 +613,6 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
     await ApiService.reportDevice(baseUrl, token, data, isDev);
     event.returnValue = true;
   } catch (err) {
-    log.error("api:reportDevice crash", err);
     event.returnValue = false;
   }
 });
