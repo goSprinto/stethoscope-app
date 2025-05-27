@@ -187,7 +187,7 @@ class App extends Component {
 
     if (
       policyLastSyncedOn === null &&
-      this.state.isSprintoAppConnected === true
+      this.state.isSprintoAppConnected === true && Object.keys(this.state.policy).length === 0
     ) {
       return true;
     }
@@ -437,13 +437,15 @@ class App extends Component {
     return new Promise((resolve, reject) =>
       this.setState({ loading: true }, async () => {
         try {
+          let policy = null;
           // Fetch the policy from the API directly
-          const baseUrl = settings.get("sprintoAPPBaseUrl");
-          let policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+          if (this.state.isSprintoAppConnected) {
+            const baseUrl = settings.get("sprintoAPPBaseUrl");
+            policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+          }
 
           if (!policy) {
             policy = {};
-            log.warn("Failed to fetch policy from the API");
           }
 
           const currentBasePath = ipcRenderer.sendSync("get:env:basePath");
@@ -468,8 +470,13 @@ class App extends Component {
 
           resolve();
         } catch (error) {
+          const errorMessage = error.message || "Unexpected error occurred";
+          log.error('Error in loadPractices:', error);
           this.setState({
-            error: error.message || "Unexpected error occurred",
+            error: { 
+              message: errorMessage,
+              details: error.stack
+            },
             loading: false,
           });
           reject(error);
@@ -535,7 +542,11 @@ class App extends Component {
    */
   handleScan = () => {
     const { policy } = this.state;
-    this.setState({ loading: true, scanIsRunning: true }, () => {
+    this.setState({ 
+      loading: true, 
+      scanIsRunning: true,
+      scanStartTime: Date.now()
+    }, () => {
       if (Object.keys(policy).length) {
         Stethoscope.validate(policy)
           .then(({ device, result, timing }) => {
@@ -556,11 +567,15 @@ class App extends Component {
             );
           })
           .catch((err) => {
-            console.log(err);
-            log.error(JSON.stringify(err));
-            let message = new Error(err.message);
-            if (err.errors) message = new Error(JSON.stringify(err.errors));
-            this.handleErrorGraphQL({ message });
+            log.error('Scan error:', err);
+            this.setState({
+              scanIsRunning: false,
+              loading: false,
+              error: { 
+                message: 'Scan failed. Please try again.',
+                details: err.message
+              }
+            });
           });
       } else {
         // now run without policy, get device info
@@ -706,7 +721,6 @@ class App extends Component {
           lastScanTime,
         });
         const lastScanFriendly = moment(lastScanTime).fromNow();
-
         content = (
           <div>
             <Device

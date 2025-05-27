@@ -49,12 +49,14 @@ app.disableHardwareAcceleration();
 const remoteMain = require("@electron/remote/main");
 remoteMain.initialize();
 
+
 // Protect against RPATH-based shared object hijacking on Linux
 if (process.platform === "linux") {
   // Use absolute paths for libraries
   const absoluteLibPath = path.resolve(app.getAppPath(), "lib");
   // Set DT_RUNPATH instead of DT_RPATH
   process.env.LD_RUN_PATH = absoluteLibPath;
+  app.commandLine.appendSwitch('no-sandbox');
 }
 
 const settings = new Store({ name: "settings" });
@@ -117,6 +119,7 @@ const BASE_URL =
 // process command line arguments
 let enableDebugger = process.argv.find((arg) => arg.includes("enableDebugger"));
 const DEBUG_MODE = !!process.env.STETHOSCOPE_DEBUG;
+
 
 const focusOrCreateWindow = (mainWindow) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -591,7 +594,6 @@ ipcMain.on("api:getPolicy", async (event, baseUrl) => {
 
     event.returnValue = await ApiService.getPolicy(baseUrl, token, isDev);
   } catch (err) {
-    log.error("api:getPolicy crash", err);
     event.returnValue = null;
   }
 });
@@ -611,9 +613,17 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
     await ApiService.reportDevice(baseUrl, token, data, isDev);
     event.returnValue = true;
   } catch (err) {
-    log.error("api:reportDevice crash", err);
     event.returnValue = false;
   }
 });
+
+ipcMain.on("app:reload", () => {
+  if (mainWindow) {
+    mainWindow.reload();
+  } else {
+    mainWindow = focusOrCreateWindow(mainWindow);
+  }
+});
+
 
 export {};

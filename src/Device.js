@@ -276,7 +276,7 @@ class Device extends Component {
 
   actions(actions, type, device) {
     const status = type === "done" ? "PASS" : "FAIL";
-
+  
     return actions.map((action, index) => {
       const actionProps = {
         action,
@@ -413,14 +413,18 @@ class Device extends Component {
     if (scanResult.status !== "PASS") {
       deviceClass = scanResult.status === "NUDGE" ? "warning" : "critical";
     }
+    
+    let actions = [];
 
-    const actions = [
-      ...this.actions(device.error, "error", device),
-      ...this.actions(device.unknown, "unknown", device),
-      ...this.actions(device.critical, "critical", device),
-      ...this.actions(device.suggested, "suggested", device),
-      ...this.actions(device.done, "done", device),
-    ];
+    if(this.props.policy && Object.keys(this.props.policy).length > 0) {
+      actions = [
+        ...this.actions(device.error, "error", device),
+        ...this.actions(device.unknown, "unknown", device),
+        ...this.actions(device.critical, "critical", device),
+        ...this.actions(device.suggested, "suggested", device),
+        ...this.actions(device.done, "done", device),
+      ];
+    }
 
     return (
       <div className="device-wrapper">
@@ -451,9 +455,22 @@ class Device extends Component {
             lastScanDuration={this.props.lastScanDuration}
             platformName={device.platformName}
           />
-          <div className="grid gap-2 grid-cols-2 grid-rows-3 mt-8">
-            {actions}
-          </div>
+          {actions.length > 0 ? (
+            <div className="grid gap-2 grid-cols-2 grid-rows-3 mt-8">
+              {actions}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center mt-8 text-sm text-gray-500">
+                <strong>
+                  <ActionIcon
+                    className="action-icon"
+                    size="15px"
+                    variant={VARIANTS.BLOCK}
+                  />{" "}
+                  <span>Policy is not loaded. Please try again later. Refresh the application.</span>
+                </strong>
+            </div>
+          )}
         </div>
       </div>
     );
