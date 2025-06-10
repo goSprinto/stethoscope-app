@@ -125,7 +125,7 @@ export default {
     // For linux, use the distro id to get the correct version
     // to compare against
     if (platform === 'linux') {
-      platform = result.system.distroId
+      platform = result.system?.distroId || 'unknown';  // Add safe access
       if (platform === "manjaro") {
         version = result.system.lsb_version;
       }

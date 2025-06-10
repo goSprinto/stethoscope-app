@@ -60,9 +60,9 @@ const Device = {
 
   async osVersion (root, args, context) {
     const result = await kmd('os', context)
-    const distroId = result.system.distroId;
+    const distroId = result.system?.distroId || 'unknown';
     let version = result.system.version || result.system.lsb_version;
-    if(distroId == 'debian'){
+    if(distroId === 'debian'){
       version = result.system.debian_version;
     }
 
