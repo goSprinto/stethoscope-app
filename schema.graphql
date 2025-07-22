@@ -274,6 +274,7 @@ input PlatformStringRequirement {
 }
 
 input PlatformBracketRequirement {
+  platforms: [VersionBracketV2]
   darwin: VersionBracket
   win32: VersionBracket
   ubuntu: VersionBracket
@@ -303,6 +304,12 @@ input PlatformBoolRequirement {
 }
 
 input VersionBracket {
+  ok: Semver
+  nudge: Semver
+}
+
+input VersionBracketV2 {
+  name: String
   ok: Semver
   nudge: Semver
 }
