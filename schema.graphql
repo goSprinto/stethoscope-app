@@ -274,22 +274,7 @@ input PlatformStringRequirement {
 }
 
 input PlatformBracketRequirement {
-  darwin: VersionBracket
-  win32: VersionBracket
-  ubuntu: VersionBracket
-  fedora: VersionBracket
-  debian: VersionBracket
-  linuxmint: VersionBracket
-  kali: VersionBracket
-  pop: VersionBracket
-  manjaro: VersionBracket
-  linux: VersionBracket
-  awsWorkspace: VersionBracket
-  all: VersionBracket
-  elementary: VersionBracket
-  neon: VersionBracket
-  ol: VersionBracket
-  Deepin: VersionBracket
+  platforms: [VersionBracketV2]
 }
 
 # a platform boolean requirement defines a target boolean value for specific platforms
@@ -303,6 +288,12 @@ input PlatformBoolRequirement {
 }
 
 input VersionBracket {
+  ok: Semver
+  nudge: Semver
+}
+
+input VersionBracketV2 {
+  name: String
   ok: Semver
   nudge: Semver
 }

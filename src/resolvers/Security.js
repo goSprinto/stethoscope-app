@@ -135,21 +135,26 @@ export default {
       
     }
 
-    if(platform in args.osVersion){
-      const { ok, nudge } = Object(args.osVersion[platform])
-      // Ubuntu versions look like 18.04.5. Convert it to
-      // 18.4.5 so that semver likes it.
-      const semverVersion = String(version).split('.').map(i => parseInt(i)).join('.')
+    const platformBracket = args.osVersion.platforms.find(
+        (p) => p.name === platform
+      );
+   
+    if (!platformBracket) return UNKNOWN;
 
-      if (semver.satisfies(semver.coerce(semverVersion), ok)) {
-        return true
-      } else if (semver.satisfies(semver.coerce(semverVersion), nudge)) {
-        return NUDGE
-      } else {
-        return false
-      }
+    const { ok, nudge } = Object(platformBracket);
+    // Ubuntu versions look like 18.04.5. Convert it to
+    // 18.4.5 so that semver likes it.
+    const semverVersion = String(version)
+      .split(".")
+      .map((i) => parseInt(i))
+      .join(".");
+
+    if (semver.satisfies(semver.coerce(semverVersion), ok)) {
+      return true;
+    } else if (semver.satisfies(semver.coerce(semverVersion), nudge)) {
+      return NUDGE;
     } else {
-      return UNKNOWN
+      return false;
     }
   },
 
