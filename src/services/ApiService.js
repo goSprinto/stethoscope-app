@@ -64,7 +64,7 @@ export default class ApiService {
     try {
       const response = await this.makeRequest({
         method: 'get',
-        url: `${baseUrl}/drsprinto/api/v1/policyConfiguration`,
+        url: `${baseUrl}/drsprinto/api/v1/policyConfigurationWithDynamicOS`,
         headers: {
           Authorization: `Bearer ${token}`,
         }
