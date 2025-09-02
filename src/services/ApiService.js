@@ -46,6 +46,7 @@ export default class ApiService {
         data: { data },
         headers: {
           Authorization: `Bearer ${token}`,
+          "User-Agent": process.env.USER_AGENT,
         }
       });
     
@@ -67,6 +68,7 @@ export default class ApiService {
         url: `${baseUrl}/drsprinto/api/v1/policyConfigurationWithDynamicOS`,
         headers: {
           Authorization: `Bearer ${token}`,
+          "User-Agent": process.env.USER_AGENT,
         }
       });
       
