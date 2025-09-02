@@ -5,7 +5,6 @@ const API_TIMEOUT = 10000; // 10 seconds
 const API_RETRY_DELAY = 1000; // 1 second
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-const USER_AGENT = "DrSprinto/v1";
 
 export default class ApiService {
   static async makeRequest(config, retryCount = 0) {
@@ -47,7 +46,7 @@ export default class ApiService {
         data: { data },
         headers: {
           Authorization: `Bearer ${token}`,
-          "User-Agent": USER_AGENT,
+          "User-Agent": process.env.USER_AGENT,
         }
       });
     
@@ -69,7 +68,7 @@ export default class ApiService {
         url: `${baseUrl}/drsprinto/api/v1/policyConfigurationWithDynamicOS`,
         headers: {
           Authorization: `Bearer ${token}`,
-          "User-Agent": USER_AGENT,
+          "User-Agent": process.env.USER_AGENT,
         }
       });
       
