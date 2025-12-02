@@ -113,8 +113,9 @@ class Action extends Component {
       // display the highest minimum version
       // if advanced semver requirement is passed (e.g. >1.2.3 || < 3.0.0)
       const { distroName } = device;
-      const { ok } =
-        distroName in policy[key] ? policy[key][distroName] : { ok: "" };
+      const { ok } = policy?.[key]?.platforms?.find(
+        (obj) => obj.name === distroName
+      ) || { ok: "" };
       const recommended = getRecommendedVersion(ok);
 
       return new Handlebars.SafeString(
