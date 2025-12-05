@@ -253,5 +253,5 @@ jobs:
       - name: Push artifacts to S3
         run: |
             mkdir artifacts && \
-            cp dist/*.{yml,exe,dmg,AppImage} artifacts/ && \
+            cp dist/*.{yml,dmg,AppImage} artifacts/ && \
             aws s3 sync artifacts s3://drsprinto-build/${{ github.event.inputs.stethoscope_repo_branch_name }}
