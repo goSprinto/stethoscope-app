@@ -113,6 +113,10 @@ export default async function startServer(
         "http://localhost:",
         "drsprinto://",
         "http://127.0.0.1:",
+        "https://app.sprinto.com",
+        "https://eu.sprinto.com",
+        "https://us.sprinto.com",
+        "https://au.sprinto.com",
       ];
       if (origin && allowed.some((hostname) => origin.startsWith(hostname))) {
         callback(null, true);
@@ -124,6 +128,16 @@ export default async function startServer(
   };
 
   app.use((req, res, next) => {
+
+    // added resp headers to allow requests from allowed origins
+    const origin = req.get("origin");
+    if (origin && allowed.some((hostname) => origin.startsWith(hostname))) {
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Vary", "Origin"); // important for proxies
+    }
+
+    res.header("Access-Control-Allow-Private-Network", "true");
+
     if (req.method === "OPTIONS") {
       // Ensure the response object (`res`) is used here
       res.status(200).send();
