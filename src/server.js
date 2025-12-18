@@ -107,13 +107,20 @@ export default async function startServer(
   };
 
   // policy, instructions and config data should only be served to app
+  // Define allowed origins list at module scope so it can be shared between
+  // policyRequestOptions and app.use middleware
+  const allowed = [
+    "http://localhost:",
+    "drsprinto://",
+    "http://127.0.0.1:",
+    "https://app.sprinto.com",
+    "https://eu.sprinto.com",
+    "https://us.sprinto.com",
+    "https://au.sprinto.com",
+  ];
+
   const policyRequestOptions = {
     origin(origin, callback) {
-      const allowed = [
-        "http://localhost:",
-        "drsprinto://",
-        "http://127.0.0.1:",
-      ];
       if (origin && allowed.some((hostname) => origin.startsWith(hostname))) {
         callback(null, true);
       } else {
@@ -124,6 +131,15 @@ export default async function startServer(
   };
 
   app.use((req, res, next) => {
+    // added resp headers to allow requests from allowed origins
+    const origin = req.get("origin");
+    if (origin && allowed.some((hostname) => origin.startsWith(hostname))) {
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Vary", "Origin"); // important for proxies
+    }
+
+    res.header("Access-Control-Allow-Private-Network", "true");
+
     if (req.method === "OPTIONS") {
       // Ensure the response object (`res`) is used here
       res.status(200).send();
