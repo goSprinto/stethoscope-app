@@ -347,32 +347,67 @@ async function createWindow(show = true) {
     try {
       clearTimeout(rescanTimeout);
       rescanTimeout = setTimeout(async () => {
+        // Check if we have a valid window to send the scan event to
+        const hasValidWindow = mainWindow &&
+                               !mainWindow.isDestroyed() &&
+                               !event.sender.isDestroyed();
+
+        if (!hasValidWindow) {
+          console.log(
+            "Auto reporting - no valid window, creating hidden window for background scan"
+          );
+
+          // Create a hidden window for background scans
+          // This allows scans to continue even when app is in tray mode
+          if (!mainWindow || mainWindow.isDestroyed()) {
+            mainWindow = new BrowserWindow({
+              ...windowPrefs,
+              show: false, // Keep hidden for background operation
+              skipTaskbar: true,
+            });
+            remoteMain.enable(mainWindow.webContents);
+
+            // Server is already running, just load the URL
+            mainWindow.loadURL(BASE_URL);
+
+            // Wait for the window to load, then trigger the scan
+            mainWindow.webContents.once("did-finish-load", () => {
+              console.log("Hidden window loaded, triggering auto-scan");
+              // Start performance tracking
+              const scanStart = performanceMonitor.startScan();
+
+              try {
+                mainWindow.webContents.send("autoscan:start", {
+                  notificationOnViolation: true,
+                });
+
+                // End performance tracking after scan completes
+                performanceMonitor.endScan(scanStart);
+              } catch (e) {
+                log.error("start:[WARN] unable to run autoscan in hidden window", e.message);
+              }
+            });
+
+            log.info("Created hidden window for background auto-scan");
+          }
+          return;
+        }
+
+        console.log("Starting auto reporting in existing window");
         // Start performance tracking
         const scanStart = performanceMonitor.startScan();
 
-        // Check if the sender (browser window) is still valid
-        if (event.sender.isDestroyed()) {
-          console.log(
-            "Auto reporting - window destroyed, recreating window"
-          );
-          // Recreate window using the focusOrCreateWindow helper
-          // This reuses the existing server instead of starting a new one
-          mainWindow = focusOrCreateWindow(mainWindow);
-          // Note: The new window will handle the scan when it loads
-        } else {
-          console.log("Starting auto reporting");
-          try {
-            // Simply trigger the autoscan - no need to restart server!
-            // The server stays running, which prevents memory leaks
-            event.sender.send("autoscan:start", {
-              notificationOnViolation: true,
-            });
+        try {
+          // Simply trigger the autoscan - no need to restart server!
+          // The server stays running, which prevents memory leaks
+          event.sender.send("autoscan:start", {
+            notificationOnViolation: true,
+          });
 
-            // End performance tracking after scan completes
-            performanceMonitor.endScan(scanStart);
-          } catch (e) {
-            log.error("start:[WARN] unable to run autoscan", e.message);
-          }
+          // End performance tracking after scan completes
+          performanceMonitor.endScan(scanStart);
+        } catch (e) {
+          log.error("start:[WARN] unable to run autoscan", e.message);
         }
       }, rescanDelay);
     } catch (error) {
