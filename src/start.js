@@ -276,26 +276,38 @@ async function createWindow(show = true) {
 
   // used to select the appropriate instructions file
   const [language] = app.getLocale().split("-");
-  // start GraphQL server, close the app if 37370 is already in use
-  server = await startGraphQLServer(env, log, language, appHooksForServer);
-  server.on("error", (error) => {
-    const e = new Error(error);
-    log.info(`startup:express:error ${JSON.stringify(e)}`);
-    if (error.message.includes("EADDRINUSE")) {
-      dialog.showMessageBox({
-        message: "Something is already using port 37370",
-      });
-    }
-  });
 
-  server.on("server:ready", () => {
-    if (!mainWindow) {
-      mainWindow = new BrowserWindow(windowPrefs);
-      remoteMain.enable(mainWindow.webContents);
+  // start GraphQL server only if it's not already running
+  // This prevents "Listen method has been called more than once" error
+  if (!server || !server.listening) {
+    log.info("Starting GraphQL server (not already running)");
+    server = await startGraphQLServer(env, log, language, appHooksForServer);
+    server.on("error", (error) => {
+      const e = new Error(error);
+      log.info(`startup:express:error ${JSON.stringify(e)}`);
+      if (error.message.includes("EADDRINUSE")) {
+        dialog.showMessageBox({
+          message: "Something is already using port 37370",
+        });
+      }
+    });
+
+    server.on("server:ready", () => {
+      if (!mainWindow) {
+        mainWindow = new BrowserWindow(windowPrefs);
+        remoteMain.enable(mainWindow.webContents);
+      }
+      mainWindow.loadURL(BASE_URL);
+      mainWindow.focus();
+    });
+  } else {
+    log.info("GraphQL server already running, reusing existing server");
+    // Server is already running, just load the URL
+    if (mainWindow) {
+      mainWindow.loadURL(BASE_URL);
+      mainWindow.focus();
     }
-    mainWindow.loadURL(BASE_URL);
-    mainWindow.focus();
-  });
+  }
 
   // add right-click menu to app
   ipcMain.on("contextmenu", (event) =>
@@ -341,10 +353,12 @@ async function createWindow(show = true) {
         // Check if the sender (browser window) is still valid
         if (event.sender.isDestroyed()) {
           console.log(
-            "Auto reporting - window destroyed, creating new window"
+            "Auto reporting - window destroyed, recreating window"
           );
-          // Only recreate the window, NOT the server
-          await createWindow(false);
+          // Recreate window using the focusOrCreateWindow helper
+          // This reuses the existing server instead of starting a new one
+          mainWindow = focusOrCreateWindow(mainWindow);
+          // Note: The new window will handle the scan when it loads
         } else {
           console.log("Starting auto reporting");
           try {
