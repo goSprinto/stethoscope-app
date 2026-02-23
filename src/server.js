@@ -68,7 +68,9 @@ export default async function startServer(
   const settingsHandle = readFileSync(find("./practices/config.yaml"), "utf8");
   const defaultConfig = yaml.load(settingsHandle);
 
-  app.use(helmet());
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }));
   app.use(noCache());
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
@@ -103,7 +105,9 @@ export default async function startServer(
       log.error(`Unauthorized request from ${origin}`);
       callback(new Error(`Unauthorized request from ${origin}`), false);
     },
-    methods: "GET,OPTIONS,HEAD,POST",
+    methods: ["GET", "POST", "OPTIONS", "HEAD"],
+    credentials: true,
+    optionsSuccessStatus: 200,
   };
 
   // policy, instructions and config data should only be served to app
@@ -128,24 +132,47 @@ export default async function startServer(
         callback(new Error(`Unauthorized request from ${origin}`), false);
       }
     },
+    methods: ["GET", "POST", "OPTIONS", "HEAD"],
+    credentials: true,
+    optionsSuccessStatus: 200,
   };
 
   app.use((req, res, next) => {
-    // added resp headers to allow requests from allowed origins
     const origin = req.get("origin");
-    if (origin && allowed.some((hostname) => origin.startsWith(hostname))) {
-      res.header("Access-Control-Allow-Origin", origin);
-      res.header("Vary", "Origin"); // important for proxies
-    }
+    const isAllowedOrigin = origin && allowed.some((hostname) => origin.startsWith(hostname));
 
+    // Always set this header for Private Network Access
     res.header("Access-Control-Allow-Private-Network", "true");
 
+    // Handle preflight OPTIONS requests
     if (req.method === "OPTIONS") {
-      // Ensure the response object (`res`) is used here
-      res.status(200).send();
-    } else {
-      next();
+      // Only handle OPTIONS for allowed origins
+      if (isAllowedOrigin) {
+        res.header("Access-Control-Allow-Origin", origin);
+        res.header("Vary", "Origin");
+        res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD");
+        res.header(
+          "Access-Control-Allow-Headers",
+          "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+        );
+        res.header("Access-Control-Max-Age", "86400");
+        res.header("Access-Control-Allow-Credentials", "true");
+        return res.status(200).end();
+      } else {
+        // For non-allowed origins, let route-level cors() middleware handle it
+        // This will properly reject unauthorized origins
+        return next();
+      }
     }
+
+    // For non-OPTIONS requests from allowed origins, set CORS headers
+    if (isAllowedOrigin) {
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Vary", "Origin");
+      res.header("Access-Control-Allow-Credentials", "true");
+    }
+
+    next();
   });
 
   app.get("/debugger", cors(corsOptions), async (req, res) => {
@@ -167,13 +194,29 @@ export default async function startServer(
           }
         });
         const checkData = await Promise.all(promises);
+
+        // Get performance metrics and certificate status
+        const perfMetrics = appActions.getPerformanceMetrics();
+        const certStatus = appActions.getCertificateStatus();
+
         // format response
         const sep = `\n${"=".repeat(20)}\n`;
         const file = readFileSync(log.getLogFile());
         const noColor = String(file).replace(/\[[\d]+m?:?/g, "") + "\n";
-        const str = JSON.stringify(extend(true, {}, ...checkData), null, 3);
+        const deviceDataStr = JSON.stringify(extend(true, {}, ...checkData), null, 3);
+        const perfMetricsStr = JSON.stringify(perfMetrics, null, 3);
+        const certStatusStr = JSON.stringify(certStatus, null, 3);
         const version = `Stethoscope version: ${pkg.version}`;
-        res.send(`${version}\nLOGS${sep}${noColor}DEVICE DATA${sep}${str}`);
+        const platform = `Platform: ${process.platform}`;
+        const nodeVersion = `Node.js: ${process.version}`;
+
+        res.send(
+          `${version}\n${platform}\n${nodeVersion}\n` +
+          `CERTIFICATE STATUS${sep}${certStatusStr}\n` +
+          `PERFORMANCE METRICS${sep}${perfMetricsStr}\n` +
+          `LOGS${sep}${noColor}` +
+          `DEVICE DATA${sep}${deviceDataStr}`
+        );
       })
       .catch(() => {
         res.status(403).send("ACCESS DENIED");

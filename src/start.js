@@ -43,8 +43,17 @@ import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
 import { isTrustedUrl } from "./lib/isTrustedUrl";
 import unixify from "unixify";
+import { initializeSystemCertificates, getCertificateStatus } from "./lib/initCertificates";
+import { PerformanceMonitor } from "./lib/performanceMonitor";
 
 app.disableHardwareAcceleration();
+
+// Initialize OS certificate store BEFORE any network requests
+// This allows Node.js to trust certificates from enterprise proxies (Zscaler, etc.)
+initializeSystemCertificates(log);
+
+// Initialize performance monitoring to track CPU/memory usage
+const performanceMonitor = new PerformanceMonitor(log);
 
 const remoteMain = require("@electron/remote/main");
 remoteMain.initialize();
@@ -257,6 +266,12 @@ async function createWindow(show = true) {
           });
       });
     },
+    getPerformanceMetrics() {
+      return performanceMonitor.getSummary();
+    },
+    getCertificateStatus() {
+      return getCertificateStatus();
+    },
   };
 
   // used to select the appropriate instructions file
@@ -315,62 +330,32 @@ async function createWindow(show = true) {
   const rescanDelay = scanSeconds * 1000;
 
   ipcMain.on("scan:init", (event) => {
-    // schedule next automatic scan
+    // Schedule next automatic scan
+    // NO server restart needed - just trigger the scan!
     try {
       clearTimeout(rescanTimeout);
       rescanTimeout = setTimeout(async () => {
+        // Start performance tracking
+        const scanStart = performanceMonitor.startScan();
+
+        // Check if the sender (browser window) is still valid
         if (event.sender.isDestroyed()) {
           console.log(
-            "doing auto reporting - object destroyed?...creating object again"
+            "Auto reporting - window destroyed, creating new window"
           );
-          server.close(() => {
-            console.log("Server closed");
-          });
+          // Only recreate the window, NOT the server
           await createWindow(false);
-        } else if (event && event.sender && !event.sender.isDestroyed()) {
-          console.log("Started auto reporting - object not destroyed");
+        } else {
+          console.log("Starting auto reporting");
           try {
-            // close the server and create a new window
-            if (server && server.listening) {
-              console.log("Closing the server before starting a new one...");
-              server.getConnections((err, count) => {
-                if (err) {
-                  console.error("Error checking active connections:", err);
-                } else {
-                  if (count > 0) {
-                    console.warn(
-                      "There are still active connections. Proceeding to close..."
-                    );
-                  }
-                  // Close the server after checking connections
-                  new Promise((resolve, reject) => {
-                    server.close((err) => {
-                      if (err) return reject(err);
-                      console.log("Server closed successfully.");
-                      resolve();
-                    });
-                  }).catch((err) => {
-                    console.error("Failed to close server:", err);
-                  });
-                }
-              });
-            }
-
-            server = await startGraphQLServer(
-              env,
-              log,
-              language,
-              appHooksForServer
-            );
-
-            // Adding some delay
-            if (process.platform === "win32") {
-              await new Promise((resolve) => setTimeout(resolve, 500));
-            }
-
+            // Simply trigger the autoscan - no need to restart server!
+            // The server stays running, which prevents memory leaks
             event.sender.send("autoscan:start", {
               notificationOnViolation: true,
             });
+
+            // End performance tracking after scan completes
+            performanceMonitor.endScan(scanStart);
           } catch (e) {
             log.error("start:[WARN] unable to run autoscan", e.message);
           }
@@ -489,6 +474,10 @@ app.on("before-quit", () => {
   const appCloseTime = Date.now();
 
   log.debug(`uptime: ${appCloseTime - appStartTime}`);
+
+  // Log performance summary before quitting
+  performanceMonitor.logSummary();
+
   if (server && server.listening) {
     server.close();
   }
@@ -588,13 +577,29 @@ ipcMain.on("api:getPolicy", async (event, baseUrl) => {
       log.error(
         "api:getPolicy - critical should not call this api when token is empty or not connected"
       );
-      event.returnValue = false;
+      event.returnValue = {
+        error: true,
+        message: "Not authenticated",
+        userMessage: "Please log in to DrSprinto to continue.",
+      };
       return;
     }
 
-    event.returnValue = await ApiService.getPolicy(baseUrl, token, isDev);
+    const policy = await ApiService.getPolicy(baseUrl, token, isDev);
+    event.returnValue = { error: false, data: policy };
   } catch (err) {
-    event.returnValue = null;
+    log.error("api:getPolicy failed", {
+      error: err.message,
+      code: err.code,
+      baseUrl,
+    });
+
+    event.returnValue = {
+      error: true,
+      message: err.message,
+      code: err.code,
+      userMessage: err.userMessage || "Failed to fetch policy from Sprinto servers.",
+    };
   }
 });
 
@@ -606,14 +611,30 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
       log.error(
         "api:reportDevice - critical should not call this api when token is empty or not connected"
       );
-      event.returnValue = false;
+      event.returnValue = {
+        error: true,
+        message: "Not authenticated",
+        userMessage: "Please log in to DrSprinto to continue.",
+      };
       return;
     }
+
     const data = { ...result, device };
     await ApiService.reportDevice(baseUrl, token, data, isDev);
-    event.returnValue = true;
+    event.returnValue = { error: false, success: true };
   } catch (err) {
-    event.returnValue = false;
+    log.error("api:reportDevice failed", {
+      error: err.message,
+      code: err.code,
+      baseUrl,
+    });
+
+    event.returnValue = {
+      error: true,
+      message: err.message,
+      code: err.code,
+      userMessage: err.userMessage || "Failed to report device status to Sprinto servers.",
+    };
   }
 });
 

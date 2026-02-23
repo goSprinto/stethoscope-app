@@ -223,10 +223,24 @@ class App extends Component {
 
   syncUpdatedPolicy = async () => {
     const baseUrl = await settings.get("sprintoAPPBaseUrl");
-    const policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
-    if (policy === null || policy === undefined) {
+    const response = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+
+    // Handle new error response format
+    if (!response || response.error === true) {
+      console.error("Failed to fetch policy:", response?.userMessage || "Unknown error");
+      // Optionally show error to user
+      if (response?.userMessage) {
+        // TODO: Show error notification to user
+        console.error("Policy sync error:", response.userMessage);
+      }
       return;
     }
+
+    const policy = response.data;
+    if (!policy) {
+      return;
+    }
+
     // update policy synced time to now
     const ts = new Date();
     settings.set("policyLastSyncedOn", ts);
@@ -400,18 +414,23 @@ class App extends Component {
         isUpdatedScanResult) &&
       this.state.isSprintoAppConnected
     ) {
-      const status = ipcRenderer.sendSync(
+      const response = ipcRenderer.sendSync(
         "api:reportDevice",
         policy.validate,
         device,
         baseUrl
       );
 
-      // store current result in local storage
-      await settings.set("scanResult", policy.validate);
+      // Handle new error response format
+      if (response && response.error) {
+        console.error("Failed to report device:", response.userMessage || response.message);
+        // Optionally show error to user
+        // TODO: Show error notification
+      } else if (response && response.success) {
+        // store current result in local storage
+        await settings.set("scanResult", policy.validate);
 
-      // update deviceLogLastReportedOn if api call success
-      if (status === true) {
+        // update deviceLogLastReportedOn if api call success
         this.onDeviceLogRecorded();
       }
     }
@@ -441,7 +460,15 @@ class App extends Component {
           // Fetch the policy from the API directly
           if (this.state.isSprintoAppConnected) {
             const baseUrl = settings.get("sprintoAPPBaseUrl");
-            policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+            const response = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+
+            // Handle new error response format
+            if (response && !response.error) {
+              policy = response.data;
+            } else if (response && response.error) {
+              console.error("Failed to fetch policy:", response.userMessage || response.message);
+              // Fall through to use empty policy
+            }
           }
 
           if (!policy) {
