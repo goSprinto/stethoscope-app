@@ -32,6 +32,19 @@ function matchHost(origin) {
   };
 }
 
+function isLoopbackOrigin(origin) {
+  if (!origin) {
+    return false;
+  }
+
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
+  } catch (error) {
+    return false;
+  }
+}
+
 setKmdEnv({
   NODE_ENV: process.env.STETHOSCOPE_ENV,
   FILE_BASE_PATH: process.resourcesPath + path.sep,
@@ -90,6 +103,9 @@ export default async function startServer(
         return callback(null, true);
       }
       if (allowHosts.includes(origin)) {
+        return callback(null, true);
+      }
+      if (isLoopbackOrigin(origin)) {
         return callback(null, true);
       }
       if (hostLabels.length) {
