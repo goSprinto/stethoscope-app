@@ -102,6 +102,10 @@ export default async function startServer(
       if (IS_DEV) {
         return callback(null, true);
       }
+      // Allow non-browser clients (no Origin header), e.g. curl/direct nav.
+      if (!origin) {
+        return callback(null, true);
+      }
       if (allowHosts.includes(origin)) {
         return callback(null, true);
       }
