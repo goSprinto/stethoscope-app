@@ -32,16 +32,24 @@ export default {
       if (Array.isArray(passing)) {
         // convert verification result to PASS|FAIL
         response[verification] = passing.map(
-          ({ name, version, installed, state, passing }, index) => {
-            const policyType = requirement[index].assertion;
+          ({ name, version, installed, state, passing, isRunning }, index) => {
+            // `applications` carries an array of requirements, one per app;
+            // `aiApplications` carries a single RequirementOption for all of them
+            const policyType = requirement[index]?.assertion || requirement;
             const failStatus = policyType === SUGGESTED ? NUDGE : FAIL;
-            return {
+            const result = {
               name,
               version,
               installed,
               state,
               status: passing ? PASS : failStatus,
             };
+
+            if (typeof isRunning === "boolean") {
+              result.isRunning = isRunning;
+            }
+
+            return result;
           }
         );
       } else if (verification === "antivirus") {

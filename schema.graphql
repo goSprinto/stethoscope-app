@@ -39,8 +39,10 @@ type Device {
   friendlyName: String
   # device serial number
   hardwareSerial: String
-  # installed applications
+  # installed applications, as required by a policy
   applications: [Application]
+  # every application installed on the device
+  installedApplications: [InstalledApplication!]!
   # browser extensions
   extensions(browser: Browser): [Extension]
   # current IP addresses
@@ -99,6 +101,20 @@ type Application {
   installFrom: String
 }
 
+# An application discovered on the device, independent of any policy.
+# `version` is a plain String rather than Semver: installed applications
+# routinely carry versions the Semver scalar rejects, and that scalar throws
+# rather than returning null, which would fail the whole field.
+type InstalledApplication {
+  name: String!
+  path: String
+  version: String
+  # matches an entry in practices/ai-apps.yaml
+  isAiApp: Boolean!
+  # a process with this name is running right now
+  isRunning: Boolean!
+}
+
 input ApplicationPaths {
   darwin: String # "/Applications"
   win32: String # "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall"
@@ -148,6 +164,8 @@ input DevicePolicy {
   openWifiConnections: RequirementOption
   # Antivirus
   antivirus: ApplicationGroupRequirement
+  # how to treat installed applications matching practices/ai-apps.yaml
+  aiApplications: RequirementOption
 }
 
 # Defines a requirement for an installed application
@@ -190,6 +208,8 @@ type PolicyResult {
   stethoscopeVersion: FeatureState
   # Open Wi-Fi
   openWifiConnections: FeatureState
+  # one entry per installed application matching the AI catalog
+  aiApplications: [AiApplicationFeatureState]
 
   # TraceError
   osVersionError: String
@@ -221,6 +241,7 @@ type Security {
   privateFirewall(requirement: RequirementOption!): Boolean!
   domainFirewall(requirement: RequirementOption!): Boolean!
   openWifiConnections(requirement: RequirementOption!): Boolean!
+  aiApplications(requirement: RequirementOption!): [Boolean!]!
   # TraceError
   osVersionError(requirement: PlatformBracketRequirement!): String
   firewallError(requirement: RequirementOption!): String
@@ -261,6 +282,16 @@ type ApplicationFeatureState {
   version: String
   installed: Boolean
   state: String
+}
+
+# The policy result for a single installed application matching the AI catalog.
+type AiApplicationFeatureState {
+  name: String!
+  version: String
+  installed: Boolean
+  state: String
+  isRunning: Boolean!
+  status: FeatureState
 }
 
 # a platform string requirement defines a target string value for specific platforms

@@ -2,6 +2,7 @@ import pkg from '../../package.json'
 import NetworkInterface from '../lib/NetworkInterface'
 import Security from './Security'
 import kmd from '../lib/kmd'
+import listInstalledApps from '../lib/listInstalledApps'
 import { ON, OFF, UNKNOWN, UNSUPPORTED, NUDGE, PASS, FAIL } from '../constants'
 import { PlatformDevice } from './platform/'
 
@@ -132,6 +133,10 @@ const Device = {
     }
 
     return UNSUPPORTED
+  },
+
+  installedApplications (root, args, context) {
+    return listInstalledApps(context)
   },
 
   policyResult (root, args, context) {

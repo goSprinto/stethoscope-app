@@ -415,6 +415,13 @@ class App extends Component {
         this.onDeviceLogRecorded();
       }
     }
+
+    // Discovered AI applications are reported separately: they must not be
+    // gated by the daily device-report throttle, so a newly installed AI app
+    // shows up on the next scan rather than up to a day later.
+    if (this.state.isSprintoAppConnected) {
+      ipcRenderer.send("api:reportDiscoveredVendorsOnly", device, baseUrl);
+    }
   };
 
   handleErrorYAML = (

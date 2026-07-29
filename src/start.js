@@ -41,6 +41,7 @@ import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
+import { buildDiscoveredVendors } from "./lib/discoveredVendors";
 import { isTrustedUrl } from "./lib/isTrustedUrl";
 import unixify from "unixify";
 
@@ -614,6 +615,51 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
     event.returnValue = true;
   } catch (err) {
     event.returnValue = false;
+  }
+});
+
+// Fire-and-forget: discovery is reported independently of the daily
+// device-report throttle, so a new AI app is surfaced on the next scan.
+ipcMain.on("api:reportDiscoveredVendorsOnly", async (_event, device, baseUrl) => {
+  try {
+    const token = AuthService.getAccessToken();
+    if (token === null || token === undefined) {
+      log.warn("api:reportDiscoveredVendors - skipped, no token", { baseUrl });
+      return;
+    }
+
+    const installedApplications = device.installedApplications || [];
+    const discoveredVendors = buildDiscoveredVendors(
+      installedApplications,
+      device
+    );
+
+    log.info("api:reportDiscoveredVendors - built payload", {
+      baseUrl,
+      installedApplicationCount: installedApplications.length,
+      discoveredVendorCount: discoveredVendors.length,
+      applicationNames: discoveredVendors.map((v) => v.applicationName),
+      deviceId: device.deviceId,
+    });
+
+    if (!discoveredVendors.length) {
+      log.info("api:reportDiscoveredVendors - nothing to report", {
+        installedApplicationCount: installedApplications.length,
+      });
+      return;
+    }
+
+    await ApiService.reportDiscoveredVendors(
+      baseUrl,
+      token,
+      discoveredVendors,
+      device
+    );
+  } catch (err) {
+    log.error("api:reportDiscoveredVendorsOnly failed", {
+      err: err?.message || String(err),
+      baseUrl,
+    });
   }
 });
 

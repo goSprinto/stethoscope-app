@@ -74,9 +74,49 @@ export default class ApiService {
       
       return response.policy;
     } catch (err) {
-      log.error("services-->api:getPolicy", { 
-        err: JSON.stringify({ err }), 
+      log.error("services-->api:getPolicy", {
+        err: JSON.stringify({ err }),
         baseUrl,
+        retryCount: err.retryCount
+      });
+      throw err;
+    }
+  }
+
+  static async reportDiscoveredVendors(baseUrl, token, discoveredVendors, device = {}) {
+    try {
+      await this.makeRequest({
+        method: 'post',
+        url: `${baseUrl}/drsprinto/api/v1/reportDiscoveredVendors`,
+        data: {
+          data: {
+            discoveredVendors,
+            device: {
+              deviceId: device.deviceId,
+              deviceName: device.deviceName,
+              platform: device.platform,
+              osVersion: device.osVersion,
+            },
+            reportedAt: new Date().toISOString(),
+          },
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent": process.env.USER_AGENT,
+        }
+      });
+
+      log.info("services-->api:reportDiscoveredVendors", {
+        baseUrl,
+        count: discoveredVendors.length,
+        deviceId: device.deviceId,
+      });
+      return true;
+    } catch (err) {
+      log.error("services-->api:reportDiscoveredVendors", {
+        err: JSON.stringify({ err }),
+        baseUrl,
+        count: discoveredVendors?.length,
         retryCount: err.retryCount
       });
       throw err;

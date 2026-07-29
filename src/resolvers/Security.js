@@ -18,6 +18,7 @@ import kmd from '../lib/kmd'
 import { PlatformSecurity } from './platform/'
 import config from '../config'
 import applicationPlatformFilter from '../lib/applicationPlatformFilter'
+import { listAiInstalledApps } from '../lib/listInstalledApps'
 
 export default {
   async automaticAppUpdates (root, args, context) {
@@ -270,5 +271,33 @@ export default {
       }
     }
     return UNSUPPORTED
+  },
+
+  /**
+   * Grades every installed application that matches the AI catalog against a
+   * single RequirementOption. Returns one entry per detected AI app, so an
+   * empty array means nothing was found to grade.
+   */
+  async aiApplications (root, args, context) {
+    const aiApps = await listAiInstalledApps(context)
+    const requirement = args.aiApplications || args.requirement
+
+    if (!requirement || aiApps.length === 0) {
+      return []
+    }
+
+    return aiApps.map((app) => {
+      // an AI app is only acceptable when the policy does not forbid it
+      const passing = ![NEVER, SUGGESTED, IF_SUPPORTED].includes(requirement)
+
+      return {
+        name: app.name,
+        version: app.version,
+        installed: true,
+        isRunning: Boolean(app.isRunning),
+        passing,
+        state: passing ? VALID : INVALID_INSTALL_STATE
+      }
+    })
   }
 }

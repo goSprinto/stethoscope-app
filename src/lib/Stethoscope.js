@@ -102,6 +102,12 @@ export default class Stethoscope {
         hardwareSerial
         stethoscopeVersion
         screenLockDelay
+        installedApplications {
+          name
+          version
+          isAiApp
+          isRunning
+        }
         security (policy: $policy) {
           diskEncryption
           screenLock
