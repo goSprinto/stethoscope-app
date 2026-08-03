@@ -24,6 +24,12 @@ split },
   extract "path"\s*:\s*"([^"]+)"
   save path
 
+  # apple | mac_app_store | identified_developer | unknown -- used to separate
+  # Apple's own bundles from software the user installed.
+  load _block
+  extract "obtained_from"\s*:\s*"([^"]+)"
+  save obtainedFrom
+
   remove _block
 noEmpty
 save apps

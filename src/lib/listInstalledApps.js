@@ -1,22 +1,20 @@
 import kmd from './kmd'
 import { DEFAULT_WIN32_APP_REGISTRY_PATH } from '../constants'
-import { isAiApp } from './aiAppMatcher'
-import { loadAiAppDefinitions } from './appConfig'
 
 const CACHE_KEY = '__installedApps'
 
-// system_profiler reaches deep into the OS and reports framework and
-// CoreServices bundles alongside real applications -- roughly two thirds of its
-// output. Those are genuine .app bundles but not user-facing applications, so
-// they are excluded.
-const EXCLUDED_PATH_PREFIXES = ['/System/Library']
+// Applications a user installed live in /Applications or ~/Applications. Anything else
+// system_profiler reports -- framework bundles, CoreServices, Script Editor templates, helper
+// agents nested inside other apps, and .app directories inside project folders -- is not an
+// installed application.
+const USER_APP_PATH_PATTERN = /^(\/Applications\/|\/Users\/[^/]+\/Applications\/)/
 
-// It also reports .service/.appex bundles and cache directories, so only .app
-// bundles are of interest here.
-const isUserFacingApp = ({ path }) =>
-  Boolean(path) &&
-  path.endsWith('.app') &&
-  !EXCLUDED_PATH_PREFIXES.some(prefix => path.startsWith(prefix))
+// Apple's own bundles are reported as obtained_from "apple"; everything the user installed comes
+// from the App Store, an identified developer, or an unsigned source.
+const APPLE_SOURCE = 'apple'
+
+const isUserInstalledApp = ({ path, obtainedFrom }) =>
+  Boolean(path) && path.endsWith('.app') && obtainedFrom !== APPLE_SOURCE && USER_APP_PATH_PATTERN.test(path)
 
 const shape = ({ name, version, path }) => ({
   name,
@@ -28,7 +26,7 @@ const shape = ({ name, version, path }) => ({
 
 const listDarwinApps = async (context) => {
   const { apps = [] } = await kmd('apps', context)
-  return apps.filter(isUserFacingApp).map(shape)
+  return apps.filter(isUserInstalledApp).map(shape)
 }
 
 const listWin32Apps = async (context) => {
@@ -95,7 +93,6 @@ export default async function listInstalledApps (context = {}) {
       break
   }
 
-  const aiAppDefinitions = loadAiAppDefinitions()
   const runningProcesses = await getRunningProcessNames(context)
 
   apps = apps
@@ -103,16 +100,9 @@ export default async function listInstalledApps (context = {}) {
     .filter(({ name }) => Boolean(name))
     .map((app) => ({
       ...app,
-      isAiApp: isAiApp(app.name, aiAppDefinitions),
       isRunning: runningProcesses.has(normalizeProcessName(app.name))
     }))
 
   context[CACHE_KEY] = apps
   return apps
-}
-
-/** The installed applications that match the AI application catalog. */
-export async function listAiInstalledApps (context = {}) {
-  const apps = await listInstalledApps(context)
-  return apps.filter(({ isAiApp: ai }) => ai)
 }

@@ -109,8 +109,6 @@ type InstalledApplication {
   name: String!
   path: String
   version: String
-  # matches an entry in practices/ai-apps.yaml
-  isAiApp: Boolean!
   # a process with this name is running right now
   isRunning: Boolean!
 }
@@ -164,8 +162,6 @@ input DevicePolicy {
   openWifiConnections: RequirementOption
   # Antivirus
   antivirus: ApplicationGroupRequirement
-  # how to treat installed applications matching practices/ai-apps.yaml
-  aiApplications: RequirementOption
 }
 
 # Defines a requirement for an installed application
@@ -208,8 +204,6 @@ type PolicyResult {
   stethoscopeVersion: FeatureState
   # Open Wi-Fi
   openWifiConnections: FeatureState
-  # one entry per installed application matching the AI catalog
-  aiApplications: [AiApplicationFeatureState]
 
   # TraceError
   osVersionError: String
@@ -241,7 +235,6 @@ type Security {
   privateFirewall(requirement: RequirementOption!): Boolean!
   domainFirewall(requirement: RequirementOption!): Boolean!
   openWifiConnections(requirement: RequirementOption!): Boolean!
-  aiApplications(requirement: RequirementOption!): [Boolean!]!
   # TraceError
   osVersionError(requirement: PlatformBracketRequirement!): String
   firewallError(requirement: RequirementOption!): String
@@ -284,15 +277,6 @@ type ApplicationFeatureState {
   state: String
 }
 
-# The policy result for a single installed application matching the AI catalog.
-type AiApplicationFeatureState {
-  name: String!
-  version: String
-  installed: Boolean
-  state: String
-  isRunning: Boolean!
-  status: FeatureState
-}
 
 # a platform string requirement defines a target string value for specific platforms
 input PlatformStringRequirement {

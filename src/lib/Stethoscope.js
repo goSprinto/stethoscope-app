@@ -105,7 +105,6 @@ export default class Stethoscope {
         installedApplications {
           name
           version
-          isAiApp
           isRunning
         }
         security (policy: $policy) {
