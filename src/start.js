@@ -634,14 +634,6 @@ ipcMain.on("api:reportDiscoveredVendorsOnly", async (_event, device, baseUrl) =>
       device
     );
 
-    log.info("api:reportDiscoveredVendors - built payload", {
-      baseUrl,
-      installedApplicationCount: installedApplications.length,
-      discoveredVendorCount: discoveredVendors.length,
-      applicationNames: discoveredVendors.map((v) => v.applicationName),
-      deviceId: device.deviceId,
-    });
-
     if (!discoveredVendors.length) {
       log.info("api:reportDiscoveredVendors - nothing to report", {
         installedApplicationCount: installedApplications.length,
