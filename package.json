@@ -150,7 +150,8 @@
       "compiled/*.json",
       "compiled/*.js",
       "schema.graphql",
-      "app.manifest"
+      "app.manifest",
+      "!compiled/**/*.test.js"
     ],
     "mac": {
       "icon": "build/drsprinto-icons/icon.icns",
