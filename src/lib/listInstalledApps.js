@@ -1,4 +1,6 @@
 import kmd from './kmd'
+import log from './logger'
+import getAppUsage, { withAppUsage } from './appUsage'
 import { DEFAULT_WIN32_APP_REGISTRY_PATH } from '../constants'
 
 const CACHE_KEY = '__installedApps'
@@ -33,14 +35,17 @@ const listWin32Apps = async (context) => {
   const { apps = [] } = await kmd('apps', context, {
     REGISTRY_PATH: DEFAULT_WIN32_APP_REGISTRY_PATH
   })
-  // the registry gives us a publisher rather than an install path
-  return apps.map(({ name, version, publisher }) => ({
+  // the uninstall registry has no bundle equivalent, so `path` is the install
+  // directory -- which is also what the UserAssist join matches against
+  return apps.map(({ name, version, installLocation }) => ({
     name,
     version: version || null,
-    path: publisher || null
+    path: installLocation || null
   }))
 }
 
+// dpkg-query only exists on Debian-derived distros, so this returns nothing on
+// the Fedora and Manjaro builds rather than failing.
 const listLinuxApps = async (context) => {
   const { apps = [] } = await kmd('apps', context)
   return apps.map(({ name, version }) => ({
@@ -48,6 +53,13 @@ const listLinuxApps = async (context) => {
     version: version || null,
     path: null
   }))
+}
+
+const APP_LISTERS = {
+  darwin: listDarwinApps,
+  win32: listWin32Apps,
+  linux: listLinuxApps,
+  ubuntu: listLinuxApps
 }
 
 // process names and application names are compared case-insensitively, and
@@ -78,30 +90,37 @@ export default async function listInstalledApps (context = {}) {
     return context[CACHE_KEY]
   }
 
+  const listApps = APP_LISTERS[process.platform]
   let apps = []
 
-  switch (process.platform) {
-    case 'darwin':
-      apps = await listDarwinApps(context)
-      break
-    case 'win32':
-      apps = await listWin32Apps(context)
-      break
-    case 'linux':
-    case 'ubuntu':
-      apps = await listLinuxApps(context)
-      break
+  if (listApps) {
+    try {
+      apps = await listApps(context)
+    } catch (e) {
+      // installedApplications is non-null in the schema, so a throw here would
+      // null out the entire Device object and fail the scan. An unavailable
+      // package source (dpkg-query on a non-Debian distro, a missing registry
+      // key) must degrade to an empty list instead.
+      log.error('listInstalledApps failed', {
+        platform: process.platform,
+        err: e && e.message ? e.message : String(e)
+      })
+      apps = []
+    }
   }
 
-  const runningProcesses = await getRunningProcessNames(context)
+  // drop anything the source could not give us a name for
+  apps = apps.filter(({ name }) => Boolean(name))
 
-  apps = apps
-    // drop anything the source could not give us a name for
-    .filter(({ name }) => Boolean(name))
-    .map((app) => ({
-      ...app,
-      isRunning: runningProcesses.has(normalizeProcessName(app.name))
-    }))
+  const [runningProcesses, usage] = await Promise.all([
+    getRunningProcessNames(context),
+    getAppUsage(apps)
+  ])
+
+  apps = withAppUsage(apps, usage).map((app) => ({
+    ...app,
+    isRunning: runningProcesses.has(normalizeProcessName(app.name))
+  }))
 
   context[CACHE_KEY] = apps
   return apps

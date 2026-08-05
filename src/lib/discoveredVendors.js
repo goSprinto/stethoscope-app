@@ -16,6 +16,10 @@ export function buildDiscoveredVendors (installedApplications = [], device = {})
     version: app.version || null,
     isInstalled: true,
     isRunning: Boolean(app.isRunning),
+    // null when the platform could not tell us -- see InstalledApplication in
+    // schema.graphql for why that is not the same as never having been launched
+    lastUsedAt: app.lastUsedAt || null,
+    useCount: typeof app.useCount === 'number' ? app.useCount : null,
     platform: platform || null,
     deviceId: deviceId || null,
     deviceName: deviceName || null,

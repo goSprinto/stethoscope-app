@@ -21,6 +21,12 @@ lines
   parseDate YYYYMMDD
   save installDate
 
+  # the directory the app was installed into, used to attribute UserAssist
+  # launch records to this app
+  load _output
+  extract InstallLocation\s+[A-Z\s_]+\s+(.*)
+  save installLocation
+
   load _output
   extract DisplayVersion\s+[A-Z\s_]+\s+(.*)
   save version

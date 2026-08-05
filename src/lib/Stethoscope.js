@@ -106,6 +106,8 @@ export default class Stethoscope {
           name
           version
           isRunning
+          lastUsedAt
+          useCount
         }
         security (policy: $policy) {
           diskEncryption

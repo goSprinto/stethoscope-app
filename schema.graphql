@@ -111,6 +111,13 @@ type InstalledApplication {
   version: String
   # a process with this name is running right now
   isRunning: Boolean!
+  # ISO-8601 timestamp of the last launch, from Spotlight metadata on Mac and
+  # UserAssist on Windows. null means unknown, not never launched: Mac loses the
+  # metadata when an app self-updates its bundle, Windows only records launches
+  # made through Explorer, and Linux has no unprivileged source at all.
+  lastUsedAt: String
+  # cumulative launch count, with the same caveats as lastUsedAt
+  useCount: Int
 }
 
 input ApplicationPaths {
