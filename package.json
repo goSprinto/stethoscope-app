@@ -103,7 +103,7 @@
     "chai": "^5.1.1",
     "chai-http": "^4.4.0",
     "electron": "^44.4.4",
-    "electron-builder": "^24.13.3",
+    "electron-builder": "^26.15.3",
     "enzyme": "^3.3.0",
     "foreman": "^3.0.1",
     "npm-run-all": "^4.1.5",
@@ -125,7 +125,6 @@
     "cookie": "^0.7.0",
     "js-yaml": "^4.1.1",
     "form-data": "^4.0.1",
-    "brace-expansion": "^2.0.1",
     "@babel/runtime": "^7.26.10"
   },
   "browserslist": [
@@ -173,9 +172,13 @@
       "target": "nsis",
       "icon": "build/drsprinto-icons/icon.png",
       "signAndEditExecutable": true,
-      "signDlls": true,
+      "signExts": [
+        ".dll"
+      ],
       "requestedExecutionLevel": "asInvoker",
-      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
+      "signtoolOptions": {
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+      },
       "extraResources": [
         "src/practices",
         "bitlocker-status/bitlocker-status.exe",
