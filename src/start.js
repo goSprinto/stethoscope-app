@@ -141,6 +141,44 @@ let enableDebugger = process.argv.find((arg) => arg.includes("enableDebugger"));
 const DEBUG_MODE = !!process.env.STETHOSCOPE_DEBUG;
 
 
+// navigation security controls, applied to every BrowserWindow the app creates
+const addNavigationControls = (win) => {
+  win.webContents.on("will-navigate", (event, navigationUrl) => {
+    // in-app navigation to a trusted http(s)/drsprinto url proceeds as normal
+    if (isTrustedUrl(navigationUrl)) return;
+
+    // app://, prefs://, ps:// and friends are registered in lib/protocolHandlers
+    // and sanitise their own payload; blocking them here would stop the handler
+    // from ever running
+    if (isAppProtocolUrl(navigationUrl)) return;
+
+    // anything else must not navigate the window
+    event.preventDefault();
+
+    if (isOsSettingsUrl(navigationUrl)) {
+      openOsSettingsUrl(navigationUrl);
+      return;
+    }
+
+    log.warn(`Blocked navigation to: ${navigationUrl}`);
+  });
+
+  // window.open / target="_blank" links. The old "new-window" event was
+  // removed in Electron 22, so it no longer fired at all on current Electron
+  win.webContents.setWindowOpenHandler(({ url: navigationUrl }) => {
+    // Handle external links safely through shell.openExternal if trusted
+    if (isTrustedUrl(navigationUrl)) {
+      shell.openExternal(navigationUrl);
+    } else if (isOsSettingsUrl(navigationUrl)) {
+      openOsSettingsUrl(navigationUrl);
+    } else {
+      log.warn(`Blocked new window to: ${navigationUrl}`);
+    }
+    // never open a new Electron window
+    return { action: "deny" };
+  });
+};
+
 const focusOrCreateWindow = (mainWindow) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     if (mainWindow.isMinimized()) {
@@ -151,6 +189,7 @@ const focusOrCreateWindow = (mainWindow) => {
   } else {
     mainWindow = new BrowserWindow(windowPrefs);
     remoteMain.enable(mainWindow.webContents);
+    addNavigationControls(mainWindow);
     initMenu(mainWindow, app, focusOrCreateWindow, updater, log);
     mainWindow.loadURL(BASE_URL);
   }
@@ -174,39 +213,7 @@ async function createWindow(show = true) {
 
   mainWindow = new BrowserWindow(windowPrefs);
   remoteMain.enable(mainWindow.webContents);
-
-  // Add navigation security controls
-  mainWindow.webContents.on("will-navigate", (event, navigationUrl) => {
-    // in-app navigation to a trusted http(s)/drsprinto url proceeds as normal
-    if (isTrustedUrl(navigationUrl)) return;
-
-    // app://, prefs://, ps:// and friends are registered in lib/protocolHandlers
-    // and sanitise their own payload; blocking them here would stop the handler
-    // from ever running
-    if (isAppProtocolUrl(navigationUrl)) return;
-
-    // anything else must not navigate the window
-    event.preventDefault();
-
-    if (isOsSettingsUrl(navigationUrl)) {
-      openOsSettingsUrl(navigationUrl);
-      return;
-    }
-
-    log.warn(`Blocked navigation to: ${navigationUrl}`);
-  });
-
-  mainWindow.webContents.on("new-window", (event, navigationUrl) => {
-    event.preventDefault();
-    // Handle external links safely through shell.openExternal if trusted
-    if (isTrustedUrl(navigationUrl)) {
-      shell.openExternal(navigationUrl);
-    } else if (isOsSettingsUrl(navigationUrl)) {
-      openOsSettingsUrl(navigationUrl);
-    } else {
-      log.warn(`Blocked new window to: ${navigationUrl}`);
-    }
-  });
+  addNavigationControls(mainWindow);
 
   // if (IS_DEV) loadReactDevTools(BrowserWindow);
   // open developer console if env vars or args request
@@ -312,6 +319,7 @@ async function createWindow(show = true) {
     if (!mainWindow) {
       mainWindow = new BrowserWindow(windowPrefs);
       remoteMain.enable(mainWindow.webContents);
+      addNavigationControls(mainWindow);
     }
     mainWindow.loadURL(BASE_URL);
     mainWindow.focus();
