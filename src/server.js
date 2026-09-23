@@ -244,12 +244,16 @@ export default async function startServer(
     const showNotification = sessionId && !alertCache.has(sessionId);
     const start = performance.now();
     const context = {};
-    const device = await kmd("os", context);
-
-    // AWS workspace override
-    if (device.system.platform.includes("Server 2016 Datacenter")) {
-      device.system.platform = "awsWorkspace";
-    }
+    // don't await os.sh here so it runs alongside the scan's other scripts
+    // instead of before them. Resolvers share this cached promise, and this
+    // .then is attached first, so the AWS workspace override is applied
+    // before any resolver sees the result
+    kmd("os", context).then((device) => {
+      const platform = device?.system?.platform;
+      if (platform && platform.includes("Server 2016 Datacenter")) {
+        device.system.platform = "awsWorkspace";
+      }
+    });
     // throttle native push notifications to user by session id
     if (sessionId && !alertCache.has(sessionId)) {
       alertCache.set(sessionId, true);
@@ -282,8 +286,11 @@ export default async function startServer(
 
         if (errors && !isRemote) {
           const errMessage = errors.reduce((p, c) => p + c + "\n", "");
+          // throwing here never sent a response, so the app's request hung
+          // until the 65s timeout above while the loader kept spinning
+          log.error(`server:scan errors ${errMessage}`);
           io.sockets.emit("scan:error", { error: errMessage });
-          throw new Error(errMessage);
+          return res.json(result);
         }
 
         // update the tray icon if a policy result is in the response
@@ -308,7 +315,10 @@ export default async function startServer(
       })
       .catch((err) => {
         io.sockets.emit("scan:error", { error: err.message });
-        throw err;
+        log.error(`server:scan failed ${err.message}`);
+        if (!res.headersSent) {
+          res.status(500).json({ errors: [{ message: err.message }] });
+        }
       });
   });
 
