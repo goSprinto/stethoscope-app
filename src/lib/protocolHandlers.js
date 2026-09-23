@@ -101,7 +101,10 @@ export default function initProtocols (mainWindow) {
   protocol.registerHttpProtocol('open', (request, cb) => {
     const sanitizedPath = validateAndSanitizeUrl(request.url, 'open');
     if (sanitizedPath) {
-      shell.openItem(sanitizedPath);
+      // shell.openItem was removed in Electron 9; openPath is the replacement
+      shell.openPath(sanitizedPath).then((err) => {
+        if (err) log.error(`Failed to open ${sanitizedPath}: ${err}`);
+      });
     } else {
       log.warn(`Blocked invalid open protocol request: ${request.url}`);
     }
