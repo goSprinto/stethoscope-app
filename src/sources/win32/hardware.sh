@@ -1,5 +1,5 @@
 #!/usr/bin/env kmd
-exec powershell 'Get-CimInstance Win32_ComputerSystemProduct | Select-Object UUID, Vendor, Version | Format-List'
+exec powershell -NoProfile -NonInteractive 'Get-CimInstance Win32_ComputerSystemProduct | Select-Object UUID, Vendor, Version | Format-List'
 trim
 save out
 
@@ -23,6 +23,6 @@ save system.machineGuid
 
 remove out
 
-exec powershell 'Get-CimInstance win32_operatingsystem | select SerialNumber | Format-List'
+exec powershell -NoProfile -NonInteractive 'Get-CimInstance win32_operatingsystem | select SerialNumber | Format-List'
 extract SerialNumber\s+:\s+([\d\-A-Z]+)
 save system.serialNumber

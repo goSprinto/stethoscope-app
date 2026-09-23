@@ -1,5 +1,5 @@
 #/usr/bin/env kmd
-exec powershell 'Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct'
+exec powershell -NoProfile -NonInteractive 'Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct'
 save output
 trim
 save debug.avProducts
@@ -14,13 +14,13 @@ save debug.bitlocker
 remove output
 remove path
 
-exec powershell 'Get-CimInstance win32_operatingsystem | select Caption,Version | Format-List'
+exec powershell -NoProfile -NonInteractive 'Get-CimInstance win32_operatingsystem | select Caption,Version | Format-List'
 save output
 trim
 save debug.os
 remove output
 
-exec powershell 'Get-CimInstance win32_desktop | where name -eq (whoami) | Format-List'
+exec powershell -NoProfile -NonInteractive 'Get-CimInstance win32_desktop | where name -eq (whoami) | Format-List'
 save output
 trim
 save debug.screensaver
