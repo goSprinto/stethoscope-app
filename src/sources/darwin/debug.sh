@@ -14,13 +14,11 @@ save output
 save os
 remove output
 
-pathResolve /mac-screenlock-check/screenlock-check
-save path
-template '{path}'
-exec
+# raw `sysadminctl -screenLock status` output; it writes to stderr, which kmd's
+# exec does not capture, hence the sh -c wrapper
+tryExec sh -c 'sysadminctl -screenLock status 2>&1'
 save output
 save screenlock
-remove path
 remove output
 
 tryExec defaults -currentHost read com.apple.screensaver

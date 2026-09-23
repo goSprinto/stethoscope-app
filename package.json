@@ -163,8 +163,7 @@
       "entitlements": "entitlements.mac.plist",
       "entitlementsInherit": "entitlements.mac.plist",
       "extraResources": [
-        "src/practices",
-        "mac-screenlock-check/screenlock-check"
+        "src/practices"
       ],
       "notarize": false
     },
