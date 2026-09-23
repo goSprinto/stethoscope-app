@@ -223,7 +223,7 @@ class App extends Component {
 
   syncUpdatedPolicy = async () => {
     const baseUrl = await settings.get("sprintoAPPBaseUrl");
-    const policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+    const policy = await ipcRenderer.invoke("api:getPolicy", baseUrl);
     if (policy === null || policy === undefined) {
       return;
     }
@@ -441,7 +441,7 @@ class App extends Component {
           // Fetch the policy from the API directly
           if (this.state.isSprintoAppConnected) {
             const baseUrl = settings.get("sprintoAPPBaseUrl");
-            policy = ipcRenderer.sendSync("api:getPolicy", baseUrl);
+            policy = await ipcRenderer.invoke("api:getPolicy", baseUrl);
           }
 
           if (!policy) {

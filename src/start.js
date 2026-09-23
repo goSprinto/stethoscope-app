@@ -614,7 +614,10 @@ ipcMain.on("auth:logout", (event) => {
 });
 
 // External API calls
-ipcMain.on("api:getPolicy", async (event, baseUrl) => {
+// `handle`, not `on`: this makes a network request, and a sendSync caller
+// would block the renderer for its entire duration -- up to 46s once the
+// request timeout and retries are accounted for.
+ipcMain.handle("api:getPolicy", async (event, baseUrl) => {
   // Get latest policy json from sprinto
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
@@ -623,13 +626,12 @@ ipcMain.on("api:getPolicy", async (event, baseUrl) => {
       log.error(
         "api:getPolicy - critical should not call this api when token is empty or not connected"
       );
-      event.returnValue = false;
-      return;
+      return false;
     }
 
-    event.returnValue = await ApiService.getPolicy(baseUrl, token, isDev);
+    return await ApiService.getPolicy(baseUrl, token, isDev);
   } catch (err) {
-    event.returnValue = null;
+    return null;
   }
 });
 
