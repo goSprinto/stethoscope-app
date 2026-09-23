@@ -1,7 +1,16 @@
 import applescript from 'applescript'
 import { shell } from 'electron'
+import os from 'os'
 import { promisify } from 'util'
 const execString = promisify(applescript.execString)
+
+// macOS 13 Ventura is Darwin 22. Before Ventura there is no System Settings:
+// the System Preferences era pane ids are the correct ones and the Settings
+// extension ids below do not exist, so the mapping must only apply from
+// Ventura onwards. The x-apple.systempreferences: scheme itself works on both.
+const VENTURA_DARWIN_MAJOR = 22
+const isSystemSettingsEra = () =>
+  parseInt(os.release(), 10) >= VENTURA_DARWIN_MAJOR
 
 // macOS 13 (Ventura) replaced System Preferences with System Settings. The old
 // `tell application "System Preferences" ... set the current pane to pane id`
@@ -33,6 +42,15 @@ const openPreferences = async function (preferencePaneId) {
   // only allow word characters, dots and dashes -- modern pane ids contain
   // dashes, and this keeps the value safe to interpolate
   const safePreferencePaneId = String(preferencePaneId).replace(/[^\w.-]/g, '')
+
+  // pre-Ventura the incoming id is already the right one for System
+  // Preferences, and the modern extension ids would not resolve
+  if (!isSystemSettingsEra()) {
+    return shell.openExternal(
+      `x-apple.systempreferences:${safePreferencePaneId}`
+    )
+  }
+
   const lookup = safePreferencePaneId.toLowerCase()
 
   let pane = SETTINGS_PANES[lookup]
