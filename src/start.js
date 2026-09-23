@@ -635,7 +635,7 @@ ipcMain.handle("api:getPolicy", async (event, baseUrl) => {
   }
 });
 
-ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
+ipcMain.handle("api:reportDevice", async (event, result, device, baseUrl) => {
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
     const token = AuthService.getAccessToken();
@@ -643,14 +643,13 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
       log.error(
         "api:reportDevice - critical should not call this api when token is empty or not connected"
       );
-      event.returnValue = false;
-      return;
+      return false;
     }
     const data = { ...result, device };
     await ApiService.reportDevice(baseUrl, token, data, isDev);
-    event.returnValue = true;
+    return true;
   } catch (err) {
-    event.returnValue = false;
+    return false;
   }
 });
 
