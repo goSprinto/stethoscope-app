@@ -41,8 +41,28 @@ import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
-import { isTrustedUrl } from "./lib/isTrustedUrl";
+import {
+  isTrustedUrl,
+  isAppProtocolUrl,
+  isOsSettingsUrl,
+} from "./lib/isTrustedUrl";
+import applescript from "./lib/applescript";
 import unixify from "unixify";
+
+const MAC_SETTINGS_SCHEME = "x-apple.systempreferences:";
+
+// Hand an OS settings deep link to the operating system. On macOS the pane id
+// goes through openPreferences, which maps the legacy System Preferences ids
+// still used in instructions.en.yaml onto their System Settings equivalents;
+// without that, macOS 13+ opens Settings on whatever pane was last shown.
+const openOsSettingsUrl = (navigationUrl) => {
+  if (navigationUrl.startsWith(MAC_SETTINGS_SCHEME)) {
+    return applescript.openPreferences(
+      navigationUrl.slice(MAC_SETTINGS_SCHEME.length)
+    );
+  }
+  return shell.openExternal(navigationUrl);
+};
 
 app.disableHardwareAcceleration();
 
@@ -157,10 +177,23 @@ async function createWindow(show = true) {
 
   // Add navigation security controls
   mainWindow.webContents.on("will-navigate", (event, navigationUrl) => {
-    if (!isTrustedUrl(navigationUrl)) {
-      event.preventDefault();
-      log.warn(`Blocked navigation to: ${navigationUrl}`);
+    // in-app navigation to a trusted http(s)/drsprinto url proceeds as normal
+    if (isTrustedUrl(navigationUrl)) return;
+
+    // app://, prefs://, ps:// and friends are registered in lib/protocolHandlers
+    // and sanitise their own payload; blocking them here would stop the handler
+    // from ever running
+    if (isAppProtocolUrl(navigationUrl)) return;
+
+    // anything else must not navigate the window
+    event.preventDefault();
+
+    if (isOsSettingsUrl(navigationUrl)) {
+      openOsSettingsUrl(navigationUrl);
+      return;
     }
+
+    log.warn(`Blocked navigation to: ${navigationUrl}`);
   });
 
   mainWindow.webContents.on("new-window", (event, navigationUrl) => {
@@ -168,6 +201,8 @@ async function createWindow(show = true) {
     // Handle external links safely through shell.openExternal if trusted
     if (isTrustedUrl(navigationUrl)) {
       shell.openExternal(navigationUrl);
+    } else if (isOsSettingsUrl(navigationUrl)) {
+      openOsSettingsUrl(navigationUrl);
     } else {
       log.warn(`Blocked new window to: ${navigationUrl}`);
     }
