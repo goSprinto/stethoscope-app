@@ -15,10 +15,24 @@ if (PORT) {
 
 process.env.ELECTRON_START_URL = `http://127.0.0.1:${port}`;
 
-const client = new net.Socket();
-
 let startedElectron = false;
+let loggedWaiting = false;
 const tryConnection = () => {
+  // a fresh socket per attempt: reusing one added another "connect" listener
+  // on every retry (MaxListenersExceededWarning)
+  const client = new net.Socket();
+  client.on("error", (e) => {
+    client.destroy();
+    // ECONNREFUSED just means the react dev server isn't listening yet; say
+    // so once instead of printing a stack trace every second
+    if (e.code !== "ECONNREFUSED") {
+      console.log("error", e);
+    } else if (!loggedWaiting) {
+      console.log(`waiting for react dev server on port ${port}...`);
+      loggedWaiting = true;
+    }
+    setTimeout(tryConnection, 1000);
+  });
   client.connect({ port }, () => {
     client.end();
     if (!startedElectron) {
@@ -41,8 +55,3 @@ const tryConnection = () => {
 };
 
 tryConnection();
-
-client.on("error", (e) => {
-  console.log("error", e);
-  setTimeout(tryConnection, 1000);
-});
