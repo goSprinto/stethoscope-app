@@ -56,12 +56,32 @@ function precompile() {
 // sessionId is used as a key
 const alertCache = new Map();
 
+function listen() {
+  const serverInstance = server.listen(PORT, "127.0.0.1", () => {
+    console.log(`GraphQL server listening on ${PORT}`);
+    serverInstance.emit("server:ready");
+  });
+  return serverInstance;
+}
+
+// routes and middleware live on the module-level express app, so they are
+// registered once; calling startServer again used to stack another full set
+// on every automatic rescan
+let routesRegistered = false;
+
 export default async function startServer(
   env,
   log,
   language = "en-US",
   appActions
 ) {
+  // later calls (autoscan recovery, re-created window) only need the server
+  // to be listening again
+  if (routesRegistered) {
+    return server.listening ? server : listen();
+  }
+  routesRegistered = true;
+
   log.info("starting express server");
   const checks = await precompile();
   const find = (filePath) => path.join(__dirname, filePath);
@@ -383,15 +403,7 @@ export default async function startServer(
     log.error(`server: ${err.message}`);
   });
 
-  const serverInstance = server.listen(PORT, "127.0.0.1", () => {
-    console.log(`GraphQL server listening on ${PORT}`);
-    // if (IS_DEV) {
-    //   console.log(`Explore the schema: http://127.0.0.1:${PORT}/graphiql`)
-    // }
-    serverInstance.emit("server:ready");
-  });
-
-  return serverInstance;
+  return listen();
 }
 
 process.on("unhandledRejection", (reason) => {

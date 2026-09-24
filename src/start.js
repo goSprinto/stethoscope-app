@@ -305,6 +305,11 @@ async function createWindow(show = true) {
   const [language] = app.getLocale().split("-");
   // start GraphQL server, close the app if 37370 is already in use
   server = await startGraphQLServer(env, log, language, appHooksForServer);
+  // createWindow runs again when the window has been destroyed, and the
+  // server object is reused; drop the previous run's listeners so each event
+  // is handled once
+  server.removeAllListeners("error");
+  server.removeAllListeners("server:ready");
   server.on("error", (error) => {
     const e = new Error(error);
     log.info(`startup:express:error ${JSON.stringify(e)}`);
@@ -324,6 +329,17 @@ async function createWindow(show = true) {
     mainWindow.loadURL(BASE_URL);
     mainWindow.focus();
   });
+
+  // same for IPC handlers: without this a re-created window registered a
+  // second "scan:init" handler, scheduling two automatic scans at a time
+  [
+    "contextmenu",
+    "app:restart",
+    "download:start",
+    "scan:init",
+    "download:complete",
+    "app:loaded",
+  ].forEach((channel) => ipcMain.removeAllListeners(channel));
 
   // add right-click menu to app
   ipcMain.on("contextmenu", (event) =>
@@ -373,42 +389,16 @@ async function createWindow(show = true) {
         } else if (event && event.sender && !event.sender.isDestroyed()) {
           console.log("Started auto reporting - object not destroyed");
           try {
-            // close the server and create a new window
-            if (server && server.listening) {
-              console.log("Closing the server before starting a new one...");
-              server.getConnections((err, count) => {
-                if (err) {
-                  console.error("Error checking active connections:", err);
-                } else {
-                  if (count > 0) {
-                    console.warn(
-                      "There are still active connections. Proceeding to close..."
-                    );
-                  }
-                  // Close the server after checking connections
-                  new Promise((resolve, reject) => {
-                    server.close((err) => {
-                      if (err) return reject(err);
-                      console.log("Server closed successfully.");
-                      resolve();
-                    });
-                  }).catch((err) => {
-                    console.error("Failed to close server:", err);
-                  });
-                }
-              });
-            }
-
-            server = await startGraphQLServer(
-              env,
-              log,
-              language,
-              appHooksForServer
-            );
-
-            // Adding some delay
-            if (process.platform === "win32") {
-              await new Promise((resolve) => setTimeout(resolve, 500));
+            // the server stays up between scans; bring it back only if it
+            // has stopped listening (it used to be closed and restarted on
+            // every automatic scan)
+            if (!server || !server.listening) {
+              server = await startGraphQLServer(
+                env,
+                log,
+                language,
+                appHooksForServer
+              );
             }
 
             event.sender.send("autoscan:start", {
