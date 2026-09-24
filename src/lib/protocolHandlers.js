@@ -16,6 +16,16 @@ import { isTrustedUrl } from './isTrustedUrl'
 
 const env = process.env.STETHOSCOPE_ENV || 'production'
 
+// Registers a handler that acts on the link, then answers 204 No Content,
+// which completes the navigation without leaving the current page. These used
+// protocol.registerHttpProtocol (deprecated since Electron 25), whose
+// callbacks were never called, so every click left a navigation pending.
+const handle = (scheme, onRequest) =>
+  protocol.handle(scheme, (request) => {
+    onRequest(request)
+    return new Response(null, { status: 204 })
+  })
+
 export default function initProtocols (mainWindow) {
   const { checkForUpdates } = updateInit(env, mainWindow)
 
@@ -34,7 +44,7 @@ export default function initProtocols (mainWindow) {
   };
 
   // used in instructions.yaml
-  protocol.registerHttpProtocol('app', (request, cb) => {
+  handle('app', (request) => {
     const sanitizedApp = validateAndSanitizeUrl(request.url, 'app');
     if (sanitizedApp) {
       applescript.openApp(sanitizedApp);
@@ -44,7 +54,7 @@ export default function initProtocols (mainWindow) {
   })
 
   // used in instructions.yaml
-  protocol.registerHttpProtocol('prefs', (request, cb) => {
+  handle('prefs', (request) => {
     const sanitizedPref = validateAndSanitizeUrl(request.url, 'prefs');
     if (!sanitizedPref) {
       log.warn(`Blocked invalid prefs protocol request: ${request.url}`);
@@ -64,7 +74,7 @@ export default function initProtocols (mainWindow) {
   })
 
   // handle 'action://update' links to start Stethoscope update process
-  protocol.registerHttpProtocol('action', (request, cb) => {
+  handle('action', (request) => {
     const sanitizedAction = validateAndSanitizeUrl(request.url, 'action');
     if (sanitizedAction && sanitizedAction.includes('update')) {
       try {
@@ -78,7 +88,7 @@ export default function initProtocols (mainWindow) {
   })
 
   // open a URL in the user's default browser
-  protocol.registerHttpProtocol('link', (request, cb) => {
+  handle('link', (request) => {
     const url = request.url.replace('link://', '');
     if (isTrustedUrl(url)) {
       shell.openExternal(url);
@@ -88,7 +98,7 @@ export default function initProtocols (mainWindow) {
   })
 
   // Runs powershell script
-  protocol.registerHttpProtocol('ps', (request, cb) => {
+  handle('ps', (request) => {
     const sanitizedScript = validateAndSanitizeUrl(request.url, 'ps');
     if (sanitizedScript) {
       powershell.run(sanitizedScript);
@@ -98,7 +108,7 @@ export default function initProtocols (mainWindow) {
   })
 
   // uses the shell `open` command to open item
-  protocol.registerHttpProtocol('open', (request, cb) => {
+  handle('open', (request) => {
     const sanitizedPath = validateAndSanitizeUrl(request.url, 'open');
     if (sanitizedPath) {
       // shell.openItem was removed in Electron 9; openPath is the replacement
