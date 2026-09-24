@@ -22,8 +22,7 @@ import isTrustedUrl from "./lib/utils";
 // CRA doesn't like importing native node modules
 // have to use window.require AFAICT
 const os = window.require("os");
-const glob = window.require("fast-glob");
-const { readFileSync } = window.require("fs");
+const { readFileSync, readdirSync } = window.require("fs");
 const path = window.require("path");
 const { shell, ipcRenderer } = window.require("electron");
 const Store = window.require("electron-store");
@@ -413,7 +412,13 @@ class App extends Component {
           }
 
           const currentBasePath = ipcRenderer.sendSync("get:env:basePath");
-          const files = await glob(`${currentBasePath}/*.yaml`);
+          // list the folder rather than glob it: the path contains the install
+          // location, and ( ) in it -- e.g. a C:\Users\name.PC(WORK) profile
+          // folder -- is glob syntax, so the pattern matched nothing and the
+          // app never got past loading
+          const files = readdirSync(currentBasePath)
+            .filter((file) => file.endsWith(".yaml"))
+            .map((file) => path.join(currentBasePath, file));
 
           if (!files.length) {
             reject("No files found");

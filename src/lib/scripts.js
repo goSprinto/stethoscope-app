@@ -1,8 +1,7 @@
 import { compile, run, setKmdEnv } from "kmd-script/src";
 import path from "path";
-import glob from "fast-glob";
 import extend from "extend";
-import { readFileSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 
 const development = process.env.STETHOSCOPE_ENV === "development";
 
@@ -17,15 +16,12 @@ setKmdEnv({
 });
 
 export async function precompile() {
-  let searchPath = path.resolve(
-    __dirname,
-    `../sources/${process.platform}/*.sh`
-  );
-  if (process.platform === "win32") {
-    // glob wants the pattern with forward slashes
-    searchPath = searchPath.replace(/\\/g, "/");
-  }
-  const files = await glob(searchPath);
+  // list the folder rather than glob it: ( ) in the install path is glob
+  // syntax and made the pattern match nothing (see server.js)
+  const dir = path.resolve(__dirname, `../sources/${process.platform}`);
+  const files = readdirSync(dir)
+    .filter((file) => file.endsWith(".sh"))
+    .map((file) => path.join(dir, file));
 
   return files.reduce((out, file) => {
     const { name } = path.parse(file);
