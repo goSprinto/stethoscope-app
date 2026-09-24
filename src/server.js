@@ -10,8 +10,7 @@ import { Server } from "http";
 import cors from "cors";
 import express from "express";
 import extend from "extend";
-import { readFileSync } from "fs";
-import glob from "fast-glob";
+import { readdirSync, readFileSync } from "fs";
 import helmet from "helmet";
 import path from "path";
 import pkg from "../package.json";
@@ -38,18 +37,14 @@ setKmdEnv({
   NODE_PATH: process.execPath,
 });
 
-function precompile() {
-  let searchPath = path.resolve(
-    __dirname,
-    `./sources/${process.platform}/*.sh`
-  );
-  if (process.platform === "win32") {
-    // glob wants the pattern with forward slashes
-    searchPath = searchPath.replace(/\\/g, "/");
-  }
-  return glob(searchPath).then((files) =>
-    files.map((file) => compile(readFileSync(file, "utf8")))
-  );
+// lists the folder rather than globbing it: __dirname contains the install
+// location, and ( ) in it (e.g. a C:\Users\name.PC(WORK) profile folder) is
+// glob syntax, so the pattern matched no scripts
+async function precompile() {
+  const dir = path.resolve(__dirname, `./sources/${process.platform}`);
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".sh"))
+    .map((file) => compile(readFileSync(path.join(dir, file), "utf8")));
 }
 
 // used to ensure that user is not shown multiple notifications for a login scan
