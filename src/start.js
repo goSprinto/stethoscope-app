@@ -499,9 +499,11 @@ if (!gotTheLock) {
       session.defaultSession.setPermissionRequestHandler(
         (webContents, permission, callback) => {
           console.log("permission", permission);
-          if (permission === "geolocation" || permission === "media") {
-            return callback(false); // Deny geolocation
-          }
+          // every request must be answered: an unanswered one stays pending
+          // forever. Only notifications are used (the "Security
+          // recommendation" alert in App.js); geolocation, media and
+          // anything else are denied
+          callback(permission === "notifications");
         }
       );
 
