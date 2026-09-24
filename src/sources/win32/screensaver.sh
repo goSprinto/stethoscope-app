@@ -5,7 +5,7 @@
 # ScreenSaverTimeout : 1200
 # SettingID          :
 
-tryExec powershell 'Get-CimInstance win32_desktop | where name -eq (whoami) | Format-List'
+tryExec powershell -NoProfile -NonInteractive 'Get-CimInstance win32_desktop | where name -eq (whoami) | Format-List'
 trim
 save output
 

@@ -10,8 +10,7 @@ import { Server } from "http";
 import cors from "cors";
 import express from "express";
 import extend from "extend";
-import { readFileSync } from "fs";
-import glob from "fast-glob";
+import { readdirSync, readFileSync } from "fs";
 import helmet from "helmet";
 import path from "path";
 import pkg from "../package.json";
@@ -38,23 +37,32 @@ setKmdEnv({
   NODE_PATH: process.execPath,
 });
 
-function precompile() {
-  let searchPath = path.resolve(
-    __dirname,
-    `./sources/${process.platform}/*.sh`
-  );
-  if (process.platform === "win32") {
-    // glob wants the pattern with forward slashes
-    searchPath = searchPath.replace(/\\/g, "/");
-  }
-  return glob(searchPath).then((files) =>
-    files.map((file) => compile(readFileSync(file, "utf8")))
-  );
+// lists the folder rather than globbing it: __dirname contains the install
+// location, and ( ) in it (e.g. a C:\Users\name.PC(WORK) profile folder) is
+// glob syntax, so the pattern matched no scripts
+async function precompile() {
+  const dir = path.resolve(__dirname, `./sources/${process.platform}`);
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".sh"))
+    .map((file) => compile(readFileSync(path.join(dir, file), "utf8")));
 }
 
 // used to ensure that user is not shown multiple notifications for a login scan
 // sessionId is used as a key
 const alertCache = new Map();
+
+function listen() {
+  const serverInstance = server.listen(PORT, "127.0.0.1", () => {
+    console.log(`GraphQL server listening on ${PORT}`);
+    serverInstance.emit("server:ready");
+  });
+  return serverInstance;
+}
+
+// routes and middleware live on the module-level express app, so they are
+// registered once; calling startServer again used to stack another full set
+// on every automatic rescan
+let routesRegistered = false;
 
 export default async function startServer(
   env,
@@ -62,6 +70,13 @@ export default async function startServer(
   language = "en-US",
   appActions
 ) {
+  // later calls (autoscan recovery, re-created window) only need the server
+  // to be listening again
+  if (routesRegistered) {
+    return server.listening ? server : listen();
+  }
+  routesRegistered = true;
+
   log.info("starting express server");
   const checks = await precompile();
   const find = (filePath) => path.join(__dirname, filePath);
@@ -244,12 +259,16 @@ export default async function startServer(
     const showNotification = sessionId && !alertCache.has(sessionId);
     const start = performance.now();
     const context = {};
-    const device = await kmd("os", context);
-
-    // AWS workspace override
-    if (device.system.platform.includes("Server 2016 Datacenter")) {
-      device.system.platform = "awsWorkspace";
-    }
+    // don't await os.sh here so it runs alongside the scan's other scripts
+    // instead of before them. Resolvers share this cached promise, and this
+    // .then is attached first, so the AWS workspace override is applied
+    // before any resolver sees the result
+    kmd("os", context).then((device) => {
+      const platform = device?.system?.platform;
+      if (platform && platform.includes("Server 2016 Datacenter")) {
+        device.system.platform = "awsWorkspace";
+      }
+    });
     // throttle native push notifications to user by session id
     if (sessionId && !alertCache.has(sessionId)) {
       alertCache.set(sessionId, true);
@@ -282,8 +301,11 @@ export default async function startServer(
 
         if (errors && !isRemote) {
           const errMessage = errors.reduce((p, c) => p + c + "\n", "");
+          // throwing here never sent a response, so the app's request hung
+          // until the 65s timeout above while the loader kept spinning
+          log.error(`server:scan errors ${errMessage}`);
           io.sockets.emit("scan:error", { error: errMessage });
-          throw new Error(errMessage);
+          return res.json(result);
         }
 
         // update the tray icon if a policy result is in the response
@@ -308,7 +330,10 @@ export default async function startServer(
       })
       .catch((err) => {
         io.sockets.emit("scan:error", { error: err.message });
-        throw err;
+        log.error(`server:scan failed ${err.message}`);
+        if (!res.headersSent) {
+          res.status(500).json({ errors: [{ message: err.message }] });
+        }
       });
   });
 
@@ -373,15 +398,7 @@ export default async function startServer(
     log.error(`server: ${err.message}`);
   });
 
-  const serverInstance = server.listen(PORT, "127.0.0.1", () => {
-    console.log(`GraphQL server listening on ${PORT}`);
-    // if (IS_DEV) {
-    //   console.log(`Explore the schema: http://127.0.0.1:${PORT}/graphiql`)
-    // }
-    serverInstance.emit("server:ready");
-  });
-
-  return serverInstance;
+  return listen();
 }
 
 process.on("unhandledRejection", (reason) => {

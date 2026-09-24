@@ -1,5 +1,5 @@
 #!/usr/bin/env kmd
-exec powershell 'Get-CimInstance win32_operatingsystem | select Caption,Version | Format-List'
+exec powershell -NoProfile -NonInteractive 'Get-CimInstance win32_operatingsystem | select Caption,Version | Format-List'
 trim
 save line
 extract Caption\s+:\s+(.*)

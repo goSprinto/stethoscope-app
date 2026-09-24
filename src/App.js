@@ -22,8 +22,7 @@ import isTrustedUrl from "./lib/utils";
 // CRA doesn't like importing native node modules
 // have to use window.require AFAICT
 const os = window.require("os");
-const glob = window.require("fast-glob");
-const { readFileSync } = window.require("fs");
+const { readFileSync, readdirSync } = window.require("fs");
 const path = window.require("path");
 const { shell, ipcRenderer } = window.require("electron");
 const Store = window.require("electron-store");
@@ -128,13 +127,8 @@ class App extends Component {
     // handler for device disconnected or deregister from sprinto account
     socket.on("sprinto:deviceDisconnected", this.onDeviceDisconnected);
 
-    // check if policy sync required (once per day)
-    if (this.shouldPolicySync(policyLastSyncedOn)) {
-      await this.syncUpdatedPolicy();
-    }
-
     ipcRenderer.send("scan:init");
-    // perform the initial policy load & scan
+    // perform the initial policy load & scan (always fetches the latest policy)
     try {
       await this.loadPractices();
     } catch (e) {
@@ -179,30 +173,6 @@ class App extends Component {
     window.addEventListener("online", () => this.setState({ offline: false }));
   }
 
-  // update policy
-  shouldPolicySync = (policyLastSyncedOn) => {
-    // we will sync policy once per day
-
-    const policySyncFreqDays = 1;
-
-    if (
-      policyLastSyncedOn === null &&
-      this.state.isSprintoAppConnected === true && Object.keys(this.state.policy).length === 0
-    ) {
-      return true;
-    }
-
-    const today = new Date();
-    const daysSincePolicySync = policyLastSyncedOn
-      ? Math.round(
-          (today.getTime() - policyLastSyncedOn.getTime()) / (1000 * 3600 * 24)
-        )
-      : policySyncFreqDays + 1;
-    return (
-      daysSincePolicySync >= 1 && this.state.isSprintoAppConnected === true
-    );
-  };
-
   shouldReportDevice = (deviceLogLastReportedOn) => {
     // We will sync device status per once day
     const deviceLogReportingFreqDays = 1;
@@ -219,18 +189,6 @@ class App extends Component {
         )
       : deviceLogReportingFreqDays + 1;
     return daysSinceLastLog >= 1;
-  };
-
-  syncUpdatedPolicy = async () => {
-    const baseUrl = await settings.get("sprintoAPPBaseUrl");
-    const policy = await ipcRenderer.invoke("api:getPolicy", baseUrl);
-    if (policy === null || policy === undefined) {
-      return;
-    }
-    // update policy synced time to now
-    const ts = new Date();
-    settings.set("policyLastSyncedOn", ts);
-    this.setState({ policy: policy, policyLastSyncedOn: ts });
   };
 
   onDeviceConnected = ({ data }) => {
@@ -400,7 +358,7 @@ class App extends Component {
         isUpdatedScanResult) &&
       this.state.isSprintoAppConnected
     ) {
-      const status = ipcRenderer.sendSync(
+      const status = await ipcRenderer.invoke(
         "api:reportDevice",
         policy.validate,
         device,
@@ -438,10 +396,15 @@ class App extends Component {
       this.setState({ loading: true }, async () => {
         try {
           let policy = null;
-          // Fetch the policy from the API directly
+          let policyLastSyncedOn = this.state.policyLastSyncedOn;
+          // Fetch the latest policy from the API directly
           if (this.state.isSprintoAppConnected) {
             const baseUrl = settings.get("sprintoAPPBaseUrl");
             policy = await ipcRenderer.invoke("api:getPolicy", baseUrl);
+            if (policy) {
+              policyLastSyncedOn = new Date();
+              settings.set("policyLastSyncedOn", policyLastSyncedOn);
+            }
           }
 
           if (!policy) {
@@ -449,7 +412,13 @@ class App extends Component {
           }
 
           const currentBasePath = ipcRenderer.sendSync("get:env:basePath");
-          const files = await glob(`${currentBasePath}/*.yaml`);
+          // list the folder rather than glob it: the path contains the install
+          // location, and ( ) in it -- e.g. a C:\Users\name.PC(WORK) profile
+          // folder -- is glob syntax, so the pattern matched nothing and the
+          // app never got past loading
+          const files = readdirSync(currentBasePath)
+            .filter((file) => file.endsWith(".yaml"))
+            .map((file) => path.join(currentBasePath, file));
 
           if (!files.length) {
             reject("No files found");
@@ -462,7 +431,7 @@ class App extends Component {
             const handle = readFileSync(filePath, "utf8");
             configs[parts.name.split(".").shift()] = yaml.load(handle);
           });
-          this.setState({ ...configs, policy, loading: false }, () => {
+          this.setState({ ...configs, policy, policyLastSyncedOn, loading: false }, () => {
             if (!this.state.scanIsRunning) {
               this.handleScan();
             }

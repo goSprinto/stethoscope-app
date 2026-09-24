@@ -141,6 +141,44 @@ let enableDebugger = process.argv.find((arg) => arg.includes("enableDebugger"));
 const DEBUG_MODE = !!process.env.STETHOSCOPE_DEBUG;
 
 
+// navigation security controls, applied to every BrowserWindow the app creates
+const addNavigationControls = (win) => {
+  win.webContents.on("will-navigate", (event, navigationUrl) => {
+    // in-app navigation to a trusted http(s)/drsprinto url proceeds as normal
+    if (isTrustedUrl(navigationUrl)) return;
+
+    // app://, prefs://, ps:// and friends are registered in lib/protocolHandlers
+    // and sanitise their own payload; blocking them here would stop the handler
+    // from ever running
+    if (isAppProtocolUrl(navigationUrl)) return;
+
+    // anything else must not navigate the window
+    event.preventDefault();
+
+    if (isOsSettingsUrl(navigationUrl)) {
+      openOsSettingsUrl(navigationUrl);
+      return;
+    }
+
+    log.warn(`Blocked navigation to: ${navigationUrl}`);
+  });
+
+  // window.open / target="_blank" links. The old "new-window" event was
+  // removed in Electron 22, so it no longer fired at all on current Electron
+  win.webContents.setWindowOpenHandler(({ url: navigationUrl }) => {
+    // Handle external links safely through shell.openExternal if trusted
+    if (isTrustedUrl(navigationUrl)) {
+      shell.openExternal(navigationUrl);
+    } else if (isOsSettingsUrl(navigationUrl)) {
+      openOsSettingsUrl(navigationUrl);
+    } else {
+      log.warn(`Blocked new window to: ${navigationUrl}`);
+    }
+    // never open a new Electron window
+    return { action: "deny" };
+  });
+};
+
 const focusOrCreateWindow = (mainWindow) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     if (mainWindow.isMinimized()) {
@@ -151,6 +189,7 @@ const focusOrCreateWindow = (mainWindow) => {
   } else {
     mainWindow = new BrowserWindow(windowPrefs);
     remoteMain.enable(mainWindow.webContents);
+    addNavigationControls(mainWindow);
     initMenu(mainWindow, app, focusOrCreateWindow, updater, log);
     mainWindow.loadURL(BASE_URL);
   }
@@ -174,39 +213,7 @@ async function createWindow(show = true) {
 
   mainWindow = new BrowserWindow(windowPrefs);
   remoteMain.enable(mainWindow.webContents);
-
-  // Add navigation security controls
-  mainWindow.webContents.on("will-navigate", (event, navigationUrl) => {
-    // in-app navigation to a trusted http(s)/drsprinto url proceeds as normal
-    if (isTrustedUrl(navigationUrl)) return;
-
-    // app://, prefs://, ps:// and friends are registered in lib/protocolHandlers
-    // and sanitise their own payload; blocking them here would stop the handler
-    // from ever running
-    if (isAppProtocolUrl(navigationUrl)) return;
-
-    // anything else must not navigate the window
-    event.preventDefault();
-
-    if (isOsSettingsUrl(navigationUrl)) {
-      openOsSettingsUrl(navigationUrl);
-      return;
-    }
-
-    log.warn(`Blocked navigation to: ${navigationUrl}`);
-  });
-
-  mainWindow.webContents.on("new-window", (event, navigationUrl) => {
-    event.preventDefault();
-    // Handle external links safely through shell.openExternal if trusted
-    if (isTrustedUrl(navigationUrl)) {
-      shell.openExternal(navigationUrl);
-    } else if (isOsSettingsUrl(navigationUrl)) {
-      openOsSettingsUrl(navigationUrl);
-    } else {
-      log.warn(`Blocked new window to: ${navigationUrl}`);
-    }
-  });
+  addNavigationControls(mainWindow);
 
   // if (IS_DEV) loadReactDevTools(BrowserWindow);
   // open developer console if env vars or args request
@@ -298,6 +305,11 @@ async function createWindow(show = true) {
   const [language] = app.getLocale().split("-");
   // start GraphQL server, close the app if 37370 is already in use
   server = await startGraphQLServer(env, log, language, appHooksForServer);
+  // createWindow runs again when the window has been destroyed, and the
+  // server object is reused; drop the previous run's listeners so each event
+  // is handled once
+  server.removeAllListeners("error");
+  server.removeAllListeners("server:ready");
   server.on("error", (error) => {
     const e = new Error(error);
     log.info(`startup:express:error ${JSON.stringify(e)}`);
@@ -312,10 +324,22 @@ async function createWindow(show = true) {
     if (!mainWindow) {
       mainWindow = new BrowserWindow(windowPrefs);
       remoteMain.enable(mainWindow.webContents);
+      addNavigationControls(mainWindow);
     }
     mainWindow.loadURL(BASE_URL);
     mainWindow.focus();
   });
+
+  // same for IPC handlers: without this a re-created window registered a
+  // second "scan:init" handler, scheduling two automatic scans at a time
+  [
+    "contextmenu",
+    "app:restart",
+    "download:start",
+    "scan:init",
+    "download:complete",
+    "app:loaded",
+  ].forEach((channel) => ipcMain.removeAllListeners(channel));
 
   // add right-click menu to app
   ipcMain.on("contextmenu", (event) =>
@@ -365,42 +389,16 @@ async function createWindow(show = true) {
         } else if (event && event.sender && !event.sender.isDestroyed()) {
           console.log("Started auto reporting - object not destroyed");
           try {
-            // close the server and create a new window
-            if (server && server.listening) {
-              console.log("Closing the server before starting a new one...");
-              server.getConnections((err, count) => {
-                if (err) {
-                  console.error("Error checking active connections:", err);
-                } else {
-                  if (count > 0) {
-                    console.warn(
-                      "There are still active connections. Proceeding to close..."
-                    );
-                  }
-                  // Close the server after checking connections
-                  new Promise((resolve, reject) => {
-                    server.close((err) => {
-                      if (err) return reject(err);
-                      console.log("Server closed successfully.");
-                      resolve();
-                    });
-                  }).catch((err) => {
-                    console.error("Failed to close server:", err);
-                  });
-                }
-              });
-            }
-
-            server = await startGraphQLServer(
-              env,
-              log,
-              language,
-              appHooksForServer
-            );
-
-            // Adding some delay
-            if (process.platform === "win32") {
-              await new Promise((resolve) => setTimeout(resolve, 500));
+            // the server stays up between scans; bring it back only if it
+            // has stopped listening (it used to be closed and restarted on
+            // every automatic scan)
+            if (!server || !server.listening) {
+              server = await startGraphQLServer(
+                env,
+                log,
+                language,
+                appHooksForServer
+              );
             }
 
             event.sender.send("autoscan:start", {
@@ -501,9 +499,11 @@ if (!gotTheLock) {
       session.defaultSession.setPermissionRequestHandler(
         (webContents, permission, callback) => {
           console.log("permission", permission);
-          if (permission === "geolocation" || permission === "media") {
-            return callback(false); // Deny geolocation
-          }
+          // every request must be answered: an unanswered one stays pending
+          // forever. Only notifications are used (the "Security
+          // recommendation" alert in App.js); geolocation, media and
+          // anything else are denied
+          callback(permission === "notifications");
         }
       );
 
@@ -635,7 +635,7 @@ ipcMain.handle("api:getPolicy", async (event, baseUrl) => {
   }
 });
 
-ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
+ipcMain.handle("api:reportDevice", async (event, result, device, baseUrl) => {
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
     const token = AuthService.getAccessToken();
@@ -643,14 +643,13 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
       log.error(
         "api:reportDevice - critical should not call this api when token is empty or not connected"
       );
-      event.returnValue = false;
-      return;
+      return false;
     }
     const data = { ...result, device };
     await ApiService.reportDevice(baseUrl, token, data, isDev);
-    event.returnValue = true;
+    return true;
   } catch (err) {
-    event.returnValue = false;
+    return false;
   }
 });
 
