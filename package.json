@@ -39,6 +39,8 @@
     "build:mac": "run-s prebuild 'build:electron -m --x64 --arm64' postbuild",
     "_electron-builder-windows": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -w",
     "build:windows": "run-s prebuild _electron-builder-windows",
+    "_electron-builder-windows-token": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 node scripts/buildWindowsWithToken.js",
+    "build:windows:token": "run-s prebuild _electron-builder-windows-token",
     "_electron-builder-linux": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -l",
     "build:linux": "export CXXFLAGS='-fPIC -Wl,-z,relro,-z,now' && run-s prebuild _electron-builder-linux postbuild",
     "build:electron": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder",
@@ -205,7 +207,8 @@
     },
     "linux": {
       "target": [
-        "AppImage", "deb"
+        "AppImage",
+        "deb"
       ],
       "maintainer": "Sprinto",
       "icon": "build/drsprinto-icons",
