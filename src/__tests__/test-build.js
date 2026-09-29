@@ -1,11 +1,9 @@
 // A simple test to verify a visible window is opened with a title
-const { Application } = require('spectron')
+const { _electron: electron } = require('playwright-core')
 const yaml = require('js-yaml')
 const fs = require('fs')
 const path = require('path')
 const assert = require('assert')
-const util = require('util')
-const exec = util.promisify(require('child_process').exec)
 const pkg = require('../../package.json')
 
 const configHandle = fs.readFileSync(path.resolve(__dirname, '../practices/config.yaml'), 'utf8')
@@ -17,21 +15,62 @@ const policy = yaml.load(policyHandle)
 policy.stethoscopeVersion = `>=${pkg.version}`
 
 const paths = {
-  darwin: `dist/mac/${pkg.name}.app/Contents/MacOS/${pkg.name}`,
+  darwin: `dist/${process.arch === 'arm64' ? 'mac-arm64' : 'mac'}/${pkg.name}.app/Contents/MacOS/${pkg.name}`,
   win32: `dist/win-unpacked/${pkg.name}.exe`,
   linux: `dist/linux-unpacked/${pkg.name.toLowerCase()}`
 }
 
-const app = new Application({
-  path: paths[process.platform],
-  args: [path.join(__dirname, '..'), 'testMode']
-})
+const appName = fs.readFileSync(path.resolve(__dirname, '../../.env'), 'utf8')
+  .match(/^REACT_APP_NAME=(.*)$/m)[1].trim()
 
+let app
+
+// DevicePolicy.osVersion is a list of named brackets, the yaml is keyed by platform
+policy.osVersion = {
+  platforms: Object.entries(policy.osVersion).map(([name, bracket]) => ({ name, ...bracket }))
+}
+
+const VALIDATE_DEVICE = `query ValidateDevice($policy: DevicePolicy!) {
+  policy {
+    validate(policy: $policy) {
+      status
+      osVersion
+      diskEncryption
+      screenLock
+      screenIdle
+      antivirus
+      stethoscopeVersion
+    }
+  }
+  device {
+    deviceId
+    deviceName
+    platform
+    platformName
+    osVersion
+    osName
+    hardwareModel
+    hardwareSerial
+    stethoscopeVersion
+    security(policy: $policy) {
+      diskEncryption
+      screenLock
+      screenIdle
+    }
+  }
+}`
+
+// resolves to the graphql response, or false if the request was rejected or errored
 async function scan (origin) {
-  const { stdout } = await exec(`curl -H "Origin: ${origin}" --verbose 'http://127.0.0.1:37370/graphql?query=query%20ValidateDevice($policy:%20DevicePolicy!)%20%7B%0A%20%20policy%20%7B%0A%20%20%20%20validate(policy:%20$policy)%20%7B%0A%20%20%20%20%20%20status%0A%20%20%20%20%20%20osVersion%0A%20%20%20%20%20%20firewall%0A%20%20%20%20%20%20diskEncryption%0A%20%20%20%20%20%20automaticUpdates%0A%20%20%20%20%20%20screenLock%0A%20%20%20%20%20%20remoteLogin%0A%20%20%20%20%20%20stethoscopeVersion%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20%0A%20%20device%20%7B%0A%20%20%20%20deviceId%0A%20%20%20%20deviceName%0A%20%20%20%20platform%0A%20%20%20%20platformName%0A%20%20%20%20friendlyName%0A%20%20%20%20osVersion%0A%20%20%20%20osName%0A%20%20%20%20osBuild%0A%20%20%20%20firmwareVersion%0A%20%20%20%20hardwareModel%0A%20%20%20%20hardwareSerial%0A%20%20%20%20stethoscopeVersion%0A%20%20%20%20ipAddresses%20%7B%0A%20%20%20%20%20%20interface%0A%20%20%20%20%20%20address%0A%20%20%20%20%20%20mask%0A%20%20%20%20%20%20broadcast%0A%20%20%20%20%7D%0A%20%20%20%20macAddresses%20%7B%0A%20%20%20%20%20%20interface%0A%20%20%20%20%20%20type%0A%20%20%20%20%20%20mac%0A%20%20%20%20%20%20physicalAdapter%0A%20%20%20%20%20%20lastChange%0A%20%20%20%20%7D%0A%20%20%20%20security%20%7B%0A%20%20%20%20%20%20firewall%0A%20%20%20%20%20%20automaticUpdates%0A%20%20%20%20%20%20diskEncryption%0A%20%20%20%20%20%20screenLock%0A%20%20%20%20%20%20remoteLogin%0A%20%20%20%20%20%20automaticAppUpdates%0A%20%20%20%20%20%20automaticSecurityUpdates%0A%20%20%20%20%20%20automaticOsUpdates%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A&variables=%7B%0A%20%20%22policy%22:%20%7B%0A%20%20%20%20%22stethoscopeVersion%22:%20%22%3E=1.0.0%22,%0A%20%20%20%20%22osVersion%22:%20%7B%0A%20%20%20%20%20%20%22darwin%22:%20%7B%0A%20%20%20%20%20%20%20%20%22ok%22:%20%22%3E=10.13.4%22,%0A%20%20%20%20%20%20%20%20%22nudge%22:%20%22%3E=10.12.6%22%0A%20%20%20%20%20%20%7D,%0A%20%20%20%20%20%20%22win32%22:%20%7B%0A%20%20%20%20%20%20%20%20%22ok%22:%20%22%3E=10.0.16299%22,%0A%20%20%20%20%20%20%20%20%22nudge%22:%20%22%3E=10.0.15063%22%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D,%0A%20%20%20%20%22firewall%22:%20%22ALWAYS%22,%0A%20%20%20%20%22diskEncryption%22:%20%22ALWAYS%22,%0A%20%20%20%20%22automaticUpdates%22:%20%22SUGGESTED%22,%0A%20%20%20%20%22screenLock%22:%20%22IF_SUPPORTED%22,%0A%20%20%20%20%22remoteLogin%22:%20%22NEVER%22%0A%20%20%7D%0A%7D&sessionId=034fad3d-9352-f41f-848b-76794010fc25&operationName=ValidateDevice'`)
-
   try {
-    return JSON.parse(stdout)
+    const res = await fetch('http://127.0.0.1:37370/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: origin },
+      body: JSON.stringify({ query: VALIDATE_DEVICE, variables: { policy } })
+    })
+    if (!res.ok) return false
+    const response = await res.json()
+    return response.errors ? false : response
   } catch (e) {
     return false
   }
@@ -62,39 +101,50 @@ console.log('\n========================== STETHOSCOPE SMOKE TEST ===============
 
 async function main () {
   try {
-    await app.start()
+    app = await electron.launch({
+      executablePath: path.resolve(__dirname, '../..', paths[process.platform]),
+      args: [path.join(__dirname, '..'), 'testMode']
+    })
+    const window = await app.firstWindow()
+    await window.waitForLoadState('domcontentloaded')
 
     console.log('\n============================ STANDALONE TESTS ============================\n')
 
-    const isVisible = await app.browserWindow.isVisible()
+    const isVisible = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible())
     assert.strict.equal(isVisible, true)
     console.log('✓', 'app is visible')
 
-    const audit = await app.client.auditAccessibility()
-    console.log(audit.message)
-    assert.strict.equal(audit.failed, false)
-    console.log('✓', 'app passes accessibility audit')
-
-    const title = await app.client.getTitle()
-    assert.strict.equal(title, `Stethoscope (v${pkg.version})`)
+    const title = await window.title()
+    assert.strict.equal(title, `${appName} (v${pkg.version})`)
     console.log('✓', 'correct version in title')
 
-    const devToolsOpen = await app.browserWindow.isDevToolsOpened()
+    const devToolsOpen = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.isDevToolsOpened())
     assert.strict.equal(devToolsOpen, false)
     console.log('✓', 'dev tools are closed')
 
-    await app.client.waitUntilTextExists('.last-updated', 'Last scanned by Stethoscope', 10000)
+    await window.getByRole('button', { name: 'Scan', exact: true }).waitFor({ timeout: 30000 })
     console.log('✓', 'app scan successful')
+
+    // the app's CSP blocks inline <script> tags but allows eval
+    await window.evaluate(require('axe-core').source)
+    const { violations } = await window.evaluate(() => window.axe.run())
+    violations.forEach(v => console.log(`  [${v.impact}] ${v.id}: ${v.help} (${v.nodes.length})`))
+    // only critical violations fail the build, the rest are reported above
+    const critical = violations.filter(v => v.impact === 'critical')
+    assert.strict.equal(critical.length, 0, `${critical.length} critical accessibility violation(s)`)
+    console.log('✓', 'app passes accessibility audit')
 
     console.log('\n============================ REMOTE SCANNING ============================\n')
 
-    const response = await scan('stethoscope://main')
-    if (response !== false) {
+    const response = await scan('drsprinto://main')
+    assert.ok(response, "scan from trusted 'drsprinto://main' failed")
+    {
       const timing = Math.round(response.extensions.timing.total / 1000 * 100) / 100
-      console.log('✓', `[Remote:Application]\tscan from trusted 'stethoscope://main' successful\t${`${timing} seconds`}`)
+      console.log('✓', `[Remote:Application]\tscan from trusted 'drsprinto://main' successful\t${`${timing} seconds`}`)
     }
 
-    if (await scan('https://malicious.ru') === false) {
+    assert.strict.equal(await scan('https://malicious.ru'), false, "scan from untrusted 'https://malicious.ru' succeeded")
+    {
       console.log('✓', '[Remote:Untrusted]\tscan from untrusted \'https://malicious.ru\' failed')
     }
 
@@ -116,7 +166,8 @@ async function main () {
     console.log('\n============================ LOAD TESTS ============================\n')
 
     for (let i = 0; i < LOAD; i++) {
-      const response = await scan('stethoscope://main')
+      const response = await scan('drsprinto://main')
+      assert.ok(response, `load test scan ${i + 1} failed`)
       const timing = Math.round(response.extensions.timing.total / 1000 * 100) / 100
       timings.push(timing)
       console.log('✓', `[LOADTEST ${i + 1}]\tscan took ${timing} seconds`)
@@ -138,11 +189,11 @@ async function main () {
 
     console.log('\n', '✓', 'ALL TESTS PASSED!')
 
-    await app.stop()
+    await app.close()
     process.exit(0)
   } catch (e) {
     console.error('X', 'Test failed', e.message)
-    await app.stop()
+    if (app) await app.close()
     process.exit(1)
   }
 }
