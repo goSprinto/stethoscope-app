@@ -138,6 +138,9 @@
     "appId": "com.sprinto.drsprinto",
     "extends": null,
     "productName": "DrSprinto",
+    "toolsets": {
+      "appimage": "1.0.3"
+    },
     "directories": {
       "buildResources": "public"
     },
@@ -206,8 +209,20 @@
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb"
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "maintainer": "Sprinto",
       "icon": "build/drsprinto-icons",

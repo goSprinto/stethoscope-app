@@ -14,10 +14,25 @@ const policy = yaml.load(policyHandle)
 
 policy.stethoscopeVersion = `>=${pkg.version}`
 
+// electron-builder only suffixes the output dir with the arch for non-x64 builds
+const archSuffix = process.arch === 'x64' ? '' : `-${process.arch}`
 const paths = {
-  darwin: `dist/${process.arch === 'arm64' ? 'mac-arm64' : 'mac'}/${pkg.name}.app/Contents/MacOS/${pkg.name}`,
-  win32: `dist/win-unpacked/${pkg.name}.exe`,
-  linux: `dist/linux-unpacked/${pkg.name.toLowerCase()}`
+  darwin: `dist/mac${archSuffix}/${pkg.name}.app/Contents/MacOS/${pkg.name}`,
+  win32: `dist/win${archSuffix}-unpacked/${pkg.name}.exe`,
+  linux: `dist/linux${archSuffix}-unpacked/${pkg.name.toLowerCase()}`
+}
+const executablePath = path.resolve(__dirname, '../..', paths[process.platform])
+
+// a cross-platform build (e.g. build:linux on macOS) can't be launched on this host
+if (!fs.existsSync(executablePath)) {
+  const hostPrefix = { darwin: 'mac', win32: 'win', linux: 'linux' }[process.platform]
+  const builds = fs.existsSync('dist')
+    ? fs.readdirSync('dist').filter(f => /^(mac|win|linux)(-|$)/.test(f))
+    : []
+  if (builds.length && !builds.some(f => f.startsWith(hostPrefix))) {
+    console.log(`Skipping smoke test: dist only has ${builds.join(', ')}, which can't run on ${process.platform}-${process.arch}`)
+    process.exit(0)
+  }
 }
 
 const appName = fs.readFileSync(path.resolve(__dirname, '../../.env'), 'utf8')
@@ -102,7 +117,7 @@ console.log('\n========================== STETHOSCOPE SMOKE TEST ===============
 async function main () {
   try {
     app = await electron.launch({
-      executablePath: path.resolve(__dirname, '../..', paths[process.platform]),
+      executablePath,
       args: [path.join(__dirname, '..'), 'testMode']
     })
     const window = await app.firstWindow()
