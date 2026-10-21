@@ -664,10 +664,7 @@ ipcMain.on("api:reportDiscoveredVendorsOnly", async (_event, device, baseUrl) =>
     }
 
     const installedApplications = device.installedApplications || [];
-    const discoveredVendors = buildDiscoveredVendors(
-      installedApplications,
-      device
-    );
+    const discoveredVendors = buildDiscoveredVendors(installedApplications);
 
     if (!discoveredVendors.length) {
       log.info("api:reportDiscoveredVendors - nothing to report", {
@@ -679,8 +676,7 @@ ipcMain.on("api:reportDiscoveredVendorsOnly", async (_event, device, baseUrl) =>
     await ApiService.reportDiscoveredVendors(
       resolveApiBaseUrl(baseUrl),
       token,
-      discoveredVendors,
-      device
+      discoveredVendors
     );
   } catch (err) {
     log.error("api:reportDiscoveredVendorsOnly failed", {
