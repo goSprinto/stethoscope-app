@@ -579,6 +579,29 @@ ipcMain.on("auth:logout", (event) => {
   }
 });
 
+// Locally the dashboard (:3000) and the /drsprinto API (:5000) are separate servers; in production one host serves both.
+const DEV_APP_BASE_URL = "http://localhost:3000";
+const DEV_API_BASE_URL = "http://localhost:5000";
+const isLocalUrl = (url) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(?::|\/|$)/i.test(url || "");
+const resolveDevBaseUrl = (baseUrl, override, localDefault) => {
+  if (process.env.STETHOSCOPE_ENV !== "development") {
+    return baseUrl;
+  }
+  if (override) {
+    return override;
+  }
+  return !baseUrl || isLocalUrl(baseUrl) ? localDefault : baseUrl;
+};
+const resolveAppBaseUrl = (baseUrl) =>
+  resolveDevBaseUrl(baseUrl, process.env.SPRINTO_APP_BASE_URL, DEV_APP_BASE_URL);
+const resolveApiBaseUrl = (baseUrl) =>
+  resolveDevBaseUrl(baseUrl, process.env.SPRINTO_API_BASE_URL, DEV_API_BASE_URL);
+
+ipcMain.on("get:app:baseUrl", (event, baseUrl) => {
+  event.returnValue = resolveAppBaseUrl(baseUrl);
+});
+
 // External API calls
 ipcMain.on("api:getPolicy", async (event, baseUrl) => {
   // Get latest policy json from sprinto
@@ -593,8 +616,16 @@ ipcMain.on("api:getPolicy", async (event, baseUrl) => {
       return;
     }
 
-    event.returnValue = await ApiService.getPolicy(baseUrl, token, isDev);
+    event.returnValue = await ApiService.getPolicy(
+      resolveApiBaseUrl(baseUrl),
+      token,
+      isDev
+    );
   } catch (err) {
+    log.error("api:getPolicy failed", {
+      err: err?.message || String(err),
+      baseUrl: resolveApiBaseUrl(baseUrl),
+    });
     event.returnValue = null;
   }
 });
@@ -611,9 +642,13 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
       return;
     }
     const data = { ...result, device };
-    await ApiService.reportDevice(baseUrl, token, data, isDev);
+    await ApiService.reportDevice(resolveApiBaseUrl(baseUrl), token, data, isDev);
     event.returnValue = true;
   } catch (err) {
+    log.error("api:reportDevice failed", {
+      err: err?.message || String(err),
+      baseUrl: resolveApiBaseUrl(baseUrl),
+    });
     event.returnValue = false;
   }
 });
@@ -642,7 +677,7 @@ ipcMain.on("api:reportDiscoveredVendorsOnly", async (_event, device, baseUrl) =>
     }
 
     await ApiService.reportDiscoveredVendors(
-      baseUrl,
+      resolveApiBaseUrl(baseUrl),
       token,
       discoveredVendors,
       device

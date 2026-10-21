@@ -41,3 +41,5 @@ latest/
 *-audit.json
 
 dist-win-unsigned
+
+dist-mac-unsigned

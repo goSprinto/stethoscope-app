@@ -496,11 +496,11 @@ class App extends Component {
    * Opens a link in the native default browser
    */
   handleOpenExternalForRegister = async (event) => {
-    let baseUrl = settings.get("sprintoAPPBaseUrl");
     const isDev = ipcRenderer.sendSync("get:env:isDev");
-    if (isDev) {
-      baseUrl = "http://localhost:5000";
-    }
+    const baseUrl = ipcRenderer.sendSync(
+      "get:app:baseUrl",
+      settings.get("sprintoAPPBaseUrl")
+    );
     const targetHref = event.target.getAttribute("href");
     event.preventDefault();
     if (targetHref) {
@@ -517,8 +517,11 @@ class App extends Component {
    * Opens a link in the native default browser
    */
   handleOpenExternal = async (event) => {
-    const url = await settings.get("sprintoAPPBaseUrl");
     const isDev = ipcRenderer.sendSync("get:env:isDev");
+    const url = ipcRenderer.sendSync(
+      "get:app:baseUrl",
+      await settings.get("sprintoAPPBaseUrl")
+    );
     const targetHref = event.target.getAttribute("href");
 
     event.preventDefault();
