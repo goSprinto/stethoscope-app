@@ -86,8 +86,8 @@ export default class ApiService {
           "User-Agent": process.env.USER_AGENT,
         }
       });
-      
-      return response.policy;
+
+      return { policy: response.policy, settings: response.settings };
     } catch (err) {
       log.error("services-->api:getPolicy", {
         err: describeError(err),

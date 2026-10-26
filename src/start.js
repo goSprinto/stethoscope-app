@@ -42,6 +42,11 @@ import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
 import { buildDiscoveredVendors } from "./lib/discoveredVendors";
+import {
+  isInstalledAppDiscoveryEnabled,
+  updateInstalledAppDiscovery,
+  disableInstalledAppDiscovery,
+} from "./lib/installedAppDiscovery";
 import { isTrustedUrl } from "./lib/isTrustedUrl";
 import unixify from "unixify";
 
@@ -573,6 +578,7 @@ ipcMain.on("auth:storeToken", (event, token) => {
 ipcMain.on("auth:logout", (event) => {
   try {
     AuthService.logout();
+    disableInstalledAppDiscovery();
     event.returnValue = true;
   } catch (err) {
     log.error("auth:logout crash", err);
@@ -612,16 +618,20 @@ ipcMain.on("api:getPolicy", async (event, baseUrl) => {
       log.error(
         "api:getPolicy - critical should not call this api when token is empty or not connected"
       );
+      disableInstalledAppDiscovery();
       event.returnValue = false;
       return;
     }
 
-    event.returnValue = await ApiService.getPolicy(
+    const { policy, settings: remoteSettings } = await ApiService.getPolicy(
       resolveApiBaseUrl(baseUrl),
       token,
       isDev
     );
+    updateInstalledAppDiscovery(remoteSettings);
+    event.returnValue = policy;
   } catch (err) {
+    disableInstalledAppDiscovery();
     log.error("api:getPolicy failed", {
       err: err?.message || String(err),
       baseUrl: resolveApiBaseUrl(baseUrl),
@@ -641,7 +651,10 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
       event.returnValue = false;
       return;
     }
-    const data = { ...result, device };
+    // The application list is reported only through reportDiscoveredVendors, and only when opted in.
+    const deviceWithoutApps = { ...device };
+    delete deviceWithoutApps.installedApplications;
+    const data = { ...result, device: deviceWithoutApps };
     await ApiService.reportDevice(resolveApiBaseUrl(baseUrl), token, data, isDev);
     event.returnValue = true;
   } catch (err) {
@@ -657,6 +670,10 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
 // device-report throttle, so a new AI app is surfaced on the next scan.
 ipcMain.on("api:reportDiscoveredVendorsOnly", async (_event, device, baseUrl) => {
   try {
+    if (!isInstalledAppDiscoveryEnabled()) {
+      return;
+    }
+
     const token = AuthService.getAccessToken();
     if (token === null || token === undefined) {
       log.warn("api:reportDiscoveredVendors - skipped, no token", { baseUrl });
