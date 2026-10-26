@@ -6,6 +6,21 @@ const API_RETRY_DELAY = 1000; // 1 second
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Logging the raw AxiosError would write the Authorization header to disk, so keep only what explains the failure.
+const describeError = (err) => {
+  const response = err?.response;
+  const body = response?.data;
+  return {
+    message: err?.message,
+    code: err?.code,
+    status: response?.status,
+    responseBody: typeof body === "string" ? body.slice(0, 500) : body,
+    server: response?.headers?.server,
+    contentType: response?.headers?.["content-type"],
+    cloudfrontRequestId: response?.headers?.["x-amz-cf-id"],
+  };
+};
+
 export default class ApiService {
   static async makeRequest(config, retryCount = 0) {
     try {
@@ -53,7 +68,7 @@ export default class ApiService {
       return true;
     } catch (err) {
       log.error("services-->api:reportDevice", { 
-        err: JSON.stringify({ err }), 
+        err: describeError(err),
         baseUrl,
         retryCount: err.retryCount
       });
@@ -71,12 +86,40 @@ export default class ApiService {
           "User-Agent": process.env.USER_AGENT,
         }
       });
-      
-      return response.policy;
+
+      return { policy: response.policy, settings: response.settings };
     } catch (err) {
-      log.error("services-->api:getPolicy", { 
-        err: JSON.stringify({ err }), 
+      log.error("services-->api:getPolicy", {
+        err: describeError(err),
         baseUrl,
+        retryCount: err.retryCount
+      });
+      throw err;
+    }
+  }
+
+  static async reportDiscoveredVendors(baseUrl, token, discoveredVendors) {
+    try {
+      await this.makeRequest({
+        method: 'post',
+        url: `${baseUrl}/drsprinto/api/v1/reportDiscoveredVendors`,
+        data: { data: { discoveredVendors } },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent": process.env.USER_AGENT,
+        }
+      });
+
+      log.info("services-->api:reportDiscoveredVendors", {
+        baseUrl,
+        count: discoveredVendors.length,
+      });
+      return true;
+    } catch (err) {
+      log.error("services-->api:reportDiscoveredVendors", {
+        err: describeError(err),
+        baseUrl,
+        count: discoveredVendors?.length,
         retryCount: err.retryCount
       });
       throw err;

@@ -2,6 +2,8 @@ import pkg from '../../package.json'
 import NetworkInterface from '../lib/NetworkInterface'
 import Security from './Security'
 import kmd from '../lib/kmd'
+import listInstalledApps from '../lib/listInstalledApps'
+import { isInstalledAppDiscoveryEnabled } from '../lib/installedAppDiscovery'
 import { ON, OFF, UNKNOWN, UNSUPPORTED, NUDGE, PASS, FAIL } from '../constants'
 import { PlatformDevice } from './platform/'
 
@@ -132,6 +134,13 @@ const Device = {
     }
 
     return UNSUPPORTED
+  },
+
+  installedApplications (root, args, context) {
+    if (!isInstalledAppDiscoveryEnabled()) {
+      return []
+    }
+    return listInstalledApps(context)
   },
 
   policyResult (root, args, context) {

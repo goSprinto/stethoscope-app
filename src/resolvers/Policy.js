@@ -33,7 +33,7 @@ export default {
         // convert verification result to PASS|FAIL
         response[verification] = passing.map(
           ({ name, version, installed, state, passing }, index) => {
-            const policyType = requirement[index].assertion;
+            const policyType = requirement[index]?.assertion;
             const failStatus = policyType === SUGGESTED ? NUDGE : FAIL;
             return {
               name,

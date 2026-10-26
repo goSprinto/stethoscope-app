@@ -39,8 +39,10 @@ type Device {
   friendlyName: String
   # device serial number
   hardwareSerial: String
-  # installed applications
+  # installed applications, as required by a policy
   applications: [Application]
+  # every application installed on the device
+  installedApplications: [InstalledApplication!]!
   # browser extensions
   extensions(browser: Browser): [Extension]
   # current IP addresses
@@ -97,6 +99,25 @@ type Application {
   assertion: RequirementOption! # ALWAYS, NEVER, SUGGESTED, etc.
   description: String
   installFrom: String
+}
+
+# An application discovered on the device, independent of any policy.
+# `version` is a plain String rather than Semver: installed applications
+# routinely carry versions the Semver scalar rejects, and that scalar throws
+# rather than returning null, which would fail the whole field.
+type InstalledApplication {
+  name: String!
+  path: String
+  version: String
+  # a process with this name is running right now
+  isRunning: Boolean!
+  # ISO-8601 timestamp of the last launch, from Spotlight metadata on Mac and
+  # UserAssist on Windows. null means unknown, not never launched: Mac loses the
+  # metadata when an app self-updates its bundle, Windows only records launches
+  # made through Explorer, and Linux has no unprivileged source at all.
+  lastUsedAt: String
+  # cumulative launch count, with the same caveats as lastUsedAt
+  useCount: Int
 }
 
 input ApplicationPaths {
@@ -262,6 +283,7 @@ type ApplicationFeatureState {
   installed: Boolean
   state: String
 }
+
 
 # a platform string requirement defines a target string value for specific platforms
 input PlatformStringRequirement {

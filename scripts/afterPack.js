@@ -115,6 +115,18 @@ module.exports = async function (context) {
 
     try {
         if (platform === 'win32') {
+            // Escape hatch for producing a throwaway installer to test on a Windows
+            // device, on a machine that has neither signtool.exe nor the signing
+            // certificate. Must be requested explicitly: a build with no signing
+            // credentials otherwise fails here rather than silently shipping an
+            // unsigned installer.
+            if (process.env.SKIP_WINDOWS_SIGNING === 'true') {
+                console.warn(
+                    '\n*** SKIP_WINDOWS_SIGNING=true -- NOT SIGNING. ***\n' +
+                    '*** The installer this produces is for testing only and must not be released. ***\n'
+                );
+                return;
+            }
             console.log('Signing Windows DLLs and EXEs...');
             signAllDlls(appOutDir);
             console.log('Windows signing completed successfully');

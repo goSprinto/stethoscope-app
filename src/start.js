@@ -41,6 +41,12 @@ import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
+import { buildDiscoveredVendors } from "./lib/discoveredVendors";
+import {
+  isInstalledAppDiscoveryEnabled,
+  updateInstalledAppDiscovery,
+  disableInstalledAppDiscovery,
+} from "./lib/installedAppDiscovery";
 import { isTrustedUrl } from "./lib/isTrustedUrl";
 import unixify from "unixify";
 
@@ -572,10 +578,34 @@ ipcMain.on("auth:storeToken", (event, token) => {
 ipcMain.on("auth:logout", (event) => {
   try {
     AuthService.logout();
+    disableInstalledAppDiscovery();
     event.returnValue = true;
   } catch (err) {
     log.error("auth:logout crash", err);
   }
+});
+
+// Locally the dashboard (:3000) and the /drsprinto API (:5000) are separate servers; in production one host serves both.
+const DEV_APP_BASE_URL = "http://localhost:3000";
+const DEV_API_BASE_URL = "http://localhost:5000";
+const isLocalUrl = (url) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(?::|\/|$)/i.test(url || "");
+const resolveDevBaseUrl = (baseUrl, override, localDefault) => {
+  if (process.env.STETHOSCOPE_ENV !== "development") {
+    return baseUrl;
+  }
+  if (override) {
+    return override;
+  }
+  return !baseUrl || isLocalUrl(baseUrl) ? localDefault : baseUrl;
+};
+const resolveAppBaseUrl = (baseUrl) =>
+  resolveDevBaseUrl(baseUrl, process.env.SPRINTO_APP_BASE_URL, DEV_APP_BASE_URL);
+const resolveApiBaseUrl = (baseUrl) =>
+  resolveDevBaseUrl(baseUrl, process.env.SPRINTO_API_BASE_URL, DEV_API_BASE_URL);
+
+ipcMain.on("get:app:baseUrl", (event, baseUrl) => {
+  event.returnValue = resolveAppBaseUrl(baseUrl);
 });
 
 // External API calls
@@ -588,12 +618,24 @@ ipcMain.on("api:getPolicy", async (event, baseUrl) => {
       log.error(
         "api:getPolicy - critical should not call this api when token is empty or not connected"
       );
+      disableInstalledAppDiscovery();
       event.returnValue = false;
       return;
     }
 
-    event.returnValue = await ApiService.getPolicy(baseUrl, token, isDev);
+    const { policy, settings: remoteSettings } = await ApiService.getPolicy(
+      resolveApiBaseUrl(baseUrl),
+      token,
+      isDev
+    );
+    updateInstalledAppDiscovery(remoteSettings);
+    event.returnValue = policy;
   } catch (err) {
+    disableInstalledAppDiscovery();
+    log.error("api:getPolicy failed", {
+      err: err?.message || String(err),
+      baseUrl: resolveApiBaseUrl(baseUrl),
+    });
     event.returnValue = null;
   }
 });
@@ -609,11 +651,55 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
       event.returnValue = false;
       return;
     }
-    const data = { ...result, device };
-    await ApiService.reportDevice(baseUrl, token, data, isDev);
+    // The application list is reported only through reportDiscoveredVendors, and only when opted in.
+    const deviceWithoutApps = { ...device };
+    delete deviceWithoutApps.installedApplications;
+    const data = { ...result, device: deviceWithoutApps };
+    await ApiService.reportDevice(resolveApiBaseUrl(baseUrl), token, data, isDev);
     event.returnValue = true;
   } catch (err) {
+    log.error("api:reportDevice failed", {
+      err: err?.message || String(err),
+      baseUrl: resolveApiBaseUrl(baseUrl),
+    });
     event.returnValue = false;
+  }
+});
+
+// Fire-and-forget: discovery is reported independently of the daily
+// device-report throttle, so a new AI app is surfaced on the next scan.
+ipcMain.on("api:reportDiscoveredVendorsOnly", async (_event, device, baseUrl) => {
+  try {
+    if (!isInstalledAppDiscoveryEnabled()) {
+      return;
+    }
+
+    const token = AuthService.getAccessToken();
+    if (token === null || token === undefined) {
+      log.warn("api:reportDiscoveredVendors - skipped, no token", { baseUrl });
+      return;
+    }
+
+    const installedApplications = device.installedApplications || [];
+    const discoveredVendors = buildDiscoveredVendors(installedApplications);
+
+    if (!discoveredVendors.length) {
+      log.info("api:reportDiscoveredVendors - nothing to report", {
+        installedApplicationCount: installedApplications.length,
+      });
+      return;
+    }
+
+    await ApiService.reportDiscoveredVendors(
+      resolveApiBaseUrl(baseUrl),
+      token,
+      discoveredVendors
+    );
+  } catch (err) {
+    log.error("api:reportDiscoveredVendorsOnly failed", {
+      err: err?.message || String(err),
+      baseUrl,
+    });
   }
 });
 

@@ -13,6 +13,10 @@ const key = "authCreds";
 export default class AuthService {
   static getAccessToken() {
     const accessToken = authData.get(key);
+    // Never connected or store reset: null routes callers to "not connected" instead of a decrypt crash.
+    if (!accessToken) {
+      return null;
+    }
     return safeStorage.decryptString(Buffer.from(accessToken, "latin1"));
   }
 

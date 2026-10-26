@@ -415,6 +415,13 @@ class App extends Component {
         this.onDeviceLogRecorded();
       }
     }
+
+    // Discovered AI applications are reported separately: they must not be
+    // gated by the daily device-report throttle, so a newly installed AI app
+    // shows up on the next scan rather than up to a day later.
+    if (this.state.isSprintoAppConnected) {
+      ipcRenderer.send("api:reportDiscoveredVendorsOnly", device, baseUrl);
+    }
   };
 
   handleErrorYAML = (
@@ -489,11 +496,11 @@ class App extends Component {
    * Opens a link in the native default browser
    */
   handleOpenExternalForRegister = async (event) => {
-    let baseUrl = settings.get("sprintoAPPBaseUrl");
     const isDev = ipcRenderer.sendSync("get:env:isDev");
-    if (isDev) {
-      baseUrl = "http://localhost:5000";
-    }
+    const baseUrl = ipcRenderer.sendSync(
+      "get:app:baseUrl",
+      settings.get("sprintoAPPBaseUrl")
+    );
     const targetHref = event.target.getAttribute("href");
     event.preventDefault();
     if (targetHref) {
@@ -510,8 +517,11 @@ class App extends Component {
    * Opens a link in the native default browser
    */
   handleOpenExternal = async (event) => {
-    const url = await settings.get("sprintoAPPBaseUrl");
     const isDev = ipcRenderer.sendSync("get:env:isDev");
+    const url = ipcRenderer.sendSync(
+      "get:app:baseUrl",
+      await settings.get("sprintoAPPBaseUrl")
+    );
     const targetHref = event.target.getAttribute("href");
 
     event.preventDefault();

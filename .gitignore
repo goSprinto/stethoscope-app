@@ -39,3 +39,7 @@ latest/
 
 *.log
 *-audit.json
+
+dist-win-unsigned
+
+dist-mac-unsigned
