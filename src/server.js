@@ -19,6 +19,7 @@ import socketio from "socket.io";
 import spacesToCamelCase from "./lib/spacesToCamelCase";
 import yaml from "js-yaml";
 import redact from "./lib/redact";
+import createScanLimiter, { parseScanRequest } from "./lib/scanLimiter";
 import {
   APP_ORIGIN,
   fullMatch,
@@ -66,6 +67,10 @@ async function precompile() {
 // used to ensure that user is not shown multiple notifications for a login scan
 // sessionId is used as a key
 const alertCache = new Map();
+const ALERT_CACHE_LIMIT = 1000;
+
+// scans requested by anything other than the app itself (V8-2213)
+const scanLimiter = createScanLimiter();
 
 function listen() {
   const serverInstance = server.listen(PORT, "127.0.0.1", () => {
@@ -293,7 +298,24 @@ export default async function startServer(
     // allow GET/POST requests and determine what property to use
     const key = req.method === "POST" ? "body" : "query";
     const origin = req.get("origin");
-    const isRemote = origin !== "drsprinto://main";
+    const isRemote = origin !== APP_ORIGIN;
+
+    // a malformed request used to throw inside this handler and hang
+    const parsed = parseScanRequest(req[key]);
+    if (parsed.error) {
+      return res.status(400).json({ errors: [{ message: parsed.error }] });
+    }
+
+    // the app's own scans follow its schedule and the user's rescan button
+    if (isRemote) {
+      const release = scanLimiter.acquire(origin || "unknown");
+      if (!release) {
+        log.warn(`Too many scans from ${origin}`);
+        res.set("Retry-After", "60");
+        return res.status(429).json({ errors: [{ message: "Too many scans" }] });
+      }
+      res.on("close", release);
+    }
     let remoteLabel = "DrSprinto";
 
     // Try to find the host label to display in app ("Last scanned by X")
@@ -304,13 +326,14 @@ export default async function startServer(
         remoteLabel = label.name;
       }
     }
-    const { query, sessionId = false } = req[key];
+    const { sessionId = false } = req[key];
+    const { query } = parsed;
     if (query.includes("__schema") || query.includes("__type")) {
       const error = new Error("Introspection queries are not allowed.");
       log.error(`Introspection query incoming`);
-      return res.status(500).json({ error: error.message });
+      return res.status(400).json({ error: error.message });
     }
-    let { variables: policy } = req[key];
+    const policy = parsed.variables;
     // native notifications are only shown for external requests and
     // are throttled by the users's session id
     const showNotification = sessionId && !alertCache.has(sessionId);
@@ -328,15 +351,11 @@ export default async function startServer(
     });
     // throttle native push notifications to user by session id
     if (sessionId && !alertCache.has(sessionId)) {
+      // callers choose session ids, so keep the cache bounded
+      if (alertCache.size >= ALERT_CACHE_LIMIT) {
+        alertCache.delete(alertCache.keys().next().value);
+      }
       alertCache.set(sessionId, true);
-    }
-
-    // policy needs to be an object, regardless of whether or not one was
-    // supplied in the request, parse if String was supplied
-    if (typeof policy === "string") {
-      policy = JSON.parse(policy);
-    } else {
-      policy = Object.assign({}, policy);
     }
 
     // if a policy was passed, tell the UI a scan has started
