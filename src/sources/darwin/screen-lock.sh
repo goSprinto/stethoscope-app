@@ -21,3 +21,10 @@ tryExec defaults -currentHost read com.apple.screensaver
 extract idleTime\s*=\s*(\d*);
 defaultTo -1
 save screen.idleDelay
+# clear the buffer so tryExec runs pmset rather than the saved value
+remove output
+
+tryExec pmset -g
+extract displaysleep\s+(\d+)
+defaultTo -1
+save screen.displaySleep
