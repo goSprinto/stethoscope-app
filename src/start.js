@@ -46,6 +46,7 @@ import {
   isTrustedUrl,
   isAppProtocolUrl,
   isOsSettingsUrl,
+  isExternalWebUrl,
 } from "./lib/isTrustedUrl";
 import applescript from "./lib/applescript";
 import unixify from "unixify";
@@ -161,14 +162,21 @@ const addNavigationControls = (win) => {
       return;
     }
 
+    // a link without target=_blank: open it in the browser, not in the app
+    if (isExternalWebUrl(navigationUrl)) {
+      shell.openExternal(navigationUrl);
+      return;
+    }
+
     log.warn(`Blocked navigation to: ${navigationUrl}`);
   });
 
   // window.open / target="_blank" links. The old "new-window" event was
   // removed in Electron 22, so it no longer fired at all on current Electron
   win.webContents.setWindowOpenHandler(({ url: navigationUrl }) => {
-    // Handle external links safely through shell.openExternal if trusted
-    if (isTrustedUrl(navigationUrl)) {
+    // links open in the default browser, outside the app session, so the
+    // page never gets the app's drsprinto://main Origin (V8-2210)
+    if (isTrustedUrl(navigationUrl) || isExternalWebUrl(navigationUrl)) {
       shell.openExternal(navigationUrl);
     } else if (isOsSettingsUrl(navigationUrl)) {
       openOsSettingsUrl(navigationUrl);
