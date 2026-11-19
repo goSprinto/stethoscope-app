@@ -6,6 +6,7 @@ import {
   fullMatch,
   isConfiguredOrigin,
   isWebAppOrigin,
+  sprintoApiBaseUrl,
 } from "./originCheck";
 
 const config = yaml.load(
@@ -78,5 +79,43 @@ describe("isWebAppOrigin", () => {
     undefined,
   ])("rejects %s", (origin) => {
     expect(isWebAppOrigin(origin)).toBe(false);
+  });
+});
+
+describe("sprintoApiBaseUrl", () => {
+  it.each([
+    ["https://app.sprinto.com", "https://app.sprinto.com"],
+    ["https://app.sprinto.com/", "https://app.sprinto.com"],
+    ["https://eu.sprinto.com", "https://eu.sprinto.com"],
+    ["https://us.sprinto.com", "https://us.sprinto.com"],
+    ["https://au.sprinto.com", "https://au.sprinto.com"],
+    ["HTTPS://APP.SPRINTO.COM", "https://app.sprinto.com"],
+  ])("accepts %s", (input, expected) => {
+    expect(sprintoApiBaseUrl(input)).toBe(expected);
+  });
+
+  it.each([
+    "http://app.sprinto.com",
+    "https://app.sprinto.com.attacker.tld",
+    "https://attacker.tld",
+    "https://staging.sprinto.in",
+    "https://sprinto.com",
+    "https://app.sprinto.com:8443",
+    "https://app.sprinto.com/evil",
+    "https://app.sprinto.com/?x=1",
+    "https://user:pass@app.sprinto.com",
+    "http://127.0.0.1:8899",
+    "http://localhost:5000",
+    "not a url",
+    "",
+    undefined,
+    {},
+  ])("rejects %s", (input) => {
+    expect(sprintoApiBaseUrl(input)).toBe(null);
+  });
+
+  it("accepts the local API server only in development", () => {
+    expect(sprintoApiBaseUrl("http://localhost:5000", { isDev: true })).toBe("http://localhost:5000");
+    expect(sprintoApiBaseUrl("http://localhost:5001", { isDev: true })).toBe(null);
   });
 });
