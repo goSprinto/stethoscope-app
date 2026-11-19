@@ -3,15 +3,16 @@
 // For windows we need to sign the exe and dlls
 // for linux we need to add removal of rpath
 
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// Function to get certificate path and password from environment
-function getCertificateInfo() {
-    const tempDir = os.tmpdir();
-    const certPath = path.join(tempDir, 'lando.windoze.p12');
+// Writes the signing certificate for one build and returns it with a
+// cleanup function. The PFX goes to a new private temp folder (mode 0600)
+// and is deleted afterwards: a fixed path in the shared temp folder outlived
+// the build and could be swapped for another file (V8-2214)
+function openCertificate() {
     const certPassword = process.env.WINDOZE_CERT_PASSWORD;
     const certData = process.env.WINDOZE_CERT_DATA;
     const sha1Key = process.env.SHA1KEY;
@@ -20,17 +21,17 @@ function getCertificateInfo() {
         throw new Error('Missing required environment variables for signing');
     }
 
-    // Write certificate to temp file if it doesn't exist
-    if (!fs.existsSync(certPath)) {
-        console.log(`Writing certificate to ${certPath}...`);
-        const certBuffer = Buffer.from(certData, 'base64');
-        fs.writeFileSync(certPath, certBuffer);
-    }
+    const certDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drsprinto-sign-'));
+    const certPath = path.join(certDir, 'cert.p12');
+    fs.writeFileSync(certPath, Buffer.from(certData, 'base64'), { mode: 0o600 });
 
     return {
         certPath,
         certPassword,
-        sha1Key
+        sha1Key,
+        close() {
+            fs.rmSync(certDir, { recursive: true, force: true });
+        }
     };
 }
 
@@ -47,29 +48,39 @@ function getSigntoolPath() {
 }
 
 // Function to sign DLLs and EXEs
-function signFile(filePath) {
-    const { certPath, certPassword, sha1Key } = getCertificateInfo();
+// signtool takes the PFX password only as /p, so it is still in signtool's
+// own arguments. It is run without a shell, and errors are reported without
+// the command line, which held the password
+function signFile(filePath, cert) {
     const signtool = getSigntoolPath();
+    const args = [
+        'sign',
+        '/f', cert.certPath,
+        '/p', cert.certPassword,
+        '/tr', 'http://timestamp.comodoca.com/?td=sha256',
+        '/td', 'sha256',
+        '/fd', 'sha256',
+        '/sha1', cert.sha1Key,
+        filePath,
+    ];
 
-    const command = `"${signtool}" sign /f "${certPath}" /p "${certPassword}" /tr http://timestamp.comodoca.com/?td=sha256 /td sha256 /fd sha256 /sha1 ${sha1Key} "${filePath}"`;
-    
+    console.log(`Signing file: ${filePath}`);
     try {
-        console.log(`Signing file: ${filePath}`);
-        execSync(command, { stdio: 'inherit' });
-        console.log(`Successfully signed: ${filePath}`);
+        execFileSync(signtool, args, { stdio: 'inherit' });
     } catch (error) {
-        console.error(`Error signing ${filePath}:`, error);
-        throw error;
+        const reason = error.status != null ? `signtool exited with ${error.status}` : error.code;
+        throw new Error(`Error signing ${filePath}: ${reason}`);
     }
+    console.log(`Successfully signed: ${filePath}`);
 }
 
-function signAllDlls(dir) {
+function signAllDlls(dir, cert) {
     fs.readdirSync(dir, { withFileTypes: true }).forEach((file) => {
         const fullPath = path.join(dir, file.name);
         if (file.isDirectory()) {
-            signAllDlls(fullPath);
+            signAllDlls(fullPath, cert);
         } else if (file.name.endsWith('.dll') || file.name.endsWith('.exe')) {
-            signFile(fullPath);
+            signFile(fullPath, cert);
         }
     });
 }
@@ -116,7 +127,12 @@ module.exports = async function (context) {
     try {
         if (platform === 'win32') {
             console.log('Signing Windows DLLs and EXEs...');
-            signAllDlls(appOutDir);
+            const cert = openCertificate();
+            try {
+                signAllDlls(appOutDir, cert);
+            } finally {
+                cert.close();
+            }
             console.log('Windows signing completed successfully');
         } else if (platform === 'linux') {
             console.log(`Skipping afterPack for platform: ${platform}`);
@@ -127,7 +143,7 @@ module.exports = async function (context) {
             console.log(`Skipping afterPack for platform: ${platform}`);
         }
     } catch (error) {
-        console.error('Error in afterPack:', error);
+        console.error('Error in afterPack:', error.message);
         throw error; // Re-throw to ensure build fails if there's an error
     }
 }; 
