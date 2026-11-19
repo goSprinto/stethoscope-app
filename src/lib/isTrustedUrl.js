@@ -32,6 +32,19 @@ export function isOsSettingsUrl (urlString) {
   return SETTINGS_PAYLOAD.test(urlString.slice(protocol.length))
 }
 
+// a web page that may be handed to the user's default browser: any https
+// URL with no credentials in it. The remediation instructions link to
+// vendor sites (avg.com, sophos.com, support.apple.com, ...), which must open
+// in the browser, never in an app window that carries the app's Origin
+export function isExternalWebUrl (urlString) {
+  try {
+    const url = new URL(urlString)
+    return url.protocol === 'https:' && !url.username && !url.password
+  } catch (err) {
+    return false
+  }
+}
+
 export function isTrustedUrl(urlString) {
   try {
     const url = new URL(urlString);
