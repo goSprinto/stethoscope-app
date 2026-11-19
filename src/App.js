@@ -6,6 +6,7 @@ import Loader from "./Loader";
 // import Footer from './Footer'
 import DownloadProgress from "./DownloadProgress";
 import openSocket from "socket.io-client";
+import { sprintoApiBaseUrl } from "./lib/originCheck";
 import moment from "moment";
 import classNames from "classnames";
 import { HOST } from "./constants";
@@ -114,9 +115,10 @@ class App extends Component {
       firstName: settings.get("firstName", null),
     });
 
-    // Set baseUrl if not set in connect Flow
+    // Set baseUrl if not set in connect Flow, or if an older build stored a
+    // URL that isn't a Sprinto regional host (V8-2208)
     const baseUrl = settings.get("sprintoAPPBaseUrl");
-    if (baseUrl === null || baseUrl === undefined || baseUrl === "") {
+    if (!sprintoApiBaseUrl(baseUrl, { isDev })) {
       settings.set(
         "sprintoAPPBaseUrl",
         isDev ? "http://localhost:5000" : appConfig.apiBaseUrl

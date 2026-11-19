@@ -22,6 +22,7 @@ import redact from "./lib/redact";
 import {
   APP_ORIGIN,
   fullMatch,
+  sprintoApiBaseUrl,
   isConfiguredOrigin,
   isWebAppOrigin,
 } from "./lib/originCheck";
@@ -228,12 +229,57 @@ export default async function startServer(
     }
   );
 
+  // connect binds the device to a Sprinto org: the token and base URL it
+  // stores receive every later device report. Only a Sprinto regional host is
+  // accepted, and the user confirms in the agent, so no caller can rebind or
+  // unbind the device silently (V8-2208)
+  let confirmPending = false;
+  const withConfirmation = async (res, confirm) => {
+    // one dialog at a time, so a caller can't stack prompts
+    if (confirmPending) {
+      res.status(409).send("Another request is waiting for confirmation");
+      return false;
+    }
+    confirmPending = true;
+    try {
+      await confirm();
+      return true;
+    } catch (e) {
+      res.status(403).send("Declined");
+      return false;
+    } finally {
+      confirmPending = false;
+    }
+  };
+
   app.post("/connect", cors(corsOptions), async (req, res) => {
-    io.sockets.emit("sprinto:deviceConnected", { data: req.body });
+    const { accessToken, firstName } = req.body || {};
+    const baseUrl = sprintoApiBaseUrl(req.body && req.body.baseUrl, { isDev: IS_DEV });
+    if (!baseUrl || typeof accessToken !== "string" || !accessToken) {
+      log.error(`Rejected connect request from ${req.get("origin")}`);
+      return res.status(400).send("Invalid connect request");
+    }
+    const name = typeof firstName === "string" ? firstName.slice(0, 100) : "";
+
+    const confirmed = await withConfirmation(res, () =>
+      appActions.confirmConnect({ host: new URL(baseUrl).host, firstName: name })
+    );
+    if (!confirmed) return;
+
+    io.sockets.emit("sprinto:deviceConnected", {
+      data: { accessToken, baseUrl, firstName: name },
+    });
     res.status(201).send("Updated");
   });
 
   app.post("/disconnect", cors(corsOptions), async (req, res) => {
+    // Menu > Disconnect in the app is already the user's choice
+    if (req.get("origin") !== APP_ORIGIN) {
+      const confirmed = await withConfirmation(res, () =>
+        appActions.confirmDisconnect(req.get("origin"))
+      );
+      if (!confirmed) return;
+    }
     io.sockets.emit("sprinto:deviceDisconnected");
     res.status(200).send("Disconnected");
   });
