@@ -88,7 +88,14 @@ const MacSecurity = {
     const result = await kmd('screen-lock', context)
 
     const {idleDelay, lockEnabled} = result.screen
-    return parseInt(idleDelay, 10) > 0 && lockEnabled === "1";
+    if (parseInt(idleDelay, 10) > 0 && lockEnabled === "1") {
+      return true;
+    }
+
+    // fallback for newer macOS versions where the screensaver timer is
+    // unset/never and the lock is driven by display sleep
+    const totalDelay = await MacDevice.screenLockDelay(root, args, context)
+    return totalDelay >= 0 && lockEnabled === "1";
   },
 
   async screenIdle (root, args, context) {

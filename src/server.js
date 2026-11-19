@@ -156,8 +156,18 @@ export default async function startServer(
     res.header("Access-Control-Allow-Private-Network", "true");
 
     if (req.method === "OPTIONS") {
-      // Ensure the response object (`res`) is used here
-      res.status(200).send();
+      // Chromium preflights every public -> 127.0.0.1 request (Private/Local
+      // Network Access), even simple ones Firefox sends without a preflight.
+      // Without allow-methods/headers the preflight fails with a CORS error,
+      // so answer it fully here; the per-route cors() never sees OPTIONS
+      res.header("Access-Control-Allow-Methods", "GET,OPTIONS,HEAD,POST");
+      const requestHeaders = req.get("access-control-request-headers");
+      if (requestHeaders) {
+        res.header("Access-Control-Allow-Headers", requestHeaders);
+        res.vary("Access-Control-Request-Headers");
+      }
+      res.header("Access-Control-Max-Age", "600");
+      res.status(204).send();
     } else {
       next();
     }
