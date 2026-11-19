@@ -18,6 +18,7 @@ import Resolvers from "./resolvers/";
 import socketio from "socket.io";
 import spacesToCamelCase from "./lib/spacesToCamelCase";
 import yaml from "js-yaml";
+import redact from "./lib/redact";
 import {
   APP_ORIGIN,
   fullMatch,
@@ -168,14 +169,20 @@ export default async function startServer(
 
   app.get("/debugger", cors(corsOptions), async (req, res) => {
     log.info("Collecting debug info");
-    let promise = Promise.resolve();
+    // the response holds the log file, process list and device data: only
+    // the app itself (Menu > Copy Debug Info) gets it without asking. The
+    // Host header says nothing about the caller, so it is not checked
+    const origin = req.get("origin");
+    const isApp = origin === APP_ORIGIN;
+    const consent = isApp
+      ? Promise.resolve()
+      : appActions.requestLogPermission(origin || "an unknown caller");
 
-    if (req.get("host") !== "127.0.0.1:37370") {
-      promise = appActions.requestLogPermission(req.get("origin"));
-      appActions.enableDebugger();
-    }
-    promise
+    consent
       .then(async () => {
+        if (!isApp) {
+          appActions.enableDebugger();
+        }
         log.warn(checks.length);
         const promises = Object.entries(checks).map(async ([name, script]) => {
           try {
@@ -188,7 +195,8 @@ export default async function startServer(
         // format response
         const sep = `\n${"=".repeat(20)}\n`;
         const file = readFileSync(log.getLogFile());
-        const noColor = String(file).replace(/\[[\d]+m?:?/g, "") + "\n";
+        // older builds wrote bearer tokens to the log; never hand them out
+        const noColor = redact(String(file).replace(/\[[\d]+m?:?/g, "")) + "\n";
         const str = JSON.stringify(extend(true, {}, ...checkData), null, 3);
         const version = `Stethoscope version: ${pkg.version}`;
         res.send(`${version}\nLOGS${sep}${noColor}DEVICE DATA${sep}${str}`);
