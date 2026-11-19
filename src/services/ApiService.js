@@ -1,3 +1,5 @@
+import { describeError } from '../lib/redact';
+
 const API_RETRY_ATTEMPTS = 3;
 const API_TIMEOUT = 10000; // 10 seconds
 const API_RETRY_DELAY = 1000; // 1 second
@@ -121,8 +123,8 @@ export default class ApiService {
     
       return true;
     } catch (err) {
-      log.error("services-->api:reportDevice", { 
-        err: JSON.stringify({ err }), 
+      log.error("services-->api:reportDevice", {
+        err: describeError(err),
         baseUrl,
         retryCount: err.retryCount
       });
@@ -143,8 +145,8 @@ export default class ApiService {
       
       return response.policy;
     } catch (err) {
-      log.error("services-->api:getPolicy", { 
-        err: JSON.stringify({ err }), 
+      log.error("services-->api:getPolicy", {
+        err: describeError(err),
         baseUrl,
         retryCount: err.retryCount
       });
