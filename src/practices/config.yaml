@@ -5,7 +5,7 @@ hostLabels:
   #   name: Local Server
   # - pattern: "^http://localhost:5000"
   #   name: Local Server
-  - pattern: "^https://(.+\\.)?sprinto\\.(com|in)"
+  - pattern: "^https://([a-z0-9-]+\\.)*sprinto\\.(com|in)$"
     name: Sprinto
 policyServer:
 testHosts:
