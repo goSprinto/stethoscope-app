@@ -18,17 +18,31 @@ import Resolvers from "./resolvers/";
 import socketio from "socket.io";
 import spacesToCamelCase from "./lib/spacesToCamelCase";
 import yaml from "js-yaml";
+import {
+  APP_ORIGIN,
+  fullMatch,
+  isConfiguredOrigin,
+  isWebAppOrigin,
+} from "./lib/originCheck";
 
 const Schema = readFileSync(path.join(__dirname, "../schema.graphql"), "utf8");
 const IS_DEV = process.env.STETHOSCOPE_ENV === "development";
 const app = express();
 const server = new Server(app);
-const io = socketio(server, { wsEngine: require("ws").Server });
+// the socket only feeds the app's own renderer, and its events carry the
+// device access token, so refuse every other origin. Browsers let any page
+// open a websocket to 127.0.0.1 (no CORS on websockets), so this check is
+// what stops a website from listening in
+const io = socketio(server, {
+  wsEngine: require("ws").Server,
+  allowRequest(req, callback) {
+    const allowed = IS_DEV || req.headers.origin === APP_ORIGIN;
+    callback(null, allowed);
+  },
+});
 
 function matchHost(origin) {
-  return (label) => {
-    return new RegExp(label.pattern).test(origin);
-  };
+  return (label) => fullMatch(label.pattern, origin);
 }
 
 setKmdEnv({
@@ -102,17 +116,8 @@ export default async function startServer(
       if (IS_DEV) {
         return callback(null, true);
       }
-      if (allowHosts.includes(origin)) {
+      if (isConfiguredOrigin(origin, { allowHosts, hostLabels })) {
         return callback(null, true);
-      }
-      if (hostLabels.length) {
-        const isAllowed = hostLabels
-          .map(({ pattern }) => new RegExp(pattern))
-          .some((regex) => regex.test(origin));
-
-        if (isAllowed) {
-          return callback(null, true);
-        }
       }
 
       log.error(`Unauthorized request from ${origin}`);
@@ -122,21 +127,9 @@ export default async function startServer(
   };
 
   // policy, instructions and config data should only be served to app
-  // Define allowed origins list at module scope so it can be shared between
-  // policyRequestOptions and app.use middleware
-  const allowed = [
-    "http://localhost:",
-    "drsprinto://",
-    "http://127.0.0.1:",
-    "https://app.sprinto.com",
-    "https://eu.sprinto.com",
-    "https://us.sprinto.com",
-    "https://au.sprinto.com",
-  ];
-
   const policyRequestOptions = {
     origin(origin, callback) {
-      if (origin && allowed.some((hostname) => origin.startsWith(hostname))) {
+      if (isWebAppOrigin(origin)) {
         callback(null, true);
       } else {
         log.error(`Unauthorized request from ${origin}`);
@@ -148,7 +141,7 @@ export default async function startServer(
   app.use((req, res, next) => {
     // added resp headers to allow requests from allowed origins
     const origin = req.get("origin");
-    if (origin && allowed.some((hostname) => origin.startsWith(hostname))) {
+    if (isWebAppOrigin(origin)) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header("Vary", "Origin"); // important for proxies
     }
