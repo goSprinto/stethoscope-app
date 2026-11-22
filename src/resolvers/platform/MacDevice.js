@@ -1,4 +1,5 @@
 import kmd from "../../lib/kmd";
+import displaySleepMinutes from "../../lib/displaySleep";
 import macFriendlyName from "../../sources/macmodels";
 import applicationRunningFilter from "../../lib/applicationRunningFilter";
 
@@ -46,10 +47,15 @@ const MacDevice = {
     // idle and screensaver to come on.
     // lockDelay is time since the screensaver comes on
     // (or the display turns off) and screen is locked
-    // displaySleep is the display sleep timer in minutes (pmset)
+    // displaySleep is the display sleep timer in minutes (pmset), the
+    // longest across power sources so the result doesn't flip between AC
+    // and battery
     const lockDelay = parseInt(settings.screen.lockDelay, 10);
     const idleDelay = parseInt(settings.screen.idleDelay, 10);
-    const displaySleep = parseInt(settings.screen.displaySleep, 10);
+    const displaySleep = displaySleepMinutes(
+      settings.screen.displaySleepCustom,
+      settings.screen.displaySleep
+    );
 
     // idleDelay = 0 -> Set to never in settings
     // idleDelay = -1 -> We were not able to extract since
