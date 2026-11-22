@@ -7,6 +7,7 @@ import {
   isConfiguredOrigin,
   isWebAppOrigin,
   sprintoApiBaseUrl,
+  storedBaseUrlAction,
 } from "./originCheck";
 
 const config = yaml.load(
@@ -61,8 +62,10 @@ describe("isWebAppOrigin", () => {
     APP_ORIGIN,
     "https://app.sprinto.com",
     "https://eu.sprinto.com",
-    "https://us.sprinto.com",
+    "https://in.sprinto.com",
     "https://au.sprinto.com",
+    "https://gcc.sprinto.com",
+    "https://demo.sprinto.com",
     "http://localhost:3000",
     "http://127.0.0.1:5000",
   ])("allows %s", (origin) => {
@@ -87,8 +90,10 @@ describe("sprintoApiBaseUrl", () => {
     ["https://app.sprinto.com", "https://app.sprinto.com"],
     ["https://app.sprinto.com/", "https://app.sprinto.com"],
     ["https://eu.sprinto.com", "https://eu.sprinto.com"],
-    ["https://us.sprinto.com", "https://us.sprinto.com"],
+    ["https://in.sprinto.com", "https://in.sprinto.com"],
     ["https://au.sprinto.com", "https://au.sprinto.com"],
+    ["https://gcc.sprinto.com", "https://gcc.sprinto.com"],
+    ["https://demo.sprinto.com", "https://demo.sprinto.com"],
     ["HTTPS://APP.SPRINTO.COM", "https://app.sprinto.com"],
   ])("accepts %s", (input, expected) => {
     expect(sprintoApiBaseUrl(input)).toBe(expected);
@@ -99,6 +104,7 @@ describe("sprintoApiBaseUrl", () => {
     "https://app.sprinto.com.attacker.tld",
     "https://attacker.tld",
     "https://staging.sprinto.in",
+    "https://us.sprinto.com",
     "https://sprinto.com",
     "https://app.sprinto.com:8443",
     "https://app.sprinto.com/evil",
@@ -117,5 +123,23 @@ describe("sprintoApiBaseUrl", () => {
   it("accepts the local API server only in development", () => {
     expect(sprintoApiBaseUrl("http://localhost:5000", { isDev: true })).toBe("http://localhost:5000");
     expect(sprintoApiBaseUrl("http://localhost:5001", { isDev: true })).toBe(null);
+  });
+});
+
+describe("storedBaseUrlAction", () => {
+  it("keeps an allowed URL", () => {
+    expect(storedBaseUrlAction("https://in.sprinto.com", true)).toBe("keep");
+    expect(storedBaseUrlAction("https://gcc.sprinto.com/", true)).toBe("keep");
+  });
+
+  it("logs out a connected device whose URL isn't allowed", () => {
+    expect(storedBaseUrlAction("http://127.0.0.1:8899", true)).toBe("logout");
+    expect(storedBaseUrlAction("https://us.sprinto.com", true)).toBe("logout");
+  });
+
+  it("uses the default URL when none is stored or the device isn't connected", () => {
+    expect(storedBaseUrlAction(null, true)).toBe("default");
+    expect(storedBaseUrlAction("", true)).toBe("default");
+    expect(storedBaseUrlAction("http://127.0.0.1:8899", false)).toBe("default");
   });
 });
