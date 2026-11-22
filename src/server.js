@@ -171,7 +171,8 @@ export default async function startServer(
     log.info("Collecting debug info");
     // the response holds the log file, process list and device data: only
     // the app itself (Menu > Copy Debug Info) gets it without asking. The
-    // Host header says nothing about the caller, so it is not checked
+    // Host header says nothing about the caller, so it is not checked.
+    // Sharing logs doesn't open DevTools: the user agreed to share logs only
     const origin = req.get("origin");
     const isApp = origin === APP_ORIGIN;
     const consent = isApp
@@ -180,9 +181,6 @@ export default async function startServer(
 
     consent
       .then(async () => {
-        if (!isApp) {
-          appActions.enableDebugger();
-        }
         log.warn(checks.length);
         const promises = Object.entries(checks).map(async ([name, script]) => {
           try {

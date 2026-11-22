@@ -282,21 +282,15 @@ async function createWindow(show = true) {
     },
     enableDebugger: enableAppDebugger,
     requestLogPermission(origin) {
-      return new Promise((resolve, reject) => {
-        dialog
-          .showMessageBox({
-            type: "info",
-            title: "Allow Access",
-            message: `Will you allow your Stethoscope log files to be sent to ${origin}?`,
-            buttons: ["Yes", "No"],
-          })
-          .then(({ response }) => {
-            if (response === 0) {
-              resolve();
-            } else {
-              reject(new Error("Access denied"));
-            }
-          });
+      return askUser({
+        type: "info",
+        title: "Allow Access",
+        message: `Will you allow your Stethoscope log files to be sent to ${origin}?`,
+        buttons: ["Yes", "No"],
+        defaultId: 1,
+        cancelId: 1,
+      }).then((response) => {
+        if (response !== 0) throw new Error("Access denied");
       });
     },
   };
@@ -434,6 +428,26 @@ async function createWindow(show = true) {
       mainWindow = null;
     });
   }
+}
+
+// asks the user on behalf of a caller of the local API. The app usually runs
+// from the tray with its window hidden, so the window is shown and brought to
+// the front first and the dialog is attached to it: a sheet on a hidden
+// window is never seen, and on macOS a dialog with no parent runs
+// synchronously, blocking the main process (and this API) until answered.
+// The dialog closes itself (as Cancel) after ASK_TIMEOUT_MS so the caller is
+// never left waiting
+const ASK_TIMEOUT_MS = 2 * 60 * 1000;
+
+function askUser(options) {
+  mainWindow = focusOrCreateWindow(mainWindow);
+  app.focus(IS_MAC ? { steal: true } : undefined);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ASK_TIMEOUT_MS);
+  return dialog
+    .showMessageBox(mainWindow, { noLink: true, ...options, signal: controller.signal })
+    .then(({ response }) => response)
+    .finally(() => clearTimeout(timer));
 }
 
 function enableAppDebugger() {
