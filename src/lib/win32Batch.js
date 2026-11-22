@@ -6,8 +6,9 @@
  * takes only tens of ms, so running the four scripts separately spent almost
  * all of a scan waiting on process startup.
  *
- * The mapped results match the output shapes of those .sh scripts exactly; if
- * the batch fails for any reason, callers fall back to running the .sh script.
+ * The mapped results match the output shapes of those .sh scripts exactly. If
+ * the batch fails, or one of its sections does, callers fall back to running
+ * the .sh script for the checks affected.
  */
 import { execFile } from "child_process";
 
@@ -26,34 +27,77 @@ const BITLOCKER_ON_VALUES = [1, 3, 5];
 
 const BATCH_TIMEOUT_MS = 60000;
 
-// the current user is read from WindowsIdentity rather than `whoami` so a
-// different whoami earlier on PATH (e.g. Git for Windows) can't break the match
+// Each section records its own failure in `failed`; only those checks fall
+// back to their .sh script. With one global SilentlyContinue, a failed query
+// looked like a real value instead (e.g. BitLocker OFF, a missing uuid).
+//
+// Everything here must also work under Constrained Language Mode, which
+// WDAC/AppLocker enforce on managed fleets: the user comes from environment
+// variables (not WindowsIdentity), and the BitLocker COM call is skipped
+// there so that check falls back to bitlocker-status.exe.
 const SCRIPT = `
-$ErrorActionPreference = 'SilentlyContinue'
-$os = Get-CimInstance Win32_OperatingSystem
-$csp = Get-CimInstance Win32_ComputerSystemProduct
-$me = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-$desk = Get-CimInstance Win32_Desktop | Where-Object { $_.Name -eq $me } | Select-Object -First 1
-$av = @(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct | ForEach-Object {
-  @{ name = [string]$_.displayName; productState = [string]$_.productState }
-})
-$guid = (Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Cryptography').MachineGuid
-$bitlocker = (New-Object -ComObject Shell.Application).NameSpace('C:\\').Self.ExtendedProperty('System.Volume.BitLockerProtection')
+$ErrorActionPreference = 'Stop'
+$failed = @()
+$fullLanguage = $ExecutionContext.SessionState.LanguageMode -eq 'FullLanguage'
+
+$os = $null
+try { $os = Get-CimInstance Win32_OperatingSystem } catch { }
+if (-not $os) { $failed += 'os' }
+
+$csp = $null
+try { $csp = Get-CimInstance Win32_ComputerSystemProduct } catch { }
+if (-not $csp) { $failed += 'csp' }
+
+$guid = $null
+try { $guid = (Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Cryptography').MachineGuid } catch { }
+if (-not $guid) { $failed += 'machineGuid' }
+
 $desktop = $null
-if ($desk) {
-  $desktop = @{
-    active = [string]$desk.ScreenSaverActive
-    secure = [string]$desk.ScreenSaverSecure
-    timeout = [string]$desk.ScreenSaverTimeout
+try {
+  $me = "$env:USERDOMAIN\\$env:USERNAME"
+  $all = @(Get-CimInstance Win32_Desktop)
+  $desk = $all | Where-Object { $_.Name -eq $me } | Select-Object -First 1
+  if (-not $desk) {
+    $mine = @($all | Where-Object { $_.Name -like ('*\\' + $env:USERNAME) })
+    if ($mine.Count -eq 1) { $desk = $mine[0] }
   }
+  if ($desk) {
+    $desktop = @{
+      active = [string]$desk.ScreenSaverActive
+      secure = [string]$desk.ScreenSaverSecure
+      timeout = [string]$desk.ScreenSaverTimeout
+    }
+  }
+} catch { $failed += 'desktop' }
+
+$av = @()
+try {
+  $av = @(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct | ForEach-Object {
+    @{ name = [string]$_.displayName; productState = [string]$_.productState }
+  })
+} catch { $failed += 'av' }
+
+$bitlocker = $null
+if ($fullLanguage) {
+  try {
+    $bitlocker = (New-Object -ComObject Shell.Application).NameSpace('C:\\').Self.ExtendedProperty('System.Volume.BitLockerProtection')
+  } catch { }
 }
+if ($null -eq $bitlocker -or [string]$bitlocker -eq '') { $failed += 'bitlocker' }
+
+$osInfo = $null
+if ($os) { $osInfo = @{ caption = [string]$os.Caption; version = [string]$os.Version; serialNumber = [string]$os.SerialNumber } }
+$cspInfo = $null
+if ($csp) { $cspInfo = @{ uuid = [string]$csp.UUID; vendor = [string]$csp.Vendor; version = [string]$csp.Version } }
+
 @{
-  os = @{ caption = [string]$os.Caption; version = [string]$os.Version; serialNumber = [string]$os.SerialNumber }
-  csp = @{ uuid = [string]$csp.UUID; vendor = [string]$csp.Vendor; version = [string]$csp.Version }
+  os = $osInfo
+  csp = $cspInfo
   machineGuid = [string]$guid
   bitlocker = [string]$bitlocker
   desktop = $desktop
   av = $av
+  failed = @($failed)
 } | ConvertTo-Json -Compress -Depth 4
 `;
 
@@ -87,7 +131,17 @@ const blankToUndefined = (value) => {
   return trimmed === "" ? undefined : trimmed;
 };
 
-const mappers = {
+// sections each script's data comes from; if any of them failed, that script
+// returns null and kmd runs its .sh script instead
+const SECTIONS = {
+  os: ["os"],
+  hardware: ["os", "csp", "machineGuid"],
+  screensaver: ["desktop"],
+  antivirus: ["av"],
+  bitlocker: ["bitlocker"],
+};
+
+export const mappers = {
   os: ({ os = {} }) => {
     const caption = blankToUndefined(os.caption);
     return {
@@ -131,6 +185,17 @@ const mappers = {
   }),
 };
 
+// the result for one script from the batch output, or null when a section it
+// needs failed
+export function mapBatchResult(file, data) {
+  if (!data) return null;
+  const failed = [].concat(data.failed || []);
+  if (SECTIONS[file].some((section) => failed.includes(section))) {
+    return null;
+  }
+  return mappers[file](data);
+}
+
 /**
  * Returns the result for `file` from the shared batch run stored on `context`,
  * or null if the batch failed (caller should fall back to the .sh script).
@@ -142,6 +207,5 @@ export async function runBatched(file, context) {
       return null;
     });
   }
-  const data = await context.__win32Batch;
-  return data ? mappers[file](data) : null;
+  return mapBatchResult(file, await context.__win32Batch);
 }
