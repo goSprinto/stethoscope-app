@@ -229,9 +229,15 @@ export default async function startServer(
 
   app.use(["/scan", "/graphql"], cors(corsOptions), async (req, res) => {
     // set upper boundary on scan time (65 seconds)
-    req.setTimeout(65000, () => {
+    // req.setTimeout only logged, so a check script that hung kept the
+    // request open for good; answer 504 instead so the caller can recover
+    const scanTimer = setTimeout(() => {
+      if (res.headersSent) return;
       log.error("Request timed out");
-    });
+      io.sockets.emit("scan:error", { error: "Scan timed out" });
+      res.status(504).json({ errors: [{ message: "Scan timed out" }] });
+    }, 65000);
+    res.on("close", () => clearTimeout(scanTimer));
 
     // allow GET/POST requests and determine what property to use
     const key = req.method === "POST" ? "body" : "query";
@@ -295,6 +301,8 @@ export default async function startServer(
       variableValues: policy,
     })
       .then((result) => {
+        // already answered with 504
+        if (res.headersSent) return;
         const total = performance.now() - start;
         const { data = {}, errors } = result;
         let scanResult = { noResults: true };

@@ -149,11 +149,11 @@ class App extends Component {
       // const { notificationOnViolation = false } = args
       if (!this.state.scanIsRunning) {
         ipcRenderer.send("scan:init");
-        if (Object.keys(this.state.policy).length) {
-          this.handleScan();
-        } else {
-          this.loadPractices();
-        }
+        // re-fetch the policy on every automatic scan: the server and window
+        // are no longer restarted between scans, so this is the only place a
+        // policy change made in Sprinto reaches an app that keeps running.
+        // loadPractices scans once the policy is in
+        this.loadPractices();
       }
     });
     // the server emits this event when a remote scan begins
@@ -407,8 +407,10 @@ class App extends Component {
             }
           }
 
+          // keep the policy already in use if the fetch failed (offline, API
+          // down), so an automatic scan still validates and reports
           if (!policy) {
-            policy = {};
+            policy = this.state.policy || {};
           }
 
           const currentBasePath = ipcRenderer.sendSync("get:env:basePath");
