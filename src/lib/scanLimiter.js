@@ -10,17 +10,23 @@ export default function createScanLimiter({
 } = {}) {
   const callers = new Map();
 
-  function entry(key) {
-    if (!callers.has(key)) callers.set(key, { starts: [], running: 0 });
-    return callers.get(key);
+  // drop callers with nothing running and no start left in the window, so
+  // the map doesn't keep one entry per origin for as long as the app runs
+  function prune(cutoff) {
+    for (const [key, caller] of callers) {
+      caller.starts = caller.starts.filter((t) => t > cutoff);
+      if (caller.running === 0 && caller.starts.length === 0) {
+        callers.delete(key);
+      }
+    }
   }
 
   return {
     // returns a release function, or null when the caller is over a limit
     acquire(key) {
-      const caller = entry(key);
-      const cutoff = now() - windowMs;
-      caller.starts = caller.starts.filter((t) => t > cutoff);
+      prune(now() - windowMs);
+      if (!callers.has(key)) callers.set(key, { starts: [], running: 0 });
+      const caller = callers.get(key);
       if (caller.running >= maxConcurrent || caller.starts.length >= maxScans) {
         return null;
       }
@@ -31,10 +37,12 @@ export default function createScanLimiter({
         if (released) return;
         released = true;
         caller.running -= 1;
-        if (caller.running === 0 && caller.starts.length === 0) {
-          callers.delete(key);
-        }
       };
+    },
+
+    // number of callers being tracked (for tests)
+    size() {
+      return callers.size;
     },
   };
 }

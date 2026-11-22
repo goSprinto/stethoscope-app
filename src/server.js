@@ -117,6 +117,22 @@ export default async function startServer(
 
   const { allowHosts = [], hostLabels = [] } = defaultConfig;
 
+  // takes a scan slot for a remote caller and returns its release function, or
+  // answers 429 and returns null. The app's own scans follow its schedule and
+  // the user's rescan button, so they aren't limited
+  function acquireScanSlot(req, res) {
+    const origin = req.get("origin");
+    if (origin === APP_ORIGIN) return () => {};
+    const release = scanLimiter.acquire(origin || "unknown");
+    if (!release) {
+      log.warn(`Too many scans from ${origin}`);
+      res.set("Retry-After", "60");
+      res.status(429).json({ errors: [{ message: "Too many scans" }] });
+      return null;
+    }
+    return release;
+  }
+
   // wide open in dev, limited to hosts specified in './practices/config.yaml' in production
   const corsOptions = {
     origin(origin, callback) {
@@ -211,15 +227,22 @@ export default async function startServer(
   });
 
   app.get("/raw", cors(corsOptions), async (req, res) => {
-    const promises = Object.entries(checks).map(async ([name, script]) => {
-      try {
-        return await run(script);
-      } catch (e) {
-        return "";
-      }
-    });
-    const checkData = await Promise.all(promises);
-    res.json(extend(true, {}, ...checkData));
+    // runs every check script, like a scan, so it shares the scan limit
+    const release = acquireScanSlot(req, res);
+    if (!release) return;
+    try {
+      const promises = Object.entries(checks).map(async ([name, script]) => {
+        try {
+          return await run(script);
+        } catch (e) {
+          return "";
+        }
+      });
+      const checkData = await Promise.all(promises);
+      res.json(extend(true, {}, ...checkData));
+    } finally {
+      release();
+    }
   });
 
   app.post(
@@ -291,7 +314,11 @@ export default async function startServer(
     // set upper boundary on scan time (65 seconds)
     // req.setTimeout only logged, so a check script that hung kept the
     // request open for good; answer 504 instead so the caller can recover
+    // the limiter slot is held until the scan's scripts finish (not when the
+    // caller disconnects), or until this timeout gives up on them
+    let releaseSlot = () => {};
     const scanTimer = setTimeout(() => {
+      releaseSlot();
       if (res.headersSent) return;
       log.error("Request timed out");
       io.sockets.emit("scan:error", { error: "Scan timed out" });
@@ -310,16 +337,15 @@ export default async function startServer(
       return res.status(400).json({ errors: [{ message: parsed.error }] });
     }
 
-    // the app's own scans follow its schedule and the user's rescan button
-    if (isRemote) {
-      const release = scanLimiter.acquire(origin || "unknown");
-      if (!release) {
-        log.warn(`Too many scans from ${origin}`);
-        res.set("Retry-After", "60");
-        return res.status(429).json({ errors: [{ message: "Too many scans" }] });
-      }
-      res.on("close", release);
+    if (parsed.query.includes("__schema") || parsed.query.includes("__type")) {
+      const error = new Error("Introspection queries are not allowed.");
+      log.error(`Introspection query incoming`);
+      return res.status(400).json({ error: error.message });
     }
+
+    const release = acquireScanSlot(req, res);
+    if (!release) return;
+    releaseSlot = release;
     let remoteLabel = "DrSprinto";
 
     // Try to find the host label to display in app ("Last scanned by X")
@@ -332,11 +358,6 @@ export default async function startServer(
     }
     const { sessionId = false } = req[key];
     const { query } = parsed;
-    if (query.includes("__schema") || query.includes("__type")) {
-      const error = new Error("Introspection queries are not allowed.");
-      log.error(`Introspection query incoming`);
-      return res.status(400).json({ error: error.message });
-    }
     const policy = parsed.variables;
     // native notifications are only shown for external requests and
     // are throttled by the users's session id
@@ -416,7 +437,8 @@ export default async function startServer(
         if (!res.headersSent) {
           res.status(500).json({ errors: [{ message: err.message }] });
         }
-      });
+      })
+      .finally(() => releaseSlot());
   });
 
   app.get("/config", serveConfig("config"));

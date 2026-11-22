@@ -122,7 +122,10 @@ export default {
     appsToValidate.forEach(({ paths = {} }) => {
       const override = paths.win32;
       if (override && !isSafeRegistryPath(override)) {
-        log.error(`windowsSecurity:applications refused registry path ${override}`);
+        // the path comes from the caller's policy: log only the start of it
+        log.error(
+          `windowsSecurity:applications refused registry path ${JSON.stringify(String(override).slice(0, 80))}`
+        );
         return;
       }
       registryPathOverrides.add(override || DEFAULT_WIN32_APP_REGISTRY_PATH);

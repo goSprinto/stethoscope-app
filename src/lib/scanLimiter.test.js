@@ -22,6 +22,26 @@ describe("scan limiter", () => {
     expect(limiter.acquire("x")).toBeTruthy();
   });
 
+  it("forgets idle callers once their window has passed", () => {
+    let t = 0;
+    const limiter = createScanLimiter({ windowMs: 1000, now: () => t });
+    limiter.acquire("https://app.sprinto.com")();
+    limiter.acquire("https://eu.sprinto.com")();
+    expect(limiter.size()).toBe(2);
+    t = 1001;
+    limiter.acquire("https://in.sprinto.com");
+    expect(limiter.size()).toBe(1);
+  });
+
+  it("keeps a caller with a scan still running", () => {
+    let t = 0;
+    const limiter = createScanLimiter({ windowMs: 1000, now: () => t });
+    limiter.acquire("busy");
+    t = 5000;
+    limiter.acquire("other");
+    expect(limiter.size()).toBe(2);
+  });
+
   it("ignores a second release", () => {
     const limiter = createScanLimiter({ maxConcurrent: 1, maxScans: 100 });
     const release = limiter.acquire("x");
