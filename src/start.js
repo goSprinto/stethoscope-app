@@ -343,6 +343,16 @@ async function createWindow(show = true) {
         confirmLabel: "Disconnect",
       });
     },
+    // /raw from anything but the app (V8-2294); resolves when the user agrees
+    requestDeviceDataPermission(origin) {
+      return confirmDialog({
+        title: "Share Device Details",
+        message: `Share this device's details with ${origin}?`,
+        detail:
+          "This includes the operating system, disk encryption, firewall, installed apps and running processes. If you didn't expect this, choose Cancel.",
+        confirmLabel: "Share",
+      });
+    },
     requestLogPermission(origin) {
       return askUser({
         type: "info",
