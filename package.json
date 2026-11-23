@@ -189,6 +189,10 @@
       ],
       "requestedExecutionLevel": "asInvoker",
       "signtoolOptions": {
+        "sign": "./scripts/windowsSign.js",
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
         "rfc3161TimeStampServer": "http://timestamp.digicert.com"
       },
       "extraResources": [
