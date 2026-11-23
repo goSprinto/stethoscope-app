@@ -41,6 +41,7 @@ import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
+import { sprintoApiBaseUrl } from "./lib/originCheck";
 import {
   isTrustedUrl,
   isAppProtocolUrl,
@@ -281,6 +282,24 @@ async function createWindow(show = true) {
       updater.checkForUpdates();
     },
     enableDebugger: enableAppDebugger,
+    // resolves when the user agrees, rejects otherwise
+    confirmConnect({ host, firstName }) {
+      const who = firstName ? ` as ${firstName}` : "";
+      return confirmDialog({
+        title: "Connect Device",
+        message: `Connect ${app.name} to Sprinto${who}?`,
+        detail: `This device will send its security status to ${host}. If you didn't start this from Sprinto, choose Cancel.`,
+        confirmLabel: "Connect",
+      });
+    },
+    confirmDisconnect(origin) {
+      return confirmDialog({
+        title: "Disconnect Device",
+        message: `Disconnect ${app.name} from Sprinto?`,
+        detail: `Requested by ${origin || "an unknown caller"}. This device will stop reporting its security status.`,
+        confirmLabel: "Disconnect",
+      });
+    },
     requestLogPermission(origin) {
       return askUser({
         type: "info",
@@ -448,6 +467,31 @@ function askUser(options) {
     .showMessageBox(mainWindow, { noLink: true, ...options, signal: controller.signal })
     .then(({ response }) => response)
     .finally(() => clearTimeout(timer));
+}
+
+function confirmDialog({ title, message, detail, confirmLabel }) {
+  return askUser({
+    type: "question",
+    title,
+    message,
+    detail,
+    buttons: [confirmLabel, "Cancel"],
+    defaultId: 1,
+    cancelId: 1,
+  }).then((response) => {
+    if (response !== 0) throw new Error("Declined");
+  });
+}
+
+// the token only ever goes to a Sprinto regional host, whatever is stored
+// in settings (an older build may have saved another URL from /connect)
+function checkedBaseUrl(baseUrl, caller) {
+  const isDev = process.env.STETHOSCOPE_ENV === "development";
+  const checked = sprintoApiBaseUrl(baseUrl, { isDev });
+  if (!checked) {
+    log.error(`${caller} - refused to send the token to ${baseUrl}`);
+  }
+  return checked;
 }
 
 function enableAppDebugger() {
@@ -643,7 +687,9 @@ ipcMain.handle("api:getPolicy", async (event, baseUrl) => {
       return false;
     }
 
-    return await ApiService.getPolicy(baseUrl, token, isDev);
+    const apiBaseUrl = checkedBaseUrl(baseUrl, "api:getPolicy");
+    if (!apiBaseUrl) return null;
+    return await ApiService.getPolicy(apiBaseUrl, token, isDev);
   } catch (err) {
     return null;
   }
@@ -660,7 +706,9 @@ ipcMain.handle("api:reportDevice", async (event, result, device, baseUrl) => {
       return false;
     }
     const data = { ...result, device };
-    await ApiService.reportDevice(baseUrl, token, data, isDev);
+    const apiBaseUrl = checkedBaseUrl(baseUrl, "api:reportDevice");
+    if (!apiBaseUrl) return false;
+    await ApiService.reportDevice(apiBaseUrl, token, data, isDev);
     return true;
   } catch (err) {
     return false;

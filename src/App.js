@@ -6,6 +6,7 @@ import Loader from "./Loader";
 // import Footer from './Footer'
 import DownloadProgress from "./DownloadProgress";
 import openSocket from "socket.io-client";
+import { storedBaseUrlAction } from "./lib/originCheck";
 import moment from "moment";
 import classNames from "classnames";
 import { HOST } from "./constants";
@@ -114,9 +115,21 @@ class App extends Component {
       firstName: settings.get("firstName", null),
     });
 
-    // Set baseUrl if not set in connect Flow
+    // Set baseUrl if not set in connect Flow. A stored URL that isn't a
+    // Sprinto regional host (saved by an older build, V8-2208) logs the device
+    // out rather than sending its token to another host; the user connects
+    // again from Sprinto
     const baseUrl = settings.get("sprintoAPPBaseUrl");
-    if (baseUrl === null || baseUrl === undefined || baseUrl === "") {
+    const baseUrlAction = storedBaseUrlAction(
+      baseUrl,
+      settings.get("isSprintoAppConnected", false),
+      { isDev }
+    );
+    if (baseUrlAction === "logout") {
+      log.error(`Disconnecting: API base URL ${baseUrl} is not allowed`);
+      this.onDeviceDisconnected();
+    }
+    if (baseUrlAction !== "keep") {
       settings.set(
         "sprintoAPPBaseUrl",
         isDev ? "http://localhost:5000" : appConfig.apiBaseUrl
