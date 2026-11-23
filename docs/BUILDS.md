@@ -51,29 +51,41 @@ More info about notarizing is available from Apple at [https://developer.apple.c
 
 ## Signing Builds (Windows)
 
-1. Obtain a Microsoft Authenticode code-signing certificate (we use [digicert](digicert.com/code-signing/))
-2. Export the private and public key as a `p12` file
-3. Use `openssl` to convert p12 to `pvk` and `spc` files
+Windows builds are signed on a Windows machine with the code-signing
+certificate on the USB hardware token. The certificate's private key never
+leaves the token: there is no PFX file and no password in the build.
 
-```bash
-openssl pkcs12 -in $P12_FILE -nocerts -nodes -out temp-rsa.pem
-openssl rsa -in temp-rsa.pem -outform PVK -pvk-strong -out windows-code-cert.pvk
+1. Install the token software (SafeNet Authentication Client) and the Windows
+   SDK, which provides `signtool.exe`. If signtool is somewhere else, set
+   `SIGNTOOL_PATH` to it.
+2. Plug in the token. In SafeNet Authentication Client turn on "single logon"
+   (Advanced View > Client Settings), so the PIN is asked once per build
+   instead of once per file.
+3. Find the certificate's SHA-1 thumbprint:
 
-openssl pkcs12 -in $P12_FILE -nokeys -nodes -out temp-cert.pem
-openssl crl2pkcs7 -nocrl -certfile temp-cert.pem -outform DER -out windows-code-cert.spc
-```
+    ```powershell
+    Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Format-List Subject,Thumbprint
+    ```
 
-4. If you are on Mac - install `mono`, if you don't have it already
+4. Build:
 
-```bash
-brew install mono
-```
+    ```powershell
+    $env:SHA1KEY = "<thumbprint>"
+    yarn build:windows
+    ```
 
-5. Build the windows executable and sign
+electron-builder calls `scripts/windowsSign.js` for every file it signs,
+after it has finished editing that file: `DrSprinto.exe`, the Electron DLLs,
+`bitlocker-status.exe` and its DLLs, `elevate.exe`, the installer and the
+uninstaller. Each is signed with SHA-256 and timestamped. A signing failure
+fails the build.
 
-```bash
-yarn build:windows
-signcode -$ commercial -a sha1 -t http://timestamp.digicert.com -i $MAIN_URL -spc $SPC_FILE.spc -v $PVK_FILE.pvk -n \"Stethoscope Installer\" \"dist/Stethoscope Setup $npm_package_version.exe\"
+To check the result:
+
+```powershell
+signtool verify /pa /v "dist\win-unpacked\DrSprinto.exe"
+signtool verify /pa /v "dist\win-unpacked\ffmpeg.dll"
+signtool verify /pa /v "dist\DrSprinto Setup <version>.exe"
 ```
 
 ## Replacing configuration values before build
