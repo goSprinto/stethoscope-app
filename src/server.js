@@ -230,6 +230,16 @@ export default async function startServer(
   });
 
   app.get("/raw", cors(corsOptions), async (req, res) => {
+    // the response is the device's full inventory: OS, encryption, firewall,
+    // installed apps and running processes. Only the app itself gets it
+    // without asking (V8-2294); one prompt at a time, like /connect
+    const origin = req.get("origin");
+    if (origin !== APP_ORIGIN) {
+      const allowed = await withConfirmation(res, () =>
+        appActions.requestDeviceDataPermission(origin || "an unknown caller")
+      );
+      if (!allowed) return;
+    }
     // runs every check script, like a scan, so it shares the scan limit
     const release = acquireScanSlot(req, res);
     if (!release) return;
