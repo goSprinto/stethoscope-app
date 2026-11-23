@@ -36,7 +36,8 @@
     "build:react": "react-scripts build && node -r @babel/register update-download-page.js",
     "build:clean": "rimraf dist",
     "build:all": "electron-builder -wl",
-    "build:mac": "run-s prebuild 'build:electron -m --x64 --arm64' postbuild",
+    "build:mac": "run-s prebuild 'build:electron -m --x64 --arm64' build:mac-feed postbuild",
+    "build:mac-feed": "node scripts/setMacMinimumSystemVersion.js",
     "_electron-builder-windows": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 electron-builder -w",
     "build:windows": "run-s prebuild _electron-builder-windows",
     "_electron-builder-windows-token": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=9 node scripts/buildWindowsWithToken.js",
@@ -163,6 +164,7 @@
     "mac": {
       "icon": "build/drsprinto-icons/icon.icns",
       "category": "public.app-category.utilities",
+      "minimumSystemVersion": "13.0",
       "gatekeeperAssess": false,
       "hardenedRuntime": true,
       "entitlements": "entitlements.mac.plist",
