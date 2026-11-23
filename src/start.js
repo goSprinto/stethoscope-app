@@ -43,7 +43,7 @@ import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
 import { sprintoApiBaseUrl } from "./lib/originCheck";
 import {
-  isTrustedUrl,
+  isAppPageUrl,
   isAppProtocolUrl,
   isOsSettingsUrl,
   isExternalWebUrl,
@@ -145,9 +145,12 @@ const DEBUG_MODE = !!process.env.STETHOSCOPE_DEBUG;
 
 // navigation security controls, applied to every BrowserWindow the app creates
 const addNavigationControls = (win) => {
-  win.webContents.on("will-navigate", (event, navigationUrl) => {
-    // in-app navigation to a trusted http(s)/drsprinto url proceeds as normal
-    if (isTrustedUrl(navigationUrl)) return;
+  // the window runs with Node access, so it only ever shows the app's own
+  // page. Every web page, Sprinto's included, opens in the default browser
+  // (V8-2292); before, *.sprinto.com over http or https and localhost on any
+  // port loaded in place and got Node access and the app's Origin
+  const guardNavigation = (event, navigationUrl) => {
+    if (isAppPageUrl(navigationUrl, BASE_URL)) return;
 
     // app://, prefs://, ps:// and friends are registered in lib/protocolHandlers
     // and sanitise their own payload; blocking them here would stop the handler
@@ -162,21 +165,25 @@ const addNavigationControls = (win) => {
       return;
     }
 
-    // a link without target=_blank: open it in the browser, not in the app
+    // https pages open in the browser; http is never opened
     if (isExternalWebUrl(navigationUrl)) {
       shell.openExternal(navigationUrl);
       return;
     }
 
     log.warn(`Blocked navigation to: ${navigationUrl}`);
-  });
+  };
+  win.webContents.on("will-navigate", guardNavigation);
+  // a redirect, e.g. from an open redirect on an allowed page, gets the same
+  // check: will-navigate only sees the first URL
+  win.webContents.on("will-redirect", guardNavigation);
 
   // window.open / target="_blank" links. The old "new-window" event was
   // removed in Electron 22, so it no longer fired at all on current Electron
   win.webContents.setWindowOpenHandler(({ url: navigationUrl }) => {
     // links open in the default browser, outside the app session, so the
     // page never gets the app's drsprinto://main Origin (V8-2210)
-    if (isTrustedUrl(navigationUrl) || isExternalWebUrl(navigationUrl)) {
+    if (isExternalWebUrl(navigationUrl)) {
       shell.openExternal(navigationUrl);
     } else if (isOsSettingsUrl(navigationUrl)) {
       openOsSettingsUrl(navigationUrl);

@@ -6,7 +6,7 @@ import Loader from "./Loader";
 // import Footer from './Footer'
 import DownloadProgress from "./DownloadProgress";
 import openSocket from "socket.io-client";
-import { storedBaseUrlAction } from "./lib/originCheck";
+import { sprintoApiBaseUrl, storedBaseUrlAction } from "./lib/originCheck";
 import moment from "moment";
 import classNames from "classnames";
 import { HOST } from "./constants";
@@ -18,7 +18,6 @@ import "./App.css";
 import ConnectToSprintoApp from "./components/ConnectToSprintoApp";
 import OfflineSprintoApp from "./components/OfflineSprintoApp";
 const socket = openSocket(HOST);
-import isTrustedUrl from "./lib/utils";
 
 // CRA doesn't like importing native node modules
 // have to use window.require AFAICT
@@ -482,7 +481,8 @@ class App extends Component {
     event.preventDefault();
     if (targetHref) {
       const fullUrl = `${baseUrl}${targetHref}`;
-      if (isDev || isTrustedUrl(baseUrl)) {
+      // only a Sprinto regional host over https (V8-2292)
+      if (isDev || sprintoApiBaseUrl(baseUrl)) {
         shell.openExternal(fullUrl);
       } else {
         log.error("blocked navigation to untrusted URL", fullUrl);
@@ -501,7 +501,7 @@ class App extends Component {
     event.preventDefault();
     if (targetHref) {
       const fullUrl = `${url}${targetHref}`;
-      if (isDev || isTrustedUrl(url)) {
+      if (isDev || sprintoApiBaseUrl(url)) {
         shell.openExternal(fullUrl);
       } else {
         log.error(`Blocked navigation to untrusted URL: ${fullUrl}`);

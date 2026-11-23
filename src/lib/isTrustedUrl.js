@@ -45,23 +45,32 @@ export function isExternalWebUrl (urlString) {
   }
 }
 
+// a Sprinto web page: https on sprinto.com or a subdomain, no credentials.
+// Such links open in the user's default browser, never in the app window
+// (V8-2292). http, localhost and 127.0.0.1 are not trusted: an app window
+// has Node access, and plain http can be rewritten on the network
 export function isTrustedUrl(urlString) {
   try {
     const url = new URL(urlString);
-    
-    // List of allowed protocols
-    const allowedProtocols = ['https:', 'http:', 'drsprinto:'];
-    if (!allowedProtocols.includes(url.protocol)) {
-      return false;
-    }
-
-    // List of allowed domains
-    const allowedDomains = ['sprinto.com', 'localhost', '127.0.0.1'];
-    return allowedDomains.some(domain => 
-      url.hostname === domain || url.hostname.endsWith(`.${domain}`)
-    );
+    if (url.protocol !== 'https:' || url.username || url.password) return false;
+    return url.hostname === 'sprinto.com' || url.hostname.endsWith('.sprinto.com');
   } catch (err) {
-    console.error('Invalid URL:', err);
+    return false;
+  }
+}
+
+// true when url is the app's own page, the only thing the app window may
+// navigate to in place. appUrl is the page the window loads: build/index.html
+// over file: in a packaged build, the dev server in development
+export function isAppPageUrl(urlString, appUrl) {
+  try {
+    const url = new URL(urlString);
+    const app = new URL(appUrl);
+    if (app.protocol === 'file:') {
+      return url.protocol === 'file:' && url.pathname === app.pathname;
+    }
+    return url.origin === app.origin;
+  } catch (err) {
     return false;
   }
 }
