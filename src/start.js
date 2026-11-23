@@ -43,6 +43,7 @@ import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
 import verifyConnection from "./lib/verifyConnection";
 import { sprintoApiBaseUrl } from "./lib/originCheck";
+import { parseDeepLink, deepLinkFromArgv } from "./lib/deepLink";
 import {
   isAppPageUrl,
   isAppProtocolUrl,
@@ -95,8 +96,9 @@ let tray;
 const appStartTime = Date.now();
 let server;
 let updater;
-let launchIntoUpdater = false;
-let deeplinkingUrl;
+// a drsprinto:// link that arrived before the app was ready (on Windows, the
+// one the app was launched with); handled once the window exists
+let pendingDeepLink = deepLinkFromArgv(process.argv);
 let isLaunching = true;
 let isFirstLaunch = false;
 // icons that are displayed in the Menu bar
@@ -140,7 +142,11 @@ const BASE_URL =
   });
 
 // process command line arguments
-let enableDebugger = process.argv.find((arg) => arg.includes("enableDebugger"));
+// only the exact flag: on Windows a drsprinto:// link arrives as an argument
+// too, and drsprinto://enableDebugger used to match (V8-2293)
+let enableDebugger = process.argv.some((arg) =>
+  ["--enableDebugger", "enableDebugger"].includes(arg)
+);
 const DEBUG_MODE = !!process.env.STETHOSCOPE_DEBUG;
 
 
@@ -223,8 +229,6 @@ async function createWindow(show = true) {
   // wait for process to load before hiding in dock, prevents the app
   // from flashing into view and then hiding
   if (!IS_DEV && IS_MAC) setImmediate(() => app.dock.hide());
-  // windows detection of deep link path
-  if (IS_WIN) deeplinkingUrl = process.argv.slice(1);
   // only allow resize if debugging production build
   if (!IS_DEV && !enableDebugger) windowPrefs.resizable = false;
 
@@ -337,6 +341,16 @@ async function createWindow(show = true) {
         message: `Disconnect ${app.name} from Sprinto?`,
         detail: `Requested by ${origin || "an unknown caller"}. This device will stop reporting its security status.`,
         confirmLabel: "Disconnect",
+      });
+    },
+    // /raw from anything but the app (V8-2294); resolves when the user agrees
+    requestDeviceDataPermission(origin) {
+      return confirmDialog({
+        title: "Share Device Details",
+        message: `Share this device's details with ${origin}?`,
+        detail:
+          "This includes the operating system, disk encryption, firewall, installed apps and running processes. If you didn't expect this, choose Cancel.",
+        confirmLabel: "Share",
       });
     },
     requestLogPermission(origin) {
@@ -473,14 +487,6 @@ async function createWindow(show = true) {
     }
   });
 
-  // wait for app to finish loading before attempting auto update from deep link (stethoscope://update)
-  ipcMain.on("app:loaded", () => {
-    if (String(deeplinkingUrl).indexOf("update") > -1) {
-      updater.forceUpdate();
-      deeplinkingUrl = "";
-    }
-  });
-
   if (mainWindow) {
     mainWindow.on("closed", () => {
       mainWindow = null;
@@ -533,6 +539,44 @@ function checkedBaseUrl(baseUrl, caller) {
   return checked;
 }
 
+// acts on a drsprinto:// link (V8-2293). Any web page can open one, so only
+// exact link names count, an update goes through the normal prompts, and
+// DevTools opens only after the user agrees
+function handleDeepLink(link) {
+  const action = parseDeepLink(link);
+  if (!action) return;
+  if (!app.isReady() || !updater) {
+    pendingDeepLink = link;
+    return;
+  }
+  log.info(`deep link: ${action}`);
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+
+  if (action === "update") {
+    // asks before downloading and before installing; the link used to call
+    // forceUpdate, which did both without asking
+    updater.checkForUpdates().catch((err) => {
+      log.error(`deep link: check for updates failed: ${err}`);
+    });
+  } else if (action === "debugger") {
+    if (!mainWindow || mainWindow.isDestroyed()) createWindow();
+    confirmDialog({
+      title: "Developer Tools",
+      message: `Open developer tools for ${app.name}?`,
+      detail:
+        "Only do this if Sprinto support asked you to. Developer tools give full access to the app and to this device's Sprinto connection.",
+      confirmLabel: "Open",
+    }).then(
+      () => enableAppDebugger(),
+      () => log.info("deep link: developer tools declined")
+    );
+  }
+}
+
 function enableAppDebugger() {
   if (mainWindow) {
     mainWindow.webContents.openDevTools();
@@ -546,12 +590,12 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on("second-instance", (event, commandLine, workingDirectory) => {
-    if (IS_WIN) deeplinkingUrl = commandLine.slice(1);
-
-    if (String(deeplinkingUrl).indexOf("update") > -1) {
-      updater.checkForUpdates(env, mainWindow, log).catch((err) => {
-        log.error(`error checking for update: ${err}`);
-      });
+    // on Windows and Linux a drsprinto:// link opened while the app runs
+    // arrives here, as an argument
+    const link = deepLinkFromArgv(commandLine);
+    if (link) {
+      handleDeepLink(link);
+      return;
     }
 
     // Someone tried to run a second instance, we should focus our window.
@@ -604,14 +648,12 @@ if (!gotTheLock) {
         }
       );
 
-      if (launchIntoUpdater) {
-        // triggered via stethoscope://update app link
-        log.info(`Launching into updater: ${launchIntoUpdater}`);
-        updater
-          .checkForUpdates(env, mainWindow)
-          .catch((err) =>
-            log.error(`start:launch:check for updates exception${err}`)
-          );
+      // a link the app was launched with (Windows), or one that arrived
+      // before it was ready (macOS)
+      if (pendingDeepLink) {
+        const link = pendingDeepLink;
+        pendingDeepLink = null;
+        handleDeepLink(link);
       }
     }, 0)
   );
@@ -626,34 +668,10 @@ app.on("before-quit", () => {
   }
 });
 
+// macOS delivers drsprinto:// links here, before or after the app is ready
 app.on("open-url", (event, url) => {
   event.preventDefault();
-
-  if (url.includes("update")) {
-    launchIntoUpdater = true;
-  }
-
-  if (url.includes("debugger")) {
-    if (!mainWindow) {
-      enableDebugger = true;
-      createWindow();
-    } else {
-      enableAppDebugger();
-    }
-  }
-
-  if (mainWindow) {
-    if (mainWindow.isMinimized()) {
-      mainWindow.restore();
-    }
-    mainWindow.focus();
-
-    if (launchIntoUpdater) {
-      updater.checkForUpdates(env, mainWindow).catch((err) => {
-        log.error(`start:check for updates error: ${err}`);
-      });
-    }
-  }
+  handleDeepLink(url);
 });
 
 app.on("activate", () => {
