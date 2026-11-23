@@ -38,6 +38,12 @@ if (!process.env.SKIP_CONFIG_UPDATE) {
     pkg.version = process.env.APP_VERSION
   }
   if (process.env.APP_PUBLISH_URL) {
+    // the update feed carries the hash the updater checks downloads
+    // against, so a plaintext feed lets a network attacker pick the update
+    if (!/^https:\/\//i.test(process.env.APP_PUBLISH_URL)) {
+      console.error(`APP_PUBLISH_URL must use https: ${process.env.APP_PUBLISH_URL}`)
+      process.exit(1)
+    }
     pkg.build.publish[0].url = process.env.APP_PUBLISH_URL
   }
   if (process.env.APP_BUNDLE_ID) {

@@ -248,7 +248,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "http://static.sprinto.com/drsprinto/"
+        "url": "https://static.sprinto.com/drsprinto/"
       }
     ]
   }
