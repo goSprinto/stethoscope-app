@@ -1,4 +1,5 @@
 import kmd from "../../lib/kmd";
+import displaySleepMinutes from "../../lib/displaySleep";
 import macFriendlyName from "../../sources/macmodels";
 import applicationRunningFilter from "../../lib/applicationRunningFilter";
 
@@ -45,17 +46,32 @@ const MacDevice = {
     // idleDelay is the time for the session to become
     // idle and screensaver to come on.
     // lockDelay is time since the screensaver comes on
-    // and screen is locked
-    const { lockDelay, idleDelay } = settings.screen;
+    // (or the display turns off) and screen is locked
+    // displaySleep is the display sleep timer in minutes (pmset), the
+    // longest across power sources so the result doesn't flip between AC
+    // and battery
+    const lockDelay = parseInt(settings.screen.lockDelay, 10);
+    const idleDelay = parseInt(settings.screen.idleDelay, 10);
+    const displaySleep = displaySleepMinutes(
+      settings.screen.displaySleepCustom,
+      settings.screen.displaySleep
+    );
 
     // idleDelay = 0 -> Set to never in settings
     // idleDelay = -1 -> We were not able to extract since
     // likely it was never manually set by the user. Default
     // is set to 1200 seconds which is high.
+    // displaySleep = 0 -> Never, -1 -> not available.
 
     // lockDelay = -1: lock is disabled. 0: locks immediately on idle
     if (lockDelay >= 0 && idleDelay > 0) {
-      return parseInt(idleDelay, 10) + parseInt(lockDelay, 10);
+      return idleDelay + lockDelay;
+    }
+
+    // fallback: newer macOS versions (27+) often have no screensaver
+    // timer and lock on display sleep instead
+    if (lockDelay >= 0 && displaySleep > 0) {
+      return displaySleep * 60 + lockDelay;
     }
 
     return -1;
