@@ -298,10 +298,23 @@ export default async function startServer(
     }
     const name = typeof firstName === "string" ? firstName.slice(0, 100) : "";
 
-    const confirmed = await withConfirmation(res, () =>
-      appActions.confirmConnect({ host: new URL(baseUrl).host, firstName: name })
-    );
+    // the token is checked with Sprinto before anything is stored (V8-2208).
+    // The check runs inside the confirmation lock, so a second /connect gets
+    // 409 until this one has finished
+    let check;
+    const confirmed = await withConfirmation(res, async () => {
+      await appActions.confirmConnect({ host: new URL(baseUrl).host, firstName: name });
+      check = await appActions.verifyConnection({ accessToken, baseUrl });
+    });
     if (!confirmed) return;
+
+    if (!check.ok) {
+      log.error(`connect: token check failed (${check.reason}${check.status ? ` ${check.status}` : ""})`);
+      appActions.showConnectError(check.reason);
+      return check.reason === "rejected"
+        ? res.status(401).send("Sprinto did not accept the token")
+        : res.status(502).send("Could not reach Sprinto to check the token");
+    }
 
     io.sockets.emit("sprinto:deviceConnected", {
       data: { accessToken, baseUrl, firstName: name },

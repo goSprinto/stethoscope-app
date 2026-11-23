@@ -41,6 +41,7 @@ import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
+import verifyConnection from "./lib/verifyConnection";
 import { sprintoApiBaseUrl } from "./lib/originCheck";
 import {
   isAppPageUrl,
@@ -306,6 +307,29 @@ async function createWindow(show = true) {
         detail: `This device will send its security status to ${host}. If you didn't start this from Sprinto, choose Cancel.`,
         confirmLabel: "Connect",
       });
+    },
+    // checks the token from /connect with Sprinto by fetching the policy
+    // with it (V8-2208); never rejects
+    verifyConnection({ accessToken, baseUrl }) {
+      return verifyConnection(
+        (url, token) => ApiService.getPolicy(url, token),
+        baseUrl,
+        accessToken
+      );
+    },
+    // tells the user a connect didn't go through, so they start it again
+    showConnectError(reason) {
+      const detail =
+        reason === "rejected"
+          ? "Sprinto didn't accept this connection. Go back to Sprinto and connect this device again."
+          : "Sprinto couldn't be reached. Check your internet connection, then go back to Sprinto and connect this device again.";
+      askUser({
+        type: "error",
+        title: "Connect Device",
+        message: `${app.name} couldn't connect to Sprinto`,
+        detail,
+        buttons: ["OK"],
+      }).catch((err) => log.error(`connect error dialog: ${err.message}`));
     },
     confirmDisconnect(origin) {
       return confirmDialog({
