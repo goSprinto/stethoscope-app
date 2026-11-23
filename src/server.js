@@ -19,6 +19,7 @@ import socketio from "socket.io";
 import spacesToCamelCase from "./lib/spacesToCamelCase";
 import yaml from "js-yaml";
 import redact from "./lib/redact";
+import createScanLimiter, { parseScanRequest } from "./lib/scanLimiter";
 import {
   APP_ORIGIN,
   fullMatch,
@@ -66,6 +67,13 @@ async function precompile() {
 // used to ensure that user is not shown multiple notifications for a login scan
 // sessionId is used as a key
 const alertCache = new Map();
+const ALERT_CACHE_LIMIT = 1000;
+// a scan whose scripts haven't finished by then is answered with 504 and its
+// limiter slot freed
+const SCAN_TIMEOUT_MS = 65000;
+
+// scans requested by anything other than the app itself (V8-2213)
+const scanLimiter = createScanLimiter();
 
 function listen() {
   const serverInstance = server.listen(PORT, "127.0.0.1", () => {
@@ -111,6 +119,22 @@ export default async function startServer(
   });
 
   const { allowHosts = [], hostLabels = [] } = defaultConfig;
+
+  // takes a scan slot for a remote caller and returns its release function, or
+  // answers 429 and returns null. The app's own scans follow its schedule and
+  // the user's rescan button, so they aren't limited
+  function acquireScanSlot(req, res) {
+    const origin = req.get("origin");
+    if (origin === APP_ORIGIN) return () => {};
+    const release = scanLimiter.acquire(origin || "unknown");
+    if (!release) {
+      log.warn(`Too many scans from ${origin}`);
+      res.set("Retry-After", "60");
+      res.status(429).json({ errors: [{ message: "Too many scans" }] });
+      return null;
+    }
+    return release;
+  }
 
   // wide open in dev, limited to hosts specified in './practices/config.yaml' in production
   const corsOptions = {
@@ -206,15 +230,30 @@ export default async function startServer(
   });
 
   app.get("/raw", cors(corsOptions), async (req, res) => {
-    const promises = Object.entries(checks).map(async ([name, script]) => {
-      try {
-        return await run(script);
-      } catch (e) {
-        return "";
+    // runs every check script, like a scan, so it shares the scan limit
+    const release = acquireScanSlot(req, res);
+    if (!release) return;
+    // as in /scan, a script that hangs must not hold the slot for good
+    const rawTimer = setTimeout(() => {
+      release();
+      if (!res.headersSent) {
+        res.status(504).json({ errors: [{ message: "Scan timed out" }] });
       }
-    });
-    const checkData = await Promise.all(promises);
-    res.json(extend(true, {}, ...checkData));
+    }, SCAN_TIMEOUT_MS);
+    try {
+      const promises = Object.entries(checks).map(async ([name, script]) => {
+        try {
+          return await run(script);
+        } catch (e) {
+          return "";
+        }
+      });
+      const checkData = await Promise.all(promises);
+      if (!res.headersSent) res.json(extend(true, {}, ...checkData));
+    } finally {
+      clearTimeout(rawTimer);
+      release();
+    }
   });
 
   app.post(
@@ -283,21 +322,38 @@ export default async function startServer(
   });
 
   app.use(["/scan", "/graphql"], cors(corsOptions), async (req, res) => {
+    // allow GET/POST requests and determine what property to use
+    const key = req.method === "POST" ? "body" : "query";
+    const origin = req.get("origin");
+    const isRemote = origin !== APP_ORIGIN;
+
+    // a malformed request used to throw inside this handler and hang
+    const parsed = parseScanRequest(req[key]);
+    if (parsed.error) {
+      return res.status(400).json({ errors: [{ message: parsed.error }] });
+    }
+
+    if (parsed.query.includes("__schema") || parsed.query.includes("__type")) {
+      const error = new Error("Introspection queries are not allowed.");
+      log.error(`Introspection query incoming`);
+      return res.status(400).json({ error: error.message });
+    }
+
+    const releaseSlot = acquireScanSlot(req, res);
+    if (!releaseSlot) return;
     // set upper boundary on scan time (65 seconds)
     // req.setTimeout only logged, so a check script that hung kept the
-    // request open for good; answer 504 instead so the caller can recover
+    // request open for good; answer 504 instead so the caller can recover.
+    // The limiter slot is held until the scan's scripts finish, or until this
+    // timer gives up on them. The timer is not cleared when the caller
+    // disconnects: it is the only thing that frees the slot if a script hangs
     const scanTimer = setTimeout(() => {
+      releaseSlot();
       if (res.headersSent) return;
       log.error("Request timed out");
       io.sockets.emit("scan:error", { error: "Scan timed out" });
       res.status(504).json({ errors: [{ message: "Scan timed out" }] });
-    }, 65000);
-    res.on("close", () => clearTimeout(scanTimer));
-
-    // allow GET/POST requests and determine what property to use
-    const key = req.method === "POST" ? "body" : "query";
-    const origin = req.get("origin");
-    const isRemote = origin !== "drsprinto://main";
+    }, SCAN_TIMEOUT_MS);
     let remoteLabel = "DrSprinto";
 
     // Try to find the host label to display in app ("Last scanned by X")
@@ -308,13 +364,9 @@ export default async function startServer(
         remoteLabel = label.name;
       }
     }
-    const { query, sessionId = false } = req[key];
-    if (query.includes("__schema") || query.includes("__type")) {
-      const error = new Error("Introspection queries are not allowed.");
-      log.error(`Introspection query incoming`);
-      return res.status(500).json({ error: error.message });
-    }
-    let { variables: policy } = req[key];
+    const { sessionId = false } = req[key];
+    const { query } = parsed;
+    const policy = parsed.variables;
     // native notifications are only shown for external requests and
     // are throttled by the users's session id
     const showNotification = sessionId && !alertCache.has(sessionId);
@@ -332,15 +384,11 @@ export default async function startServer(
     });
     // throttle native push notifications to user by session id
     if (sessionId && !alertCache.has(sessionId)) {
+      // callers choose session ids, so keep the cache bounded
+      if (alertCache.size >= ALERT_CACHE_LIMIT) {
+        alertCache.delete(alertCache.keys().next().value);
+      }
       alertCache.set(sessionId, true);
-    }
-
-    // policy needs to be an object, regardless of whether or not one was
-    // supplied in the request, parse if String was supplied
-    if (typeof policy === "string") {
-      policy = JSON.parse(policy);
-    } else {
-      policy = Object.assign({}, policy);
     }
 
     // if a policy was passed, tell the UI a scan has started
@@ -397,6 +445,10 @@ export default async function startServer(
         if (!res.headersSent) {
           res.status(500).json({ errors: [{ message: err.message }] });
         }
+      })
+      .finally(() => {
+        clearTimeout(scanTimer);
+        releaseSlot();
       });
   });
 

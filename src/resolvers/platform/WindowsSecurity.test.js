@@ -9,9 +9,32 @@ afterEach(() => {
 })
 
 describe('Windows applications resolver', () => {
+  it('refuses a registry path that could break out of the script quoting', async () => {
+    global.log = { error: jest.fn() }
+    kmd.mockResolvedValue({ apps: [] })
+
+    const result = await WindowsSecurity.applications(
+      null,
+      [{ name: 'fooApp', paths: { win32: "HKLM\\Software' & calc.exe & '" } }],
+      {}
+    )
+    expect(kmd).not.toHaveBeenCalled()
+    expect(result).toEqual([{ name: 'fooApp', reason: 'NOT_INSTALLED' }])
+  })
+
+  it('matches app names as text, not as a regex', async () => {
+    kmd.mockResolvedValue({ apps: [{ name: 'Foo App (x64)', version: '1.0.0' }] })
+
+    const [plain] = await WindowsSecurity.applications(null, [{ name: 'foo app' }], {})
+    expect(plain).toEqual({ name: 'foo app', version: '1.0.0' })
+
+    const [regexLike] = await WindowsSecurity.applications(null, [{ name: '(a+)+$' }], {})
+    expect(regexLike.reason).toBe('NOT_INSTALLED')
+  })
+
   it('should pass (registry) path to kmd', async () => {
     const name = 'fooApp'
-    const path = 'some\\nonstandard\\regpath'
+    const path = 'HKCU\\Software\\Vendor\\Uninstall'
 
     kmd.mockResolvedValue({
       apps: [
