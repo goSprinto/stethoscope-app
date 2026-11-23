@@ -6,33 +6,19 @@
 const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 
-// Writes the signing certificate for one build and returns it with a
-// cleanup function. The PFX goes to a new private temp folder (mode 0600)
-// and is deleted afterwards: a fixed path in the shared temp folder outlived
-// the build and could be swapped for another file (V8-2214)
-function openCertificate() {
-    const certPassword = process.env.WINDOZE_CERT_PASSWORD;
-    const certData = process.env.WINDOZE_CERT_DATA;
-    const sha1Key = process.env.SHA1KEY;
-
-    if (!certData || !certPassword || !sha1Key) {
-        throw new Error('Missing required environment variables for signing');
+// Windows signing uses the code-signing certificate on the USB hardware
+// token (V8-2214). signtool picks the certificate from the Windows store by
+// its SHA-1 thumbprint, and the token's own software asks for the PIN, so
+// the build never handles a PFX file or a password.
+// SHA1KEY: thumbprint of the certificate on the token (certmgr, or
+// `certutil -user -store My`); spaces are ignored
+function certificateThumbprint() {
+    const thumbprint = (process.env.SHA1KEY || '').replace(/\s/g, '');
+    if (!/^[0-9a-fA-F]{40}$/.test(thumbprint)) {
+        throw new Error('SHA1KEY must be the 40-character thumbprint of the signing certificate on the hardware token');
     }
-
-    const certDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drsprinto-sign-'));
-    const certPath = path.join(certDir, 'cert.p12');
-    fs.writeFileSync(certPath, Buffer.from(certData, 'base64'), { mode: 0o600 });
-
-    return {
-        certPath,
-        certPassword,
-        sha1Key,
-        close() {
-            fs.rmSync(certDir, { recursive: true, force: true });
-        }
-    };
+    return thumbprint;
 }
 
 // Function to get signtool path
@@ -47,42 +33,62 @@ function getSigntoolPath() {
     return signtoolDefault;
 }
 
-// Function to sign DLLs and EXEs
-// signtool takes the PFX password only as /p, so it is still in signtool's
-// own arguments. It is run without a shell, and errors are reported without
-// the command line, which held the password
-function signFile(filePath, cert) {
-    const signtool = getSigntoolPath();
-    const args = [
+// signtool arguments for one run over several files. No /f or /p: the
+// certificate and its key stay on the token
+function signArgs(thumbprint, files) {
+    return [
         'sign',
-        '/f', cert.certPath,
-        '/p', cert.certPassword,
+        '/sha1', thumbprint,
         '/tr', 'http://timestamp.comodoca.com/?td=sha256',
         '/td', 'sha256',
         '/fd', 'sha256',
-        '/sha1', cert.sha1Key,
-        filePath,
+        ...files,
     ];
-
-    console.log(`Signing file: ${filePath}`);
-    try {
-        execFileSync(signtool, args, { stdio: 'inherit' });
-    } catch (error) {
-        const reason = error.status != null ? `signtool exited with ${error.status}` : error.code;
-        throw new Error(`Error signing ${filePath}: ${reason}`);
-    }
-    console.log(`Successfully signed: ${filePath}`);
 }
 
-function signAllDlls(dir, cert) {
-    fs.readdirSync(dir, { withFileTypes: true }).forEach((file) => {
+// the .dll and .exe files under dir
+function findBinaries(dir) {
+    return fs.readdirSync(dir, { withFileTypes: true }).flatMap((file) => {
         const fullPath = path.join(dir, file.name);
-        if (file.isDirectory()) {
-            signAllDlls(fullPath, cert);
-        } else if (file.name.endsWith('.dll') || file.name.endsWith('.exe')) {
-            signFile(fullPath, cert);
-        }
+        if (file.isDirectory()) return findBinaries(fullPath);
+        return /\.(dll|exe)$/i.test(file.name) ? [fullPath] : [];
     });
+}
+
+// groups files so each signtool command line stays under Windows' 32K
+// character limit. Each signtool run can ask for the token PIN once, so
+// this keeps it to one prompt for a normal build
+function batchFiles(files, maxChars = 30000) {
+    const batches = [];
+    let current = [];
+    let length = 0;
+    for (const file of files) {
+        if (current.length && length + file.length + 3 > maxChars) {
+            batches.push(current);
+            current = [];
+            length = 0;
+        }
+        current.push(file);
+        length += file.length + 3;
+    }
+    if (current.length) batches.push(current);
+    return batches;
+}
+
+function signWindowsBinaries(dir) {
+    const thumbprint = certificateThumbprint();
+    const files = findBinaries(dir);
+    const signtool = getSigntoolPath();
+    for (const batch of batchFiles(files)) {
+        console.log(`Signing ${batch.length} file(s):\n  ${batch.join('\n  ')}`);
+        try {
+            execFileSync(signtool, signArgs(thumbprint, batch), { stdio: 'inherit' });
+        } catch (error) {
+            const reason = error.status != null ? `signtool exited with ${error.status}` : error.code;
+            throw new Error(`Error signing: ${reason}. Is the hardware token plugged in and unlocked?`);
+        }
+    }
+    console.log(`Signed ${files.length} file(s)`);
 }
 
 // Functions for RPATH removal (from remove-rpath.js)
@@ -126,13 +132,8 @@ module.exports = async function (context) {
 
     try {
         if (platform === 'win32') {
-            console.log('Signing Windows DLLs and EXEs...');
-            const cert = openCertificate();
-            try {
-                signAllDlls(appOutDir, cert);
-            } finally {
-                cert.close();
-            }
+            console.log('Signing Windows DLLs and EXEs with the hardware token...');
+            signWindowsBinaries(appOutDir);
             console.log('Windows signing completed successfully');
         } else if (platform === 'linux') {
             console.log(`Skipping afterPack for platform: ${platform}`);
@@ -146,4 +147,10 @@ module.exports = async function (context) {
         console.error('Error in afterPack:', error.message);
         throw error; // Re-throw to ensure build fails if there's an error
     }
-}; 
+};
+
+// for tests
+module.exports.signArgs = signArgs;
+module.exports.batchFiles = batchFiles;
+module.exports.findBinaries = findBinaries;
+module.exports.certificateThumbprint = certificateThumbprint;
