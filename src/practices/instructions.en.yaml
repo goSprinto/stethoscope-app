@@ -157,9 +157,9 @@ practices:
         1. Rescan to update the status
 
       linux: |
-        The recommended option for full disk encryption for Linux is <a target="_blank" href="https://gitlab.com/cryptsetup/cryptsetup/-/wikis/home">LUKS</a>. You can find instructions for Ubuntu 19.04 and 20.04 below.
-        1. <a target="_blank" href="https://medium.com/@chrishantha/encrypting-disks-on-ubuntu-19-04-b50bfc65182a">Ubuntu 19.04</a>
-        1. <a target="_blank" href="https://gist.github.com/luispabon/db2c9e5f6cc73bb37812a19a40e137bc">Ubuntu 21.04 dual boot with Windows 10</a>
+        The recommended option for full disk encryption for Linux is LUKS (https://gitlab.com/cryptsetup/cryptsetup/-/wikis/home). You can find instructions for Ubuntu 19.04 and 20.04 below.
+        1. Ubuntu 19.04 (https://medium.com/@chrishantha/encrypting-disks-on-ubuntu-19-04-b50bfc65182a)
+        1. Ubuntu 21.04 dual boot with Windows 10 (https://gist.github.com/luispabon/db2c9e5f6cc73bb37812a19a40e137bc)
 
         For other distributions, please consult the documentation.
   automaticUpdates:
@@ -349,7 +349,7 @@ practices:
         1. In the System Preferences window, click Software Update. (If your System Preferences doesn't include Software Update, use the App Store to get updates instead.)
         1. Click Update Now or Upgrade Now.
 
-        For more details, please see Apple help page on <a target="_blank" href="https://support.apple.com/en-in/HT201541">how to update/upgrade MacOS</a>.
+        For more details, please see Apple help page on how to update/upgrade MacOS (https://support.apple.com/en-in/HT201541).
 
         {{requirement "osVersion" "darwin"}}
 
@@ -413,23 +413,23 @@ practices:
         <ol>
         <li> Please install one of the following:
           <ol>    
-          <li> <a target="_blank" href="https://www.avg.com/en-in/avg-antivirus-for-mac#pc">AVG Antivirus</a> [Free]</li>
-          <li> <a target="_blank" href="https://home.sophos.com/en-us/download-mac-anti-virus.aspx">Sophos Antivirus</a> [Free]</li>
-          <li><a target="_blank" href="https://www.mcafee.com/en-in/antivirus/mac.html">McAfee Endpoint Security for Mac</a></li>
-          <li><a target="_blank" href="https://www.clamxav.com/">ClamXAV</a></li>
+          <li> AVG Antivirus (https://www.avg.com/en-in/avg-antivirus-for-mac#pc) [Free]</li>
+          <li> Sophos Antivirus (https://home.sophos.com/en-us/download-mac-anti-virus.aspx) [Free]</li>
+          <li>McAfee Endpoint Security for Mac (https://www.mcafee.com/en-in/antivirus/mac.html)</li>
+          <li>ClamXAV (https://www.clamxav.com/)</li>
           </ol>
           </li>
         <li>Rescan to update the status</li>
         </ol>
 
       win32: |
-        <a target="_blank" href="https://support.microsoft.com/en-us/windows/stay-protected-with-windows-security-2ae0363d-0ada-c064-8b56-6a39afb6a963">Enable Windows Defender using these steps</a>
+        <a href="ms-settings:windowsdefender">Open Windows Security</a> and turn on Microsoft Defender Antivirus
 
       linux: |
         Please install one of the following:
-        1. <a target="_blank" href="https://antivirus.comodo.com/">Comodo Antivirus</a>
-        1. <a target="_blank" href="https://www.clamav.net/">Clam Antivirus</a>
-        1. <a target="_blank" href="https://www.avg.com/en-us/free-antivirus-download">AVG Antivirus</a>
+        1. Comodo Antivirus (https://antivirus.comodo.com/)
+        1. Clam Antivirus (https://www.clamav.net/)
+        1. AVG Antivirus (https://www.avg.com/en-us/free-antivirus-download)
 
         **Setting up Clam Antivirus**
 

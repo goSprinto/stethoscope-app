@@ -1,5 +1,5 @@
 #/usr/bin/env kmd
-exec powershell 'Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct'
+exec powershell -NoProfile -NonInteractive 'Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct'
 trim
 split \r\n\r\n
   save line

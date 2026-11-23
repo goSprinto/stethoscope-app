@@ -62,7 +62,7 @@ export default {
         (screenSaveActive === 1 && screenSaverIsSecure === 1)
       );
     } catch (error) {
-      log.error("windowsSecurity:screenLock::crash", e.toString());
+      log.error("windowsSecurity:screenLock::crash", error.toString());
       return false;
     }
   },
@@ -105,7 +105,7 @@ export default {
         (newdelayOk && screenSaverIsSecure === 1 && screenSaveActive === 1)
       );
     } catch (error) {
-      log.error("windowsSecurity:screenIdle::crash", e.toString());
+      log.error("windowsSecurity:screenIdle::crash", error.toString());
       return false;
     }
   },

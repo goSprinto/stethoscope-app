@@ -54,12 +54,16 @@ const apps = [
 ]
 
 describe('applicationPlatformFilter', () => {
-  it('should return three apps for MacOS Sierra', async () => {
+  // the OS version requirement is no longer applied (see the note in
+  // applicationPlatformFilter.js), so older versions get every app for the
+  // platform
+  it('should return all four Mac apps for MacOS Sierra', async () => {
     const filteredApps = await applicationPlatformFilter(apps, {}, 'darwin', '10.12.1')
-    expect(filteredApps.length).toEqual(3)
+    expect(filteredApps.length).toEqual(4)
     expect(filteredApps[0].name).toEqual('CommonApp')
     expect(filteredApps[1].name).toEqual('CommonAppWithExplicitAll')
     expect(filteredApps[2].name).toEqual('Terminal')
+    expect(filteredApps[3].name).toEqual('TV')
   })
 
   it('should return four apps for MacOS Catalina', async () => {
@@ -79,11 +83,12 @@ describe('applicationPlatformFilter', () => {
     expect(filteredApps[2].name).toEqual('bash')
   })
 
-  it('should return two apps for Ubuntu Hardy ', async () => {
+  it('should return all three Linux apps for Ubuntu Hardy', async () => {
     const filteredApps = await applicationPlatformFilter(apps, {}, 'linux', '8.04')
-    expect(filteredApps.length).toEqual(2)
+    expect(filteredApps.length).toEqual(3)
     expect(filteredApps[0].name).toEqual('CommonApp')
     expect(filteredApps[1].name).toEqual('CommonAppWithExplicitAll')
+    expect(filteredApps[2].name).toEqual('bash')
   })
 
   it('should return three apps for Windows 10', async () => {
@@ -94,11 +99,12 @@ describe('applicationPlatformFilter', () => {
     expect(filteredApps[2].name).toEqual('Notepad.exe')
   })
 
-  it('should return two apps for Windows 7', async () => {
+  it('should return all three Windows apps for Windows 7', async () => {
     const filteredApps = await applicationPlatformFilter(apps, {}, 'win32', '6.1')
-    expect(filteredApps.length).toEqual(2)
+    expect(filteredApps.length).toEqual(3)
     expect(filteredApps[0].name).toEqual('CommonApp')
     expect(filteredApps[1].name).toEqual('CommonAppWithExplicitAll')
+    expect(filteredApps[2].name).toEqual('Notepad.exe')
   })
 
   it('should not return PoorlyFilteredApp', async () => {
