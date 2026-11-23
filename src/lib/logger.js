@@ -2,6 +2,7 @@ import { app } from "electron";
 import winston from "winston";
 import path from "path";
 import moment from "moment";
+import redact from "./redact";
 require("winston-daily-rotate-file");
 const IS_DEV = process.env.STETHOSCOPE_ENV === "development";
 
@@ -36,7 +37,8 @@ if (!global.log) {
         format: winston.format.combine(
           winston.format.timestamp(),
           winston.format.printf(
-            (info) => `${info.timestamp} ${info.level} - ${info.message}`
+            (info) =>
+              `${info.timestamp} ${info.level} - ${redact(String(info.message))}`
           )
         ),
       }),
