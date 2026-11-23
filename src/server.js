@@ -68,6 +68,9 @@ async function precompile() {
 // sessionId is used as a key
 const alertCache = new Map();
 const ALERT_CACHE_LIMIT = 1000;
+// a scan whose scripts haven't finished by then is answered with 504 and its
+// limiter slot freed
+const SCAN_TIMEOUT_MS = 65000;
 
 // scans requested by anything other than the app itself (V8-2213)
 const scanLimiter = createScanLimiter();
@@ -230,6 +233,13 @@ export default async function startServer(
     // runs every check script, like a scan, so it shares the scan limit
     const release = acquireScanSlot(req, res);
     if (!release) return;
+    // as in /scan, a script that hangs must not hold the slot for good
+    const rawTimer = setTimeout(() => {
+      release();
+      if (!res.headersSent) {
+        res.status(504).json({ errors: [{ message: "Scan timed out" }] });
+      }
+    }, SCAN_TIMEOUT_MS);
     try {
       const promises = Object.entries(checks).map(async ([name, script]) => {
         try {
@@ -239,8 +249,9 @@ export default async function startServer(
         }
       });
       const checkData = await Promise.all(promises);
-      res.json(extend(true, {}, ...checkData));
+      if (!res.headersSent) res.json(extend(true, {}, ...checkData));
     } finally {
+      clearTimeout(rawTimer);
       release();
     }
   });
@@ -311,21 +322,6 @@ export default async function startServer(
   });
 
   app.use(["/scan", "/graphql"], cors(corsOptions), async (req, res) => {
-    // set upper boundary on scan time (65 seconds)
-    // req.setTimeout only logged, so a check script that hung kept the
-    // request open for good; answer 504 instead so the caller can recover
-    // the limiter slot is held until the scan's scripts finish (not when the
-    // caller disconnects), or until this timeout gives up on them
-    let releaseSlot = () => {};
-    const scanTimer = setTimeout(() => {
-      releaseSlot();
-      if (res.headersSent) return;
-      log.error("Request timed out");
-      io.sockets.emit("scan:error", { error: "Scan timed out" });
-      res.status(504).json({ errors: [{ message: "Scan timed out" }] });
-    }, 65000);
-    res.on("close", () => clearTimeout(scanTimer));
-
     // allow GET/POST requests and determine what property to use
     const key = req.method === "POST" ? "body" : "query";
     const origin = req.get("origin");
@@ -343,9 +339,21 @@ export default async function startServer(
       return res.status(400).json({ error: error.message });
     }
 
-    const release = acquireScanSlot(req, res);
-    if (!release) return;
-    releaseSlot = release;
+    const releaseSlot = acquireScanSlot(req, res);
+    if (!releaseSlot) return;
+    // set upper boundary on scan time (65 seconds)
+    // req.setTimeout only logged, so a check script that hung kept the
+    // request open for good; answer 504 instead so the caller can recover.
+    // The limiter slot is held until the scan's scripts finish, or until this
+    // timer gives up on them. The timer is not cleared when the caller
+    // disconnects: it is the only thing that frees the slot if a script hangs
+    const scanTimer = setTimeout(() => {
+      releaseSlot();
+      if (res.headersSent) return;
+      log.error("Request timed out");
+      io.sockets.emit("scan:error", { error: "Scan timed out" });
+      res.status(504).json({ errors: [{ message: "Scan timed out" }] });
+    }, SCAN_TIMEOUT_MS);
     let remoteLabel = "DrSprinto";
 
     // Try to find the host label to display in app ("Last scanned by X")
@@ -438,7 +446,10 @@ export default async function startServer(
           res.status(500).json({ errors: [{ message: err.message }] });
         }
       })
-      .finally(() => releaseSlot());
+      .finally(() => {
+        clearTimeout(scanTimer);
+        releaseSlot();
+      });
   });
 
   app.get("/config", serveConfig("config"));
