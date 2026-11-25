@@ -137,8 +137,13 @@ async function main () {
     assert.strict.equal(devToolsOpen, false)
     console.log('✓', 'dev tools are closed')
 
-    await window.getByRole('button', { name: 'Scan', exact: true }).waitFor({ timeout: 30000 })
-    console.log('✓', 'app scan successful')
+    // a device connected to Sprinto shows the Scan button; one that isn't
+    // (a fresh build machine) shows the connect screen. Either means the app
+    // loaded its policy and rendered
+    const mainScreen = window.getByRole('button', { name: /^(Scan|Share device info)$/ }).first()
+    await mainScreen.waitFor({ timeout: 30000 })
+    const connected = (await mainScreen.innerText()).trim() === 'Scan'
+    console.log('✓', connected ? 'app scan successful' : 'app loaded (device not connected to Sprinto, showing the connect screen)')
 
     // the app's CSP blocks inline <script> tags but allows eval
     await window.evaluate(require('axe-core').source)
