@@ -3,6 +3,7 @@ import semver from 'semver'
 import kmd from '../../lib/kmd'
 import sanitizeDebianVersionString from '../../lib/sanitizeDebianVersionString'
 import LinuxDevice from './LinuxDevice'
+import { appNameMatches } from '../../lib/appPolicy'
 
 export default {
   async firewall (root, args, context) {
@@ -69,7 +70,7 @@ export default {
       let userApp = false
 
       if (!exactMatch) {
-        userApp = foundApps.find((app) => (new RegExp(name, 'ig')).test(app.name))
+        userApp = foundApps.find((app) => appNameMatches(name, app.name))
       } else {
         userApp = foundApps.find((app) => app.name === name)
       }

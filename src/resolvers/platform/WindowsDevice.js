@@ -29,7 +29,7 @@ export default {
       if (screenlockDelay === -1) return screenSaveTimeout;
       else return screenlockDelay;
     } catch (error) {
-      log.error("windowsDevice:screenLockDelay::crash", e.toString());
+      log.error("windowsDevice:screenLockDelay::crash", error.toString());
       return 0;
     }
   },

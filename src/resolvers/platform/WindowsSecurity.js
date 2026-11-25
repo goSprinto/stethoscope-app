@@ -3,6 +3,7 @@ import kmd from "../../lib/kmd";
 import { UNKNOWN, DEFAULT_WIN32_APP_REGISTRY_PATH } from "../../constants";
 import WindowsDevice from "./WindowsDevice";
 import { safeParseInt } from "../../lib/scripts";
+import { appNameMatches, isSafeRegistryPath } from "../../lib/appPolicy";
 
 export default {
   async automaticUpdates(root, args, context) {
@@ -62,7 +63,7 @@ export default {
         (screenSaveActive === 1 && screenSaverIsSecure === 1)
       );
     } catch (error) {
-      log.error("windowsSecurity:screenLock::crash", e.toString());
+      log.error("windowsSecurity:screenLock::crash", error.toString());
       return false;
     }
   },
@@ -105,7 +106,7 @@ export default {
         (newdelayOk && screenSaverIsSecure === 1 && screenSaveActive === 1)
       );
     } catch (error) {
-      log.error("windowsSecurity:screenIdle::crash", e.toString());
+      log.error("windowsSecurity:screenIdle::crash", error.toString());
       return false;
     }
   },
@@ -118,8 +119,16 @@ export default {
   async applications(root, appsToValidate, context) {
     // gather set of optional registry path overrides from policy
     const registryPathOverrides = new Set();
-    appsToValidate.map(({ paths = {} }) => {
-      registryPathOverrides.add(paths.win32 || DEFAULT_WIN32_APP_REGISTRY_PATH);
+    appsToValidate.forEach(({ paths = {} }) => {
+      const override = paths.win32;
+      if (override && !isSafeRegistryPath(override)) {
+        // the path comes from the caller's policy: log only the start of it
+        log.error(
+          `windowsSecurity:applications refused registry path ${JSON.stringify(String(override).slice(0, 80))}`
+        );
+        return;
+      }
+      registryPathOverrides.add(override || DEFAULT_WIN32_APP_REGISTRY_PATH);
     });
 
     const paths = Array.from(registryPathOverrides);
@@ -134,9 +143,7 @@ export default {
       let userApp = false;
 
       if (!exactMatch) {
-        userApp = foundApps.find((app) =>
-          new RegExp(name, "ig").test(app.name)
-        );
+        userApp = foundApps.find((app) => appNameMatches(name, app.name));
       } else {
         userApp = foundApps.find((app) => app.name === name);
       }

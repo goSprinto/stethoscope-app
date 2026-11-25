@@ -2,7 +2,7 @@ import Policy from './Policy'
 import Security from './Security'
 import { PASS, FAIL, NUDGE, SUGGESTED, ALWAYS } from '../constants'
 
-jest.mock('./Security/')
+jest.mock('./Security')
 
 describe('array policies', () => {
   it('should pass if all pass', async () => {

@@ -10,8 +10,7 @@ import { Server } from "http";
 import cors from "cors";
 import express from "express";
 import extend from "extend";
-import { readFileSync } from "fs";
-import glob from "fast-glob";
+import { readdirSync, readFileSync } from "fs";
 import helmet from "helmet";
 import path from "path";
 import pkg from "../package.json";
@@ -19,17 +18,34 @@ import Resolvers from "./resolvers/";
 import socketio from "socket.io";
 import spacesToCamelCase from "./lib/spacesToCamelCase";
 import yaml from "js-yaml";
+import redact from "./lib/redact";
+import createScanLimiter, { parseScanRequest } from "./lib/scanLimiter";
+import {
+  APP_ORIGIN,
+  fullMatch,
+  sprintoApiBaseUrl,
+  isConfiguredOrigin,
+  isWebAppOrigin,
+} from "./lib/originCheck";
 
 const Schema = readFileSync(path.join(__dirname, "../schema.graphql"), "utf8");
 const IS_DEV = process.env.STETHOSCOPE_ENV === "development";
 const app = express();
 const server = new Server(app);
-const io = socketio(server, { wsEngine: require("ws").Server });
+// the socket only feeds the app's own renderer, and its events carry the
+// device access token, so refuse every other origin. Browsers let any page
+// open a websocket to 127.0.0.1 (no CORS on websockets), so this check is
+// what stops a website from listening in
+const io = socketio(server, {
+  wsEngine: require("ws").Server,
+  allowRequest(req, callback) {
+    const allowed = IS_DEV || req.headers.origin === APP_ORIGIN;
+    callback(null, allowed);
+  },
+});
 
 function matchHost(origin) {
-  return (label) => {
-    return new RegExp(label.pattern).test(origin);
-  };
+  return (label) => fullMatch(label.pattern, origin);
 }
 
 setKmdEnv({
@@ -38,23 +54,39 @@ setKmdEnv({
   NODE_PATH: process.execPath,
 });
 
-function precompile() {
-  let searchPath = path.resolve(
-    __dirname,
-    `./sources/${process.platform}/*.sh`
-  );
-  if (process.platform === "win32") {
-    // glob wants the pattern with forward slashes
-    searchPath = searchPath.replace(/\\/g, "/");
-  }
-  return glob(searchPath).then((files) =>
-    files.map((file) => compile(readFileSync(file, "utf8")))
-  );
+// lists the folder rather than globbing it: __dirname contains the install
+// location, and ( ) in it (e.g. a C:\Users\name.PC(WORK) profile folder) is
+// glob syntax, so the pattern matched no scripts
+async function precompile() {
+  const dir = path.resolve(__dirname, `./sources/${process.platform}`);
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".sh"))
+    .map((file) => compile(readFileSync(path.join(dir, file), "utf8")));
 }
 
 // used to ensure that user is not shown multiple notifications for a login scan
 // sessionId is used as a key
 const alertCache = new Map();
+const ALERT_CACHE_LIMIT = 1000;
+// a scan whose scripts haven't finished by then is answered with 504 and its
+// limiter slot freed
+const SCAN_TIMEOUT_MS = 65000;
+
+// scans requested by anything other than the app itself (V8-2213)
+const scanLimiter = createScanLimiter();
+
+function listen() {
+  const serverInstance = server.listen(PORT, "127.0.0.1", () => {
+    console.log(`GraphQL server listening on ${PORT}`);
+    serverInstance.emit("server:ready");
+  });
+  return serverInstance;
+}
+
+// routes and middleware live on the module-level express app, so they are
+// registered once; calling startServer again used to stack another full set
+// on every automatic rescan
+let routesRegistered = false;
 
 export default async function startServer(
   env,
@@ -62,6 +94,13 @@ export default async function startServer(
   language = "en-US",
   appActions
 ) {
+  // later calls (autoscan recovery, re-created window) only need the server
+  // to be listening again
+  if (routesRegistered) {
+    return server.listening ? server : listen();
+  }
+  routesRegistered = true;
+
   log.info("starting express server");
   const checks = await precompile();
   const find = (filePath) => path.join(__dirname, filePath);
@@ -81,23 +120,30 @@ export default async function startServer(
 
   const { allowHosts = [], hostLabels = [] } = defaultConfig;
 
+  // takes a scan slot for a remote caller and returns its release function, or
+  // answers 429 and returns null. The app's own scans follow its schedule and
+  // the user's rescan button, so they aren't limited
+  function acquireScanSlot(req, res) {
+    const origin = req.get("origin");
+    if (origin === APP_ORIGIN) return () => {};
+    const release = scanLimiter.acquire(origin || "unknown");
+    if (!release) {
+      log.warn(`Too many scans from ${origin}`);
+      res.set("Retry-After", "60");
+      res.status(429).json({ errors: [{ message: "Too many scans" }] });
+      return null;
+    }
+    return release;
+  }
+
   // wide open in dev, limited to hosts specified in './practices/config.yaml' in production
   const corsOptions = {
     origin(origin, callback) {
       if (IS_DEV) {
         return callback(null, true);
       }
-      if (allowHosts.includes(origin)) {
+      if (isConfiguredOrigin(origin, { allowHosts, hostLabels })) {
         return callback(null, true);
-      }
-      if (hostLabels.length) {
-        const isAllowed = hostLabels
-          .map(({ pattern }) => new RegExp(pattern))
-          .some((regex) => regex.test(origin));
-
-        if (isAllowed) {
-          return callback(null, true);
-        }
       }
 
       log.error(`Unauthorized request from ${origin}`);
@@ -109,12 +155,7 @@ export default async function startServer(
   // policy, instructions and config data should only be served to app
   const policyRequestOptions = {
     origin(origin, callback) {
-      const allowed = [
-        "http://localhost:",
-        "drsprinto://",
-        "http://127.0.0.1:",
-      ];
-      if (origin && allowed.some((hostname) => origin.startsWith(hostname))) {
+      if (isWebAppOrigin(origin)) {
         callback(null, true);
       } else {
         log.error(`Unauthorized request from ${origin}`);
@@ -124,9 +165,28 @@ export default async function startServer(
   };
 
   app.use((req, res, next) => {
+    // added resp headers to allow requests from allowed origins
+    const origin = req.get("origin");
+    if (isWebAppOrigin(origin)) {
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Vary", "Origin"); // important for proxies
+    }
+
+    res.header("Access-Control-Allow-Private-Network", "true");
+
     if (req.method === "OPTIONS") {
-      // Ensure the response object (`res`) is used here
-      res.status(200).send();
+      // Chromium preflights every public -> 127.0.0.1 request (Private/Local
+      // Network Access), even simple ones Firefox sends without a preflight.
+      // Without allow-methods/headers the preflight fails with a CORS error,
+      // so answer it fully here; the per-route cors() never sees OPTIONS
+      res.header("Access-Control-Allow-Methods", "GET,OPTIONS,HEAD,POST");
+      const requestHeaders = req.get("access-control-request-headers");
+      if (requestHeaders) {
+        res.header("Access-Control-Allow-Headers", requestHeaders);
+        res.vary("Access-Control-Request-Headers");
+      }
+      res.header("Access-Control-Max-Age", "600");
+      res.status(204).send();
     } else {
       next();
     }
@@ -134,13 +194,17 @@ export default async function startServer(
 
   app.get("/debugger", cors(corsOptions), async (req, res) => {
     log.info("Collecting debug info");
-    let promise = Promise.resolve();
+    // the response holds the log file, process list and device data: only
+    // the app itself (Menu > Copy Debug Info) gets it without asking. The
+    // Host header says nothing about the caller, so it is not checked.
+    // Sharing logs doesn't open DevTools: the user agreed to share logs only
+    const origin = req.get("origin");
+    const isApp = origin === APP_ORIGIN;
+    const consent = isApp
+      ? Promise.resolve()
+      : appActions.requestLogPermission(origin || "an unknown caller");
 
-    if (req.get("host") !== "127.0.0.1:37370") {
-      promise = appActions.requestLogPermission(req.get("origin"));
-      appActions.enableDebugger();
-    }
-    promise
+    consent
       .then(async () => {
         log.warn(checks.length);
         const promises = Object.entries(checks).map(async ([name, script]) => {
@@ -154,7 +218,8 @@ export default async function startServer(
         // format response
         const sep = `\n${"=".repeat(20)}\n`;
         const file = readFileSync(log.getLogFile());
-        const noColor = String(file).replace(/\[[\d]+m?:?/g, "") + "\n";
+        // older builds wrote bearer tokens to the log; never hand them out
+        const noColor = redact(String(file).replace(/\[[\d]+m?:?/g, "")) + "\n";
         const str = JSON.stringify(extend(true, {}, ...checkData), null, 3);
         const version = `Stethoscope version: ${pkg.version}`;
         res.send(`${version}\nLOGS${sep}${noColor}DEVICE DATA${sep}${str}`);
@@ -165,15 +230,40 @@ export default async function startServer(
   });
 
   app.get("/raw", cors(corsOptions), async (req, res) => {
-    const promises = Object.entries(checks).map(async ([name, script]) => {
-      try {
-        return await run(script);
-      } catch (e) {
-        return "";
+    // the response is the device's full inventory: OS, encryption, firewall,
+    // installed apps and running processes. Only the app itself gets it
+    // without asking (V8-2294); one prompt at a time, like /connect
+    const origin = req.get("origin");
+    if (origin !== APP_ORIGIN) {
+      const allowed = await withConfirmation(res, () =>
+        appActions.requestDeviceDataPermission(origin || "an unknown caller")
+      );
+      if (!allowed) return;
+    }
+    // runs every check script, like a scan, so it shares the scan limit
+    const release = acquireScanSlot(req, res);
+    if (!release) return;
+    // as in /scan, a script that hangs must not hold the slot for good
+    const rawTimer = setTimeout(() => {
+      release();
+      if (!res.headersSent) {
+        res.status(504).json({ errors: [{ message: "Scan timed out" }] });
       }
-    });
-    const checkData = await Promise.all(promises);
-    res.json(extend(true, {}, ...checkData));
+    }, SCAN_TIMEOUT_MS);
+    try {
+      const promises = Object.entries(checks).map(async ([name, script]) => {
+        try {
+          return await run(script);
+        } catch (e) {
+          return "";
+        }
+      });
+      const checkData = await Promise.all(promises);
+      if (!res.headersSent) res.json(extend(true, {}, ...checkData));
+    } finally {
+      clearTimeout(rawTimer);
+      release();
+    }
   });
 
   app.post(
@@ -186,26 +276,107 @@ export default async function startServer(
     }
   );
 
+  // connect binds the device to a Sprinto org: the token and base URL it
+  // stores receive every later device report. Only a Sprinto regional host is
+  // accepted, and the user confirms in the agent, so no caller can rebind or
+  // unbind the device silently (V8-2208)
+  let confirmPending = false;
+  const withConfirmation = async (res, confirm) => {
+    // one dialog at a time, so a caller can't stack prompts
+    if (confirmPending) {
+      res.status(409).send("Another request is waiting for confirmation");
+      return false;
+    }
+    confirmPending = true;
+    try {
+      await confirm();
+      return true;
+    } catch (e) {
+      res.status(403).send("Declined");
+      return false;
+    } finally {
+      confirmPending = false;
+    }
+  };
+
   app.post("/connect", cors(corsOptions), async (req, res) => {
-    io.sockets.emit("sprinto:deviceConnected", { data: req.body });
+    const { accessToken, firstName } = req.body || {};
+    const baseUrl = sprintoApiBaseUrl(req.body && req.body.baseUrl, { isDev: IS_DEV });
+    if (!baseUrl || typeof accessToken !== "string" || !accessToken) {
+      log.error(`Rejected connect request from ${req.get("origin")}`);
+      return res.status(400).send("Invalid connect request");
+    }
+    const name = typeof firstName === "string" ? firstName.slice(0, 100) : "";
+
+    // the token is checked with Sprinto before anything is stored (V8-2208).
+    // The check runs inside the confirmation lock, so a second /connect gets
+    // 409 until this one has finished
+    let check;
+    const confirmed = await withConfirmation(res, async () => {
+      await appActions.confirmConnect({ host: new URL(baseUrl).host, firstName: name });
+      check = await appActions.verifyConnection({ accessToken, baseUrl });
+    });
+    if (!confirmed) return;
+
+    if (!check.ok) {
+      log.error(`connect: token check failed (${check.reason}${check.status ? ` ${check.status}` : ""})`);
+      appActions.showConnectError(check.reason);
+      return check.reason === "rejected"
+        ? res.status(401).send("Sprinto did not accept the token")
+        : res.status(502).send("Could not reach Sprinto to check the token");
+    }
+
+    io.sockets.emit("sprinto:deviceConnected", {
+      data: { accessToken, baseUrl, firstName: name },
+    });
     res.status(201).send("Updated");
   });
 
   app.post("/disconnect", cors(corsOptions), async (req, res) => {
+    // Menu > Disconnect in the app is already the user's choice
+    if (req.get("origin") !== APP_ORIGIN) {
+      const confirmed = await withConfirmation(res, () =>
+        appActions.confirmDisconnect(req.get("origin"))
+      );
+      if (!confirmed) return;
+    }
     io.sockets.emit("sprinto:deviceDisconnected");
     res.status(200).send("Disconnected");
   });
 
   app.use(["/scan", "/graphql"], cors(corsOptions), async (req, res) => {
-    // set upper boundary on scan time (65 seconds)
-    req.setTimeout(65000, () => {
-      log.error("Request timed out");
-    });
-
     // allow GET/POST requests and determine what property to use
     const key = req.method === "POST" ? "body" : "query";
     const origin = req.get("origin");
-    const isRemote = origin !== "drsprinto://main";
+    const isRemote = origin !== APP_ORIGIN;
+
+    // a malformed request used to throw inside this handler and hang
+    const parsed = parseScanRequest(req[key]);
+    if (parsed.error) {
+      return res.status(400).json({ errors: [{ message: parsed.error }] });
+    }
+
+    if (parsed.query.includes("__schema") || parsed.query.includes("__type")) {
+      const error = new Error("Introspection queries are not allowed.");
+      log.error(`Introspection query incoming`);
+      return res.status(400).json({ error: error.message });
+    }
+
+    const releaseSlot = acquireScanSlot(req, res);
+    if (!releaseSlot) return;
+    // set upper boundary on scan time (65 seconds)
+    // req.setTimeout only logged, so a check script that hung kept the
+    // request open for good; answer 504 instead so the caller can recover.
+    // The limiter slot is held until the scan's scripts finish, or until this
+    // timer gives up on them. The timer is not cleared when the caller
+    // disconnects: it is the only thing that frees the slot if a script hangs
+    const scanTimer = setTimeout(() => {
+      releaseSlot();
+      if (res.headersSent) return;
+      log.error("Request timed out");
+      io.sockets.emit("scan:error", { error: "Scan timed out" });
+      res.status(504).json({ errors: [{ message: "Scan timed out" }] });
+    }, SCAN_TIMEOUT_MS);
     let remoteLabel = "DrSprinto";
 
     // Try to find the host label to display in app ("Last scanned by X")
@@ -216,35 +387,31 @@ export default async function startServer(
         remoteLabel = label.name;
       }
     }
-    const { query, sessionId = false } = req[key];
-    if (query.includes("__schema") || query.includes("__type")) {
-      const error = new Error("Introspection queries are not allowed.");
-      log.error(`Introspection query incoming`);
-      return res.status(500).json({ error: error.message });
-    }
-    let { variables: policy } = req[key];
+    const { sessionId = false } = req[key];
+    const { query } = parsed;
+    const policy = parsed.variables;
     // native notifications are only shown for external requests and
     // are throttled by the users's session id
     const showNotification = sessionId && !alertCache.has(sessionId);
     const start = performance.now();
     const context = {};
-    const device = await kmd("os", context);
-
-    // AWS workspace override
-    if (device.system.platform.includes("Server 2016 Datacenter")) {
-      device.system.platform = "awsWorkspace";
-    }
+    // don't await os.sh here so it runs alongside the scan's other scripts
+    // instead of before them. Resolvers share this cached promise, and this
+    // .then is attached first, so the AWS workspace override is applied
+    // before any resolver sees the result
+    kmd("os", context).then((device) => {
+      const platform = device?.system?.platform;
+      if (platform && platform.includes("Server 2016 Datacenter")) {
+        device.system.platform = "awsWorkspace";
+      }
+    });
     // throttle native push notifications to user by session id
     if (sessionId && !alertCache.has(sessionId)) {
+      // callers choose session ids, so keep the cache bounded
+      if (alertCache.size >= ALERT_CACHE_LIMIT) {
+        alertCache.delete(alertCache.keys().next().value);
+      }
       alertCache.set(sessionId, true);
-    }
-
-    // policy needs to be an object, regardless of whether or not one was
-    // supplied in the request, parse if String was supplied
-    if (typeof policy === "string") {
-      policy = JSON.parse(policy);
-    } else {
-      policy = Object.assign({}, policy);
     }
 
     // if a policy was passed, tell the UI a scan has started
@@ -260,14 +427,19 @@ export default async function startServer(
       variableValues: policy,
     })
       .then((result) => {
+        // already answered with 504
+        if (res.headersSent) return;
         const total = performance.now() - start;
         const { data = {}, errors } = result;
         let scanResult = { noResults: true };
 
         if (errors && !isRemote) {
           const errMessage = errors.reduce((p, c) => p + c + "\n", "");
+          // throwing here never sent a response, so the app's request hung
+          // until the 65s timeout above while the loader kept spinning
+          log.error(`server:scan errors ${errMessage}`);
           io.sockets.emit("scan:error", { error: errMessage });
-          throw new Error(errMessage);
+          return res.json(result);
         }
 
         // update the tray icon if a policy result is in the response
@@ -292,7 +464,14 @@ export default async function startServer(
       })
       .catch((err) => {
         io.sockets.emit("scan:error", { error: err.message });
-        throw err;
+        log.error(`server:scan failed ${err.message}`);
+        if (!res.headersSent) {
+          res.status(500).json({ errors: [{ message: err.message }] });
+        }
+      })
+      .finally(() => {
+        clearTimeout(scanTimer);
+        releaseSlot();
       });
   });
 
@@ -357,15 +536,7 @@ export default async function startServer(
     log.error(`server: ${err.message}`);
   });
 
-  const serverInstance = server.listen(PORT, "127.0.0.1", () => {
-    console.log(`GraphQL server listening on ${PORT}`);
-    // if (IS_DEV) {
-    //   console.log(`Explore the schema: http://127.0.0.1:${PORT}/graphiql`)
-    // }
-    serverInstance.emit("server:ready");
-  });
-
-  return serverInstance;
+  return listen();
 }
 
 process.on("unhandledRejection", (reason) => {

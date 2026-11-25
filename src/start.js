@@ -41,8 +41,32 @@ import AutoLauncher from "./AutoLauncher";
 import updateInit from "./updater";
 import AuthService from "./services/AuthService";
 import ApiService from "./services/ApiService";
-import { isTrustedUrl } from "./lib/isTrustedUrl";
+import verifyConnection from "./lib/verifyConnection";
+import { sprintoApiBaseUrl } from "./lib/originCheck";
+import { parseDeepLink, deepLinkFromArgv } from "./lib/deepLink";
+import {
+  isAppPageUrl,
+  isAppProtocolUrl,
+  isOsSettingsUrl,
+  isExternalWebUrl,
+} from "./lib/isTrustedUrl";
+import applescript from "./lib/applescript";
 import unixify from "unixify";
+
+const MAC_SETTINGS_SCHEME = "x-apple.systempreferences:";
+
+// Hand an OS settings deep link to the operating system. On macOS the pane id
+// goes through openPreferences, which maps the legacy System Preferences ids
+// still used in instructions.en.yaml onto their System Settings equivalents;
+// without that, macOS 13+ opens Settings on whatever pane was last shown.
+const openOsSettingsUrl = (navigationUrl) => {
+  if (navigationUrl.startsWith(MAC_SETTINGS_SCHEME)) {
+    return applescript.openPreferences(
+      navigationUrl.slice(MAC_SETTINGS_SCHEME.length)
+    );
+  }
+  return shell.openExternal(navigationUrl);
+};
 
 app.disableHardwareAcceleration();
 
@@ -72,8 +96,9 @@ let tray;
 const appStartTime = Date.now();
 let server;
 let updater;
-let launchIntoUpdater = false;
-let deeplinkingUrl;
+// a drsprinto:// link that arrived before the app was ready (on Windows, the
+// one the app was launched with); handled once the window exists
+let pendingDeepLink = deepLinkFromArgv(process.argv);
 let isLaunching = true;
 let isFirstLaunch = false;
 // icons that are displayed in the Menu bar
@@ -117,9 +142,65 @@ const BASE_URL =
   });
 
 // process command line arguments
-let enableDebugger = process.argv.find((arg) => arg.includes("enableDebugger"));
+// only the exact flag: on Windows a drsprinto:// link arrives as an argument
+// too, and drsprinto://enableDebugger used to match (V8-2293)
+let enableDebugger = process.argv.some((arg) =>
+  ["--enableDebugger", "enableDebugger"].includes(arg)
+);
 const DEBUG_MODE = !!process.env.STETHOSCOPE_DEBUG;
 
+
+// navigation security controls, applied to every BrowserWindow the app creates
+const addNavigationControls = (win) => {
+  // the window runs with Node access, so it only ever shows the app's own
+  // page. Every web page, Sprinto's included, opens in the default browser
+  // (V8-2292); before, *.sprinto.com over http or https and localhost on any
+  // port loaded in place and got Node access and the app's Origin
+  const guardNavigation = (event, navigationUrl) => {
+    if (isAppPageUrl(navigationUrl, BASE_URL)) return;
+
+    // app://, prefs://, ps:// and friends are registered in lib/protocolHandlers
+    // and sanitise their own payload; blocking them here would stop the handler
+    // from ever running
+    if (isAppProtocolUrl(navigationUrl)) return;
+
+    // anything else must not navigate the window
+    event.preventDefault();
+
+    if (isOsSettingsUrl(navigationUrl)) {
+      openOsSettingsUrl(navigationUrl);
+      return;
+    }
+
+    // https pages open in the browser; http is never opened
+    if (isExternalWebUrl(navigationUrl)) {
+      shell.openExternal(navigationUrl);
+      return;
+    }
+
+    log.warn(`Blocked navigation to: ${navigationUrl}`);
+  };
+  win.webContents.on("will-navigate", guardNavigation);
+  // a redirect, e.g. from an open redirect on an allowed page, gets the same
+  // check: will-navigate only sees the first URL
+  win.webContents.on("will-redirect", guardNavigation);
+
+  // window.open / target="_blank" links. The old "new-window" event was
+  // removed in Electron 22, so it no longer fired at all on current Electron
+  win.webContents.setWindowOpenHandler(({ url: navigationUrl }) => {
+    // links open in the default browser, outside the app session, so the
+    // page never gets the app's drsprinto://main Origin (V8-2210)
+    if (isExternalWebUrl(navigationUrl)) {
+      shell.openExternal(navigationUrl);
+    } else if (isOsSettingsUrl(navigationUrl)) {
+      openOsSettingsUrl(navigationUrl);
+    } else {
+      log.warn(`Blocked new window to: ${navigationUrl}`);
+    }
+    // never open a new Electron window
+    return { action: "deny" };
+  });
+};
 
 const focusOrCreateWindow = (mainWindow) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -131,6 +212,7 @@ const focusOrCreateWindow = (mainWindow) => {
   } else {
     mainWindow = new BrowserWindow(windowPrefs);
     remoteMain.enable(mainWindow.webContents);
+    addNavigationControls(mainWindow);
     initMenu(mainWindow, app, focusOrCreateWindow, updater, log);
     mainWindow.loadURL(BASE_URL);
   }
@@ -147,31 +229,12 @@ async function createWindow(show = true) {
   // wait for process to load before hiding in dock, prevents the app
   // from flashing into view and then hiding
   if (!IS_DEV && IS_MAC) setImmediate(() => app.dock.hide());
-  // windows detection of deep link path
-  if (IS_WIN) deeplinkingUrl = process.argv.slice(1);
   // only allow resize if debugging production build
   if (!IS_DEV && !enableDebugger) windowPrefs.resizable = false;
 
   mainWindow = new BrowserWindow(windowPrefs);
   remoteMain.enable(mainWindow.webContents);
-
-  // Add navigation security controls
-  mainWindow.webContents.on("will-navigate", (event, navigationUrl) => {
-    if (!isTrustedUrl(navigationUrl)) {
-      event.preventDefault();
-      log.warn(`Blocked navigation to: ${navigationUrl}`);
-    }
-  });
-
-  mainWindow.webContents.on("new-window", (event, navigationUrl) => {
-    event.preventDefault();
-    // Handle external links safely through shell.openExternal if trusted
-    if (isTrustedUrl(navigationUrl)) {
-      shell.openExternal(navigationUrl);
-    } else {
-      log.warn(`Blocked new window to: ${navigationUrl}`);
-    }
-  });
+  addNavigationControls(mainWindow);
 
   // if (IS_DEV) loadReactDevTools(BrowserWindow);
   // open developer console if env vars or args request
@@ -239,22 +302,67 @@ async function createWindow(show = true) {
       updater.checkForUpdates();
     },
     enableDebugger: enableAppDebugger,
+    // resolves when the user agrees, rejects otherwise
+    confirmConnect({ host, firstName }) {
+      const who = firstName ? ` as ${firstName}` : "";
+      return confirmDialog({
+        title: "Connect Device",
+        message: `Connect ${app.name} to Sprinto${who}?`,
+        detail: `This device will send its security status to ${host}. If you didn't start this from Sprinto, choose Cancel.`,
+        confirmLabel: "Connect",
+      });
+    },
+    // checks the token from /connect with Sprinto by fetching the policy
+    // with it (V8-2208); never rejects
+    verifyConnection({ accessToken, baseUrl }) {
+      return verifyConnection(
+        (url, token) => ApiService.getPolicy(url, token),
+        baseUrl,
+        accessToken
+      );
+    },
+    // tells the user a connect didn't go through, so they start it again
+    showConnectError(reason) {
+      const detail =
+        reason === "rejected"
+          ? "Sprinto didn't accept this connection. Go back to Sprinto and connect this device again."
+          : "Sprinto couldn't be reached. Check your internet connection, then go back to Sprinto and connect this device again.";
+      askUser({
+        type: "error",
+        title: "Connect Device",
+        message: `${app.name} couldn't connect to Sprinto`,
+        detail,
+        buttons: ["OK"],
+      }).catch((err) => log.error(`connect error dialog: ${err.message}`));
+    },
+    confirmDisconnect(origin) {
+      return confirmDialog({
+        title: "Disconnect Device",
+        message: `Disconnect ${app.name} from Sprinto?`,
+        detail: `Requested by ${origin || "an unknown caller"}. This device will stop reporting its security status.`,
+        confirmLabel: "Disconnect",
+      });
+    },
+    // /raw from anything but the app (V8-2294); resolves when the user agrees
+    requestDeviceDataPermission(origin) {
+      return confirmDialog({
+        title: "Share Device Details",
+        message: `Share this device's details with ${origin}?`,
+        detail:
+          "This includes the operating system, disk encryption, firewall, installed apps and running processes. If you didn't expect this, choose Cancel.",
+        confirmLabel: "Share",
+      });
+    },
     requestLogPermission(origin) {
-      return new Promise((resolve, reject) => {
-        dialog
-          .showMessageBox({
-            type: "info",
-            title: "Allow Access",
-            message: `Will you allow your Stethoscope log files to be sent to ${origin}?`,
-            buttons: ["Yes", "No"],
-          })
-          .then(({ response }) => {
-            if (response === 0) {
-              resolve();
-            } else {
-              reject(new Error("Access denied"));
-            }
-          });
+      return askUser({
+        type: "info",
+        title: "Allow Access",
+        message: `Will you allow your Stethoscope log files to be sent to ${origin}?`,
+        buttons: ["Yes", "No"],
+        defaultId: 1,
+        cancelId: 1,
+      }).then((response) => {
+        if (response !== 0) throw new Error("Access denied");
       });
     },
   };
@@ -263,6 +371,11 @@ async function createWindow(show = true) {
   const [language] = app.getLocale().split("-");
   // start GraphQL server, close the app if 37370 is already in use
   server = await startGraphQLServer(env, log, language, appHooksForServer);
+  // createWindow runs again when the window has been destroyed, and the
+  // server object is reused; drop the previous run's listeners so each event
+  // is handled once
+  server.removeAllListeners("error");
+  server.removeAllListeners("server:ready");
   server.on("error", (error) => {
     const e = new Error(error);
     log.info(`startup:express:error ${JSON.stringify(e)}`);
@@ -277,10 +390,22 @@ async function createWindow(show = true) {
     if (!mainWindow) {
       mainWindow = new BrowserWindow(windowPrefs);
       remoteMain.enable(mainWindow.webContents);
+      addNavigationControls(mainWindow);
     }
     mainWindow.loadURL(BASE_URL);
     mainWindow.focus();
   });
+
+  // same for IPC handlers: without this a re-created window registered a
+  // second "scan:init" handler, scheduling two automatic scans at a time
+  [
+    "contextmenu",
+    "app:restart",
+    "download:start",
+    "scan:init",
+    "download:complete",
+    "app:loaded",
+  ].forEach((channel) => ipcMain.removeAllListeners(channel));
 
   // add right-click menu to app
   ipcMain.on("contextmenu", (event) =>
@@ -330,42 +455,16 @@ async function createWindow(show = true) {
         } else if (event && event.sender && !event.sender.isDestroyed()) {
           console.log("Started auto reporting - object not destroyed");
           try {
-            // close the server and create a new window
-            if (server && server.listening) {
-              console.log("Closing the server before starting a new one...");
-              server.getConnections((err, count) => {
-                if (err) {
-                  console.error("Error checking active connections:", err);
-                } else {
-                  if (count > 0) {
-                    console.warn(
-                      "There are still active connections. Proceeding to close..."
-                    );
-                  }
-                  // Close the server after checking connections
-                  new Promise((resolve, reject) => {
-                    server.close((err) => {
-                      if (err) return reject(err);
-                      console.log("Server closed successfully.");
-                      resolve();
-                    });
-                  }).catch((err) => {
-                    console.error("Failed to close server:", err);
-                  });
-                }
-              });
-            }
-
-            server = await startGraphQLServer(
-              env,
-              log,
-              language,
-              appHooksForServer
-            );
-
-            // Adding some delay
-            if (process.platform === "win32") {
-              await new Promise((resolve) => setTimeout(resolve, 500));
+            // the server stays up between scans; bring it back only if it
+            // has stopped listening (it used to be closed and restarted on
+            // every automatic scan)
+            if (!server || !server.listening) {
+              server = await startGraphQLServer(
+                env,
+                log,
+                language,
+                appHooksForServer
+              );
             }
 
             event.sender.send("autoscan:start", {
@@ -388,18 +487,93 @@ async function createWindow(show = true) {
     }
   });
 
-  // wait for app to finish loading before attempting auto update from deep link (stethoscope://update)
-  ipcMain.on("app:loaded", () => {
-    if (String(deeplinkingUrl).indexOf("update") > -1) {
-      updater.forceUpdate();
-      deeplinkingUrl = "";
-    }
-  });
-
   if (mainWindow) {
     mainWindow.on("closed", () => {
       mainWindow = null;
     });
+  }
+}
+
+// asks the user on behalf of a caller of the local API. The app usually runs
+// from the tray with its window hidden, so the window is shown and brought to
+// the front first and the dialog is attached to it: a sheet on a hidden
+// window is never seen, and on macOS a dialog with no parent runs
+// synchronously, blocking the main process (and this API) until answered.
+// The dialog closes itself (as Cancel) after ASK_TIMEOUT_MS so the caller is
+// never left waiting
+const ASK_TIMEOUT_MS = 2 * 60 * 1000;
+
+function askUser(options) {
+  mainWindow = focusOrCreateWindow(mainWindow);
+  app.focus(IS_MAC ? { steal: true } : undefined);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ASK_TIMEOUT_MS);
+  return dialog
+    .showMessageBox(mainWindow, { noLink: true, ...options, signal: controller.signal })
+    .then(({ response }) => response)
+    .finally(() => clearTimeout(timer));
+}
+
+function confirmDialog({ title, message, detail, confirmLabel }) {
+  return askUser({
+    type: "question",
+    title,
+    message,
+    detail,
+    buttons: [confirmLabel, "Cancel"],
+    defaultId: 1,
+    cancelId: 1,
+  }).then((response) => {
+    if (response !== 0) throw new Error("Declined");
+  });
+}
+
+// the token only ever goes to a Sprinto regional host, whatever is stored
+// in settings (an older build may have saved another URL from /connect)
+function checkedBaseUrl(baseUrl, caller) {
+  const isDev = process.env.STETHOSCOPE_ENV === "development";
+  const checked = sprintoApiBaseUrl(baseUrl, { isDev });
+  if (!checked) {
+    log.error(`${caller} - refused to send the token to ${baseUrl}`);
+  }
+  return checked;
+}
+
+// acts on a drsprinto:// link (V8-2293). Any web page can open one, so only
+// exact link names count, an update goes through the normal prompts, and
+// DevTools opens only after the user agrees
+function handleDeepLink(link) {
+  const action = parseDeepLink(link);
+  if (!action) return;
+  if (!app.isReady() || !updater) {
+    pendingDeepLink = link;
+    return;
+  }
+  log.info(`deep link: ${action}`);
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+
+  if (action === "update") {
+    // asks before downloading and before installing; the link used to call
+    // forceUpdate, which did both without asking
+    updater.checkForUpdates().catch((err) => {
+      log.error(`deep link: check for updates failed: ${err}`);
+    });
+  } else if (action === "debugger") {
+    if (!mainWindow || mainWindow.isDestroyed()) createWindow();
+    confirmDialog({
+      title: "Developer Tools",
+      message: `Open developer tools for ${app.name}?`,
+      detail:
+        "Only do this if Sprinto support asked you to. Developer tools give full access to the app and to this device's Sprinto connection.",
+      confirmLabel: "Open",
+    }).then(
+      () => enableAppDebugger(),
+      () => log.info("deep link: developer tools declined")
+    );
   }
 }
 
@@ -416,12 +590,12 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on("second-instance", (event, commandLine, workingDirectory) => {
-    if (IS_WIN) deeplinkingUrl = commandLine.slice(1);
-
-    if (String(deeplinkingUrl).indexOf("update") > -1) {
-      updater.checkForUpdates(env, mainWindow, log).catch((err) => {
-        log.error(`error checking for update: ${err}`);
-      });
+    // on Windows and Linux a drsprinto:// link opened while the app runs
+    // arrives here, as an argument
+    const link = deepLinkFromArgv(commandLine);
+    if (link) {
+      handleDeepLink(link);
+      return;
     }
 
     // Someone tried to run a second instance, we should focus our window.
@@ -466,20 +640,20 @@ if (!gotTheLock) {
       session.defaultSession.setPermissionRequestHandler(
         (webContents, permission, callback) => {
           console.log("permission", permission);
-          if (permission === "geolocation" || permission === "media") {
-            return callback(false); // Deny geolocation
-          }
+          // every request must be answered: an unanswered one stays pending
+          // forever. Only notifications are used (the "Security
+          // recommendation" alert in App.js); geolocation, media and
+          // anything else are denied
+          callback(permission === "notifications");
         }
       );
 
-      if (launchIntoUpdater) {
-        // triggered via stethoscope://update app link
-        log.info(`Launching into updater: ${launchIntoUpdater}`);
-        updater
-          .checkForUpdates(env, mainWindow)
-          .catch((err) =>
-            log.error(`start:launch:check for updates exception${err}`)
-          );
+      // a link the app was launched with (Windows), or one that arrived
+      // before it was ready (macOS)
+      if (pendingDeepLink) {
+        const link = pendingDeepLink;
+        pendingDeepLink = null;
+        handleDeepLink(link);
       }
     }, 0)
   );
@@ -494,34 +668,10 @@ app.on("before-quit", () => {
   }
 });
 
+// macOS delivers drsprinto:// links here, before or after the app is ready
 app.on("open-url", (event, url) => {
   event.preventDefault();
-
-  if (url.includes("update")) {
-    launchIntoUpdater = true;
-  }
-
-  if (url.includes("debugger")) {
-    if (!mainWindow) {
-      enableDebugger = true;
-      createWindow();
-    } else {
-      enableAppDebugger();
-    }
-  }
-
-  if (mainWindow) {
-    if (mainWindow.isMinimized()) {
-      mainWindow.restore();
-    }
-    mainWindow.focus();
-
-    if (launchIntoUpdater) {
-      updater.checkForUpdates(env, mainWindow).catch((err) => {
-        log.error(`start:check for updates error: ${err}`);
-      });
-    }
-  }
+  handleDeepLink(url);
 });
 
 app.on("activate", () => {
@@ -579,7 +729,10 @@ ipcMain.on("auth:logout", (event) => {
 });
 
 // External API calls
-ipcMain.on("api:getPolicy", async (event, baseUrl) => {
+// `handle`, not `on`: this makes a network request, and a sendSync caller
+// would block the renderer for its entire duration -- up to 46s once the
+// request timeout and retries are accounted for.
+ipcMain.handle("api:getPolicy", async (event, baseUrl) => {
   // Get latest policy json from sprinto
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
@@ -588,17 +741,18 @@ ipcMain.on("api:getPolicy", async (event, baseUrl) => {
       log.error(
         "api:getPolicy - critical should not call this api when token is empty or not connected"
       );
-      event.returnValue = false;
-      return;
+      return false;
     }
 
-    event.returnValue = await ApiService.getPolicy(baseUrl, token, isDev);
+    const apiBaseUrl = checkedBaseUrl(baseUrl, "api:getPolicy");
+    if (!apiBaseUrl) return null;
+    return await ApiService.getPolicy(apiBaseUrl, token, isDev);
   } catch (err) {
-    event.returnValue = null;
+    return null;
   }
 });
 
-ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
+ipcMain.handle("api:reportDevice", async (event, result, device, baseUrl) => {
   try {
     const isDev = process.env.STETHOSCOPE_ENV === "development";
     const token = AuthService.getAccessToken();
@@ -606,14 +760,15 @@ ipcMain.on("api:reportDevice", async (event, result, device, baseUrl) => {
       log.error(
         "api:reportDevice - critical should not call this api when token is empty or not connected"
       );
-      event.returnValue = false;
-      return;
+      return false;
     }
     const data = { ...result, device };
-    await ApiService.reportDevice(baseUrl, token, data, isDev);
-    event.returnValue = true;
+    const apiBaseUrl = checkedBaseUrl(baseUrl, "api:reportDevice");
+    if (!apiBaseUrl) return false;
+    await ApiService.reportDevice(apiBaseUrl, token, data, isDev);
+    return true;
   } catch (err) {
-    event.returnValue = false;
+    return false;
   }
 });
 

@@ -4,7 +4,6 @@ import config from './config'
 
 let attemptingUpdate = false
 let isFirstLaunch
-let forceUpdate = false
 const eventRegistration = {}
 
 // NOTE:
@@ -33,32 +32,30 @@ export default function updater (env, mainWindow, log = console, server, focusOr
         attemptingUpdate = false
       }
     },
+    // every update asks before downloading and before installing; there
+    // is no silent path (V8-2293: a drsprinto://update link from any web
+    // page used to download and install without asking)
     'update-available': () => {
-      if (!forceUpdate) {
-        dialog.showMessageBox({
-          type: 'info',
-          title: `${app.name} Update Available`,
-          message: `A new version of ${app.name} is available, would you like to download and update now?`,
-          buttons: ['Yes', 'No'],
-          defaultId: 0
-        }).then(({ response }) => {
-          if (response === 0) {
-            if (!isDev) {
-              mainWindow = focusOrCreateWindow(mainWindow)
-              autoUpdater.downloadUpdate()
-            } else {
-              attemptingUpdate = false
-              dialog.showMessageBox({
-                title: `Downloading ${app.name}`,
-                message: 'App cannot be updated in dev mode'
-              })
-            }
+      dialog.showMessageBox({
+        type: 'info',
+        title: `${app.name} Update Available`,
+        message: `A new version of ${app.name} is available, would you like to download and update now?`,
+        buttons: ['Yes', 'No'],
+        defaultId: 0
+      }).then(({ response }) => {
+        if (response === 0) {
+          if (!isDev) {
+            mainWindow = focusOrCreateWindow(mainWindow)
+            autoUpdater.downloadUpdate()
+          } else {
+            attemptingUpdate = false
+            dialog.showMessageBox({
+              title: `Downloading ${app.name}`,
+              message: 'App cannot be updated in dev mode'
+            })
           }
-        })
-      } else {
-        mainWindow = focusOrCreateWindow(mainWindow)
-        autoUpdater.downloadUpdate()
-      }
+        }
+      })
     },
     'update-not-available': () => {
       // no need to show the dialog on first launch
@@ -72,24 +69,17 @@ export default function updater (env, mainWindow, log = console, server, focusOr
       attemptingUpdate = false
     },
     'update-downloaded': () => {
-      if (!forceUpdate) {
-        dialog.showMessageBox({
-          title: `Install ${app.name} Updates`,
-          message: `Updates downloaded, ${app.name} will quit and relaunch.`
-        }).then(() => {
-          if (!isDev) {
-            if (server && server.listening) {
-              server.close()
-            }
-            setImmediate(() => autoUpdater.quitAndInstall())
+      dialog.showMessageBox({
+        title: `Install ${app.name} Updates`,
+        message: `Updates downloaded, ${app.name} will quit and relaunch.`
+      }).then(() => {
+        if (!isDev) {
+          if (server && server.listening) {
+            server.close()
           }
-        })
-      } else {
-        if (server && server.listening) {
-          server.close()
+          setImmediate(() => autoUpdater.quitAndInstall())
         }
-        setImmediate(() => autoUpdater.quitAndInstall())
-      }
+      })
     },
     // TODO move this to ipc, remove mainWindow dependency
     'download-progress': (progressObj) => {
@@ -110,12 +100,6 @@ export default function updater (env, mainWindow, log = console, server, focusOr
   }
 
   return {
-    forceUpdate () {
-      forceUpdate = true
-      autoUpdater.checkForUpdates().catch(err => {
-        log.error(`Error updating: ${err.message}`, err)
-      })
-    },
     checkForUpdates (menuItem = {}, focusedWindow = {}, event = {}, isLaunch = false) {
       // don't allow multiple concurrent attempts
       attemptingUpdate = true

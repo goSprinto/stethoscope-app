@@ -3,6 +3,9 @@ import { HOST, PASS, FAIL } from "../constants";
 const remote = window.require("@electron/remote");
 const log = remote.getGlobal("log");
 
+// the server answers within 65s; allow for that plus the request itself
+const SCAN_TIMEOUT_MS = 90 * 1000;
+
 const handleValidate = (result, partitions, device, practices, platform) => {
   const { status, ...rest } = result;
   const nonNullValues = Object.keys(rest).filter((key) => result[key]);
@@ -121,7 +124,14 @@ export default class Stethoscope {
       body: JSON.stringify({ query, variables: { policy } }),
     };
 
+    // a scan that never answers would keep scanIsRunning set and skip every
+    // later automatic scan; give up after SCAN_TIMEOUT_MS
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), SCAN_TIMEOUT_MS);
+    options.signal = controller.signal;
+
     fetch(`${HOST}/scan`, options)
+      .finally(() => clearTimeout(timeout))
       .then((res) => {
         switch (res.status) {
           case 200:
@@ -145,6 +155,8 @@ export default class Stethoscope {
       .catch((err) => {
         if (err.message === "retry") {
           return this.__repeatRequest(policy, resolve, reject);
+        } else if (err.name === "AbortError") {
+          reject(new Error("Scan timed out"));
         } else {
           reject(err);
         }
